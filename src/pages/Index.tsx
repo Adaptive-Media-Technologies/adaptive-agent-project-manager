@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import TaskItem from '@/components/TaskItem';
-import { Plus, LogOut, FolderPlus } from 'lucide-react';
+import TaskList from '@/components/TaskList';
+import { Plus, LogOut, FolderPlus, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { format } from 'date-fns';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { projects, loading: projLoading, create: createProject } = useProjects();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, deleteTask } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask } = useTasks(activeProjectId);
+  const { logTime } = useTimeEntries(activeProjectId);
   const [newTask, setNewTask] = useState('');
   const [newProject, setNewProject] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -43,6 +48,19 @@ const Index = () => {
       toast.error(err.message);
     }
   };
+
+  const handleLogTime = async (taskId: string, minutes: number) => {
+    try {
+      await logTime(taskId, minutes);
+      toast.success(`Logged ${minutes} min`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const openCount = tasks.filter(t => t.status === 'open').length;
+  const doingCount = tasks.filter(t => t.status === 'in_progress').length;
+  const doneCount = tasks.filter(t => t.status === 'complete').length;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -81,18 +99,25 @@ const Index = () => {
       <main className="flex flex-1 flex-col">
         {activeProject ? (
           <>
-            <header className="border-b border-border px-6 py-4">
+            <header className="flex items-center justify-between border-b border-border px-6 py-4">
               <h2 className="text-lg font-semibold text-foreground">{activeProject.name}</h2>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowDetails(true)} title="Project details">
+                <Info size={16} />
+              </Button>
             </header>
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
               {tasksLoading ? (
                 <p className="text-sm text-muted-foreground">Loading tasks...</p>
               ) : tasks.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No tasks yet. Add one below.</p>
               ) : (
-                tasks.map(t => (
-                  <TaskItem key={t.id} task={t} onCycle={() => cycleStatus(t)} onDelete={() => deleteTask(t.id)} />
-                ))
+                <TaskList
+                  tasks={tasks}
+                  onCycle={cycleStatus}
+                  onDelete={deleteTask}
+                  onReorder={reorder}
+                  onLogTime={handleLogTime}
+                />
               )}
             </div>
             <form onSubmit={handleAddTask} className="border-t border-border px-6 py-3">
@@ -103,6 +128,30 @@ const Index = () => {
                 </Button>
               </div>
             </form>
+
+            {/* Project Details Sheet */}
+            <Sheet open={showDetails} onOpenChange={setShowDetails}>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>{activeProject.name}</SheetTitle>
+                  <SheetDescription>Project details</SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Created</p>
+                    <p className="text-sm text-foreground">{format(new Date(activeProject.created_at), 'PPP')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tasks Summary</p>
+                    <div className="mt-1 flex gap-3 text-sm">
+                      <span className="text-muted-foreground">Open: {openCount}</span>
+                      <span className="text-primary">Doing: {doingCount}</span>
+                      <span className="text-green-600">Done: {doneCount}</span>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center">
