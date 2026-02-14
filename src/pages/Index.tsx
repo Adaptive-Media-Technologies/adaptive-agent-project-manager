@@ -117,6 +117,7 @@ const Index = () => {
                   onDelete={deleteTask}
                   onReorder={reorder}
                   onLogTime={handleLogTime}
+                  taskMinutes={{}}
                 />
               )}
             </div>

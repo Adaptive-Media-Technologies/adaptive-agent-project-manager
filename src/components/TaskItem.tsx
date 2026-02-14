@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { Task } from '@/hooks/useTasks';
-import { Check, Circle, Loader2, Trash2, GripVertical, Clock } from 'lucide-react';
+import { Check, Circle, Loader2, Trash2, GripVertical, Timer } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Input } from '@/components/ui/input';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
@@ -15,13 +13,12 @@ type Props = {
   task: Task;
   onCycle: () => void;
   onDelete: () => void;
-  onLogTime?: (minutes: number) => void;
+  onStartTimer?: () => void;
+  isTimerActive?: boolean;
 };
 
-const TaskItem = ({ task, onCycle, onDelete, onLogTime }: Props) => {
+const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive }: Props) => {
   const { icon: Icon, label, className } = statusConfig[task.status];
-  const [showTime, setShowTime] = useState(false);
-  const [minutes, setMinutes] = useState('');
 
   const {
     attributes,
@@ -38,21 +35,15 @@ const TaskItem = ({ task, onCycle, onDelete, onLogTime }: Props) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleLogTime = (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseInt(minutes, 10);
-    if (val > 0 && onLogTime) {
-      onLogTime(val);
-      setMinutes('');
-      setShowTime(false);
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group flex items-center gap-2 rounded-lg border border-border bg-card px-2 py-2 transition-colors hover:bg-accent"
+      className={`group flex items-center gap-2 rounded-lg border px-2 py-2 transition-colors ${
+        isTimerActive
+          ? 'border-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.1)]'
+          : 'border-border bg-card hover:bg-accent'
+      }`}
     >
       <button
         {...attributes}
@@ -72,28 +63,17 @@ const TaskItem = ({ task, onCycle, onDelete, onLogTime }: Props) => {
         {task.title}
       </span>
 
-      {showTime ? (
-        <form onSubmit={handleLogTime} className="flex items-center gap-1">
-          <Input
-            type="number"
-            min={1}
-            placeholder="min"
-            value={minutes}
-            onChange={e => setMinutes(e.target.value)}
-            className="h-6 w-16 text-xs"
-            autoFocus
-            onBlur={() => { if (!minutes) setShowTime(false); }}
-          />
-        </form>
-      ) : (
-        <button
-          onClick={() => setShowTime(true)}
-          className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
-          title="Log time"
-        >
-          <Clock size={14} />
-        </button>
-      )}
+      <button
+        onClick={onStartTimer}
+        className={`shrink-0 transition-opacity ${
+          isTimerActive
+            ? 'text-[hsl(var(--timer-active))]'
+            : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'
+        }`}
+        title="Timer"
+      >
+        <Timer size={14} />
+      </button>
 
       <button onClick={onDelete} className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive">
         <Trash2 size={14} />
