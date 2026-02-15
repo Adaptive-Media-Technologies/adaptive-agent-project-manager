@@ -24,7 +24,7 @@ const Index = () => {
   const { teams } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { profile } = useProfile();
   const [newTask, setNewTask] = useState('');
@@ -233,6 +233,7 @@ const Index = () => {
                   onReorder={reorder}
                   onLogTime={handleLogTime}
                   taskMinutes={taskMinutes}
+                  onRenameTask={renameTask}
                 />
               )}
             </div>

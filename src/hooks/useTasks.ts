@@ -101,5 +101,11 @@ export const useTasks = (projectId: string | null) => {
     await supabase.from('tasks').delete().eq('id', id);
   };
 
-  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, refresh: fetch };
+  const renameTask = async (id: string, newTitle: string) => {
+    const { error } = await supabase.from('tasks').update({ title: newTitle }).eq('id', id);
+    if (error) throw error;
+    setTasks(t => t.map(tt => tt.id === id ? { ...tt, title: newTitle } : tt));
+  };
+
+  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, refresh: fetch };
 };
