@@ -23,7 +23,7 @@ export const useTeamInvites = () => {
     const { data } = await supabase
       .from('team_invites')
       .select('*, team:teams(name)')
-      .eq('email', user.email)
+      .ilike('email', user.email)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
     setPendingInvites((data as TeamInvite[]) || []);
