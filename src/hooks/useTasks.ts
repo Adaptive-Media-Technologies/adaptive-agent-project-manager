@@ -45,7 +45,13 @@ export const useProjects = () => {
     return data as Project;
   };
 
-  return { projects, loading, create, refresh: fetch };
+  const rename = async (id: string, newName: string) => {
+    const { error } = await supabase.from('projects').update({ name: newName }).eq('id', id);
+    if (error) throw error;
+    setProjects(p => p.map(pp => pp.id === id ? { ...pp, name: newName } : pp));
+  };
+
+  return { projects, loading, create, rename, refresh: fetch };
 };
 
 export const useTasks = (projectId: string | null) => {
