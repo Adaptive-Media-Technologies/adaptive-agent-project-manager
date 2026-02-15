@@ -13,7 +13,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ import { format } from 'date-fns';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
   const { projects, loading: projLoading, create: createProject, rename: renameProject, refresh: refreshProjects } = useProjects();
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
@@ -37,6 +39,7 @@ const Index = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -95,7 +98,7 @@ const Index = () => {
 
   const ProjectButton = ({ id, name, icon }: { id: string; name: string; icon?: React.ReactNode }) => (
     <button
-      onClick={() => setActiveProjectId(id)}
+      onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
       className={`w-full flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
         id === activeProjectId ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
       }`}
@@ -107,18 +110,30 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-card">
+      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-56 shrink-0'} flex flex-col border-r border-border bg-card ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h1 className="text-sm font-semibold text-foreground">Projects</h1>
-          <button onClick={() => setShowProfile(true)} title="Profile">
-            <Avatar className="h-7 w-7">
-              {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
-              <AvatarFallback className="text-[10px]">
-                {profile?.display_name ? profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowProfile(true)} title="Profile">
+              <Avatar className="h-7 w-7">
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
+                <AvatarFallback className="text-[10px]">
+                  {profile?.display_name ? profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+            {isMobile && (
+              <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X size={18} />
+              </button>
+            )}
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-4">
@@ -173,6 +188,7 @@ const Index = () => {
                         try {
                           const p = await createProject(`${team.name} Tasks`, 'team', team.id);
                           if (p) setActiveProjectId(p.id);
+                          if (isMobile) setSidebarOpen(false);
                         } catch (err: any) {
                           toast.error(err.message);
                         }
@@ -189,7 +205,7 @@ const Index = () => {
         </nav>
 
         <div className="border-t border-border p-2 space-y-1">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => setShowCreateProject(true)}>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}>
             <Plus size={14} /> New Project
           </Button>
           <Link to="/teams">
@@ -204,12 +220,17 @@ const Index = () => {
       <main className="flex flex-1 flex-col">
         {activeProject ? (
           <>
-            <header className="flex items-center justify-between border-b border-border px-6 py-4">
+            <header className="flex items-center justify-between border-b border-border px-4 md:px-6 py-4">
               <div className="flex items-center gap-2">
+                {isMobile && (
+                  <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                    <Menu size={20} />
+                  </button>
+                )}
                 {activeProject.type === 'team' ? <Users size={16} className="text-muted-foreground" /> : <Lock size={16} className="text-muted-foreground" />}
-                <h2 className="text-lg font-semibold text-foreground">{activeProject.name}</h2>
+                <h2 className="text-lg font-semibold text-foreground truncate">{activeProject.name}</h2>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowDetails(true)} title="Project details">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowDetails(true)} title="Project details">
                 <Info size={16} />
               </Button>
             </header>
@@ -341,7 +362,12 @@ const Index = () => {
             </Sheet>
           </>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 relative">
+            {isMobile && (
+              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
+                <Menu size={20} />
+              </button>
+            )}
             <img src="/favicon.png" alt="AgntFind" className="h-16 w-16 mb-2" />
             <h1 className="text-3xl font-bold text-foreground">AgntFind</h1>
             <p className="text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project'}</p>
