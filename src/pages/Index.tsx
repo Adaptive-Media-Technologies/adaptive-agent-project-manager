@@ -265,7 +265,8 @@ const Index = () => {
           </>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <h1 className="text-3xl font-bold text-foreground">Agent Find</h1>
+            <img src="/favicon.png" alt="AgntFind" className="h-16 w-16 mb-2" />
+            <h1 className="text-3xl font-bold text-foreground">AgntFind</h1>
             <p className="text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project'}</p>
           </div>
         )}
