@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: Loader2, label: 'Doing', className: 'text-primary' },
+  in_progress: { icon: Loader2, label: 'In Progress', className: 'text-primary animate-spin' },
   complete: { icon: Check, label: 'Done', className: 'text-green-600' },
 };
 

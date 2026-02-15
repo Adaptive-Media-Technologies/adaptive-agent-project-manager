@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: Loader2, label: 'Doing', className: 'text-primary' },
+  in_progress: { icon: Loader2, label: 'In Progress', className: 'text-primary animate-spin' },
   complete: { icon: Check, label: 'Done', className: 'text-green-600' },
 };
 
@@ -44,7 +44,9 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
       className={`group flex items-center gap-2 rounded-lg border px-2 py-2 transition-colors ${
         isTimerActive
           ? 'border-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.1)]'
-          : 'border-border bg-card hover:bg-accent'
+          : task.status === 'in_progress'
+            ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+            : 'border-border bg-card hover:bg-accent'
       }`}
     >
       <button

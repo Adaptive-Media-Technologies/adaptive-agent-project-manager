@@ -16,7 +16,7 @@ const Index = () => {
   const { projects, loading: projLoading, create: createProject } = useProjects();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask } = useTasks(activeProjectId);
-  const { logTime } = useTimeEntries(activeProjectId);
+  const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const [newTask, setNewTask] = useState('');
   const [newProject, setNewProject] = useState('');
   const [showDetails, setShowDetails] = useState(false);
@@ -117,7 +117,7 @@ const Index = () => {
                   onDelete={deleteTask}
                   onReorder={reorder}
                   onLogTime={handleLogTime}
-                  taskMinutes={{}}
+                  taskMinutes={taskMinutes}
                 />
               )}
             </div>
