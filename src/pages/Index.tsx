@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
+import { useProfile } from '@/hooks/useProfile';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
+import ProfileSheet from '@/components/ProfileSheet';
 import { Plus, LogOut, FolderPlus, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -17,9 +20,11 @@ const Index = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
+  const { profile } = useProfile();
   const [newTask, setNewTask] = useState('');
   const [newProject, setNewProject] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -68,8 +73,13 @@ const Index = () => {
       <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h1 className="text-sm font-semibold text-foreground">Projects</h1>
-          <button onClick={signOut} className="text-muted-foreground hover:text-foreground" title="Sign out">
-            <LogOut size={16} />
+          <button onClick={() => setShowProfile(true)} title="Profile">
+            <Avatar className="h-7 w-7">
+              {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
+              <AvatarFallback className="text-[10px]">
+                {profile?.display_name ? profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
+              </AvatarFallback>
+            </Avatar>
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -160,6 +170,8 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      <ProfileSheet open={showProfile} onOpenChange={setShowProfile} />
     </div>
   );
 };
