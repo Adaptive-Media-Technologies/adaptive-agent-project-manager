@@ -16,6 +16,8 @@ export type Project = {
   id: string;
   name: string;
   owner_id: string;
+  type: 'private' | 'team';
+  team_id: string | null;
   created_at: string;
 };
 
@@ -33,9 +35,11 @@ export const useProjects = () => {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const create = async (name: string) => {
+  const create = async (name: string, type: 'private' | 'team' = 'private', teamId?: string) => {
     if (!user) return;
-    const { data, error } = await supabase.from('projects').insert({ name, owner_id: user.id }).select().single();
+    const insert: any = { name, owner_id: user.id, type };
+    if (type === 'team' && teamId) insert.team_id = teamId;
+    const { data, error } = await supabase.from('projects').insert(insert).select().single();
     if (error) throw error;
     setProjects(p => [...p, data as Project]);
     return data as Project;
