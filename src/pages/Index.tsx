@@ -188,7 +188,19 @@ const Index = () => {
               {tasksLoading ? (
                 <p className="text-sm text-muted-foreground">Loading tasks...</p>
               ) : tasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tasks yet. Add one below.</p>
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16">
+                  <div className="rounded-full bg-accent p-4">
+                    <Plus size={28} className="text-muted-foreground" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-base font-medium text-foreground">No tasks yet</p>
+                    <p className="text-sm text-muted-foreground">Create your first task to get started</p>
+                  </div>
+                  <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
+                    <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" autoFocus />
+                    <Button type="submit" size="sm" disabled={!newTask.trim()}>Add</Button>
+                  </form>
+                </div>
               ) : (
                 <TaskList
                   tasks={tasks}
