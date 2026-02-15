@@ -4,14 +4,14 @@ import { useAuth } from './useAuth';
 
 export const NOTE_COLORS = [
   { name: 'Default', value: '', bg: 'bg-card', border: 'border-border' },
-  { name: 'Red', value: 'red', bg: 'bg-red-950/40', border: 'border-red-900/50' },
-  { name: 'Orange', value: 'orange', bg: 'bg-orange-950/40', border: 'border-orange-900/50' },
-  { name: 'Yellow', value: 'yellow', bg: 'bg-yellow-950/40', border: 'border-yellow-900/50' },
-  { name: 'Green', value: 'green', bg: 'bg-green-950/40', border: 'border-green-900/50' },
-  { name: 'Teal', value: 'teal', bg: 'bg-teal-950/40', border: 'border-teal-900/50' },
-  { name: 'Blue', value: 'blue', bg: 'bg-blue-950/40', border: 'border-blue-900/50' },
-  { name: 'Purple', value: 'purple', bg: 'bg-purple-950/40', border: 'border-purple-900/50' },
-  { name: 'Pink', value: 'pink', bg: 'bg-pink-950/40', border: 'border-pink-900/50' },
+  { name: 'Red', value: 'red', bg: 'bg-red-900/30', border: 'border-red-700/60' },
+  { name: 'Orange', value: 'orange', bg: 'bg-orange-900/30', border: 'border-orange-700/60' },
+  { name: 'Yellow', value: 'yellow', bg: 'bg-yellow-900/30', border: 'border-yellow-700/60' },
+  { name: 'Green', value: 'green', bg: 'bg-green-900/30', border: 'border-green-700/60' },
+  { name: 'Teal', value: 'teal', bg: 'bg-teal-900/30', border: 'border-teal-700/60' },
+  { name: 'Blue', value: 'blue', bg: 'bg-blue-900/30', border: 'border-blue-700/60' },
+  { name: 'Purple', value: 'purple', bg: 'bg-purple-900/30', border: 'border-purple-700/60' },
+  { name: 'Pink', value: 'pink', bg: 'bg-pink-900/30', border: 'border-pink-700/60' },
 ] as const;
 
 export type NoteColor = typeof NOTE_COLORS[number]['value'];
