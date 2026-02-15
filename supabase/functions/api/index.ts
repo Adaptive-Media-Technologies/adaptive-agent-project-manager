@@ -1,17 +1,36 @@
 // Supabase Edge Function: API for AI Agents
 //
 // Routes:
-//   GET    /api/projects              - List projects (scoped to user's teams)
-//   POST   /api/projects              - Create project { name, team_id? }
-//   GET    /api/tasks?project_id=xxx  - List tasks
-//   POST   /api/tasks                 - Create task { project_id, title }
-//   PATCH  /api/tasks/:id             - Update task { title?, status? }
-//   DELETE /api/tasks/:id             - Delete task
-//   POST   /api/tasks/reorder         - Reorder { project_id, task_ids: string[] }
-//   GET    /api/notes?task_id=xxx     - List notes for a task
-//   POST   /api/notes                 - Create note { task_id, content }
-//   DELETE /api/notes/:id             - Delete note
-//   POST   /api/time                  - Log time { task_id, minutes }
+//   --- Auth & Keys ---
+//   GET    /api/keys                        - List user's API keys
+//   POST   /api/keys                        - Generate API key { label? }
+//   DELETE /api/keys/:id                    - Revoke API key
+//
+//   --- Teams ---
+//   GET    /api/teams                       - List user's teams
+//
+//   --- Projects ---
+//   GET    /api/projects                    - List projects (owned + team)
+//   POST   /api/projects                    - Create project { name, team_id? }
+//
+//   --- Tasks ---
+//   GET    /api/tasks?project_id=xxx        - List tasks
+//   POST   /api/tasks                       - Create task { project_id, title }
+//   PATCH  /api/tasks/:id                   - Update task { title?, status? }
+//   DELETE /api/tasks/:id                   - Delete task
+//   POST   /api/tasks/reorder               - Reorder { project_id, task_ids[] }
+//
+//   --- Task Notes ---
+//   GET    /api/notes?task_id=xxx           - List notes for a task
+//   POST   /api/notes                       - Create note { task_id, content }
+//   DELETE /api/notes/:id                   - Delete note
+//
+//   --- Project Notes ---
+//   GET    /api/project-notes?project_id=x  - Get project note
+//   PUT    /api/project-notes               - Upsert { project_id, content, color? }
+//
+//   --- Time ---
+//   POST   /api/time                        - Log time { task_id, minutes }
 //
 // Auth: x-api-key header (hashed against api_keys table) or Bearer <jwt>
 
@@ -25,6 +44,21 @@ const corsHeaders = {
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
+// Generate a random API key string
+function generateApiKey(): string {
+  const bytes = new Uint8Array(32)
+  crypto.getRandomValues(bytes)
+  return 'ak_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// SHA-256 hash a string
+async function hashKey(key: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(key)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
@@ -44,11 +78,7 @@ serve(async (req) => {
   let userId: string | null = null
 
   if (apiKey) {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(apiKey)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
-
+    const hashHex = await hashKey(apiKey)
     const { data: keyRow } = await supabase
       .from('api_keys')
       .select('user_id')
@@ -67,10 +97,106 @@ serve(async (req) => {
     return json({ error: 'Missing auth. Use x-api-key or Authorization: Bearer <jwt>' }, 401)
   }
 
+  // Helper: get team IDs the user belongs to
+  async function getUserTeamIds(): Promise<string[]> {
+    const { data } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId!)
+    return (data || []).map(r => r.team_id)
+  }
+
+  // Helper: check user has access to a project (owns it or is member of its team)
+  async function canAccessProject(projectId: string): Promise<boolean> {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('owner_id, team_id')
+      .eq('id', projectId)
+      .single()
+    if (!project) return false
+    if (project.owner_id === userId) return true
+    if (project.team_id) {
+      const teamIds = await getUserTeamIds()
+      return teamIds.includes(project.team_id)
+    }
+    return false
+  }
+
   try {
-    // --- PROJECTS ---
+    // ===================
+    // PHASE 1: API KEYS
+    // ===================
+
+    if (path === '/keys' && method === 'GET') {
+      const { data, error } = await supabase
+        .from('api_keys')
+        .select('id, label, created_at, key_prefix')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return json(data)
+    }
+
+    if (path === '/keys' && method === 'POST') {
+      const body = await req.json().catch(() => ({}))
+      const label = body.label || 'default'
+      const rawKey = generateApiKey()
+      const keyHash = await hashKey(rawKey)
+      const keyPrefix = rawKey.substring(0, 10) + '...'
+
+      const { data, error } = await supabase
+        .from('api_keys')
+        .insert({ user_id: userId, key_hash: keyHash, label, key_prefix: keyPrefix })
+        .select('id, label, created_at, key_prefix')
+        .single()
+      if (error) throw error
+
+      // Return the raw key ONCE — it won't be retrievable again
+      return json({ ...data, key: rawKey }, 201)
+    }
+
+    const keyMatch = path.match(/^\/keys\/([a-f0-9-]+)$/)
+    if (keyMatch && method === 'DELETE') {
+      const id = keyMatch[1]
+      const { error } = await supabase
+        .from('api_keys')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+      if (error) throw error
+      return json({ ok: true })
+    }
+
+    // ===================
+    // PHASE 2: TEAMS & SCOPED ACCESS
+    // ===================
+
+    if (path === '/teams' && method === 'GET') {
+      const teamIds = await getUserTeamIds()
+      if (teamIds.length === 0) return json([])
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*')
+        .in('id', teamIds)
+        .order('created_at')
+      if (error) throw error
+      return json(data)
+    }
+
+    // --- PROJECTS (team-scoped) ---
     if (path === '/projects' && method === 'GET') {
-      const { data, error } = await supabase.from('projects').select('*').eq('owner_id', userId).order('created_at')
+      const teamIds = await getUserTeamIds()
+
+      // Get owned private projects + all team projects for user's teams
+      let query = supabase.from('projects').select('*').order('created_at')
+
+      if (teamIds.length > 0) {
+        query = query.or(`owner_id.eq.${userId},team_id.in.(${teamIds.join(',')})`)
+      } else {
+        query = query.eq('owner_id', userId)
+      }
+
+      const { data, error } = await query
       if (error) throw error
       return json(data)
     }
@@ -79,6 +205,15 @@ serve(async (req) => {
       const body = await req.json()
       const { name, team_id } = body
       if (!name) return json({ error: 'name required' }, 400)
+
+      // If team project, verify user is a member
+      if (team_id) {
+        const teamIds = await getUserTeamIds()
+        if (!teamIds.includes(team_id)) {
+          return json({ error: 'Not a member of this team' }, 403)
+        }
+      }
+
       const insert: Record<string, unknown> = { name, owner_id: userId, type: team_id ? 'team' : 'private' }
       if (team_id) insert.team_id = team_id
       const { data, error } = await supabase.from('projects').insert(insert).select().single()
@@ -86,10 +221,11 @@ serve(async (req) => {
       return json(data, 201)
     }
 
-    // --- TASKS ---
+    // --- TASKS (with access check) ---
     if (path === '/tasks' && method === 'GET') {
       const projectId = url.searchParams.get('project_id')
       if (!projectId) return json({ error: 'project_id required' }, 400)
+      if (!(await canAccessProject(projectId))) return json({ error: 'Access denied' }, 403)
       const { data, error } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('position')
       if (error) throw error
       return json(data)
@@ -98,6 +234,7 @@ serve(async (req) => {
     if (path === '/tasks' && method === 'POST') {
       const { project_id, title } = await req.json()
       if (!project_id || !title) return json({ error: 'project_id and title required' }, 400)
+      if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
       const { data: existing } = await supabase.from('tasks').select('position').eq('project_id', project_id).order('position', { ascending: false }).limit(1)
       const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
       const { data, error } = await supabase.from('tasks').insert({ project_id, title, created_by: userId, position }).select().single()
@@ -127,13 +264,14 @@ serve(async (req) => {
     if (path === '/tasks/reorder' && method === 'POST') {
       const { project_id, task_ids } = await req.json()
       if (!project_id || !task_ids?.length) return json({ error: 'project_id and task_ids required' }, 400)
+      if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
       await Promise.all(task_ids.map((id: string, i: number) =>
         supabase.from('tasks').update({ position: i }).eq('id', id).eq('project_id', project_id)
       ))
       return json({ ok: true })
     }
 
-    // --- NOTES ---
+    // --- TASK NOTES ---
     if (path === '/notes' && method === 'GET') {
       const taskId = url.searchParams.get('task_id')
       if (!taskId) return json({ error: 'task_id required' }, 400)
@@ -156,6 +294,39 @@ serve(async (req) => {
       const { error } = await supabase.from('notes').delete().eq('id', id)
       if (error) throw error
       return json({ ok: true })
+    }
+
+    // ===================
+    // PHASE 3: PROJECT NOTES
+    // ===================
+
+    if (path === '/project-notes' && method === 'GET') {
+      const projectId = url.searchParams.get('project_id')
+      if (!projectId) return json({ error: 'project_id required' }, 400)
+      if (!(await canAccessProject(projectId))) return json({ error: 'Access denied' }, 403)
+      const { data, error } = await supabase
+        .from('project_notes')
+        .select('*')
+        .eq('project_id', projectId)
+        .maybeSingle()
+      if (error) throw error
+      return json(data || { project_id: projectId, content: '', color: '' })
+    }
+
+    if (path === '/project-notes' && method === 'PUT') {
+      const { project_id, content, color } = await req.json()
+      if (!project_id) return json({ error: 'project_id required' }, 400)
+      if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
+      const upsertData: Record<string, unknown> = { project_id, updated_by: userId }
+      if (content !== undefined) upsertData.content = content
+      if (color !== undefined) upsertData.color = color
+      const { data, error } = await supabase
+        .from('project_notes')
+        .upsert(upsertData, { onConflict: 'project_id' })
+        .select()
+        .single()
+      if (error) throw error
+      return json(data)
     }
 
     // --- TIME ENTRIES ---
