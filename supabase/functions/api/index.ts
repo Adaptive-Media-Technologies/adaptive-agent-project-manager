@@ -1,17 +1,19 @@
-// Supabase Edge Function: API for AI Agents (OpenClaw)
-// Deploy with: supabase functions deploy api
+// Supabase Edge Function: API for AI Agents
 //
 // Routes:
-//   GET    /api/projects       - List projects
-//   POST   /api/projects       - Create project { name }
+//   GET    /api/projects              - List projects (scoped to user's teams)
+//   POST   /api/projects              - Create project { name, team_id? }
 //   GET    /api/tasks?project_id=xxx  - List tasks
-//   POST   /api/tasks          - Create task { project_id, title }
-//   PATCH  /api/tasks/:id      - Update task { title?, status? }
-//   DELETE /api/tasks/:id      - Delete task
-//   POST   /api/tasks/reorder  - Reorder { project_id, task_ids: string[] }
-//   POST   /api/time           - Log time { task_id, minutes }
+//   POST   /api/tasks                 - Create task { project_id, title }
+//   PATCH  /api/tasks/:id             - Update task { title?, status? }
+//   DELETE /api/tasks/:id             - Delete task
+//   POST   /api/tasks/reorder         - Reorder { project_id, task_ids: string[] }
+//   GET    /api/notes?task_id=xxx     - List notes for a task
+//   POST   /api/notes                 - Create note { task_id, content }
+//   DELETE /api/notes/:id             - Delete note
+//   POST   /api/time                  - Log time { task_id, minutes }
 //
-// Auth: Bearer <jwt> or x-api-key header (hashed against api_keys table)
+// Auth: x-api-key header (hashed against api_keys table) or Bearer <jwt>
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -33,29 +35,15 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+  const supabase = createClient(supabaseUrl, serviceKey)
 
-  // Debug route - no auth required (temporary)
-  if (path === '/debug-teams' && method === 'GET') {
-    const { data: teams } = await supabaseAdmin.from('teams').select('*')
-    const { data: members } = await supabaseAdmin.from('team_members').select('*')
-    const { data: invites } = await supabaseAdmin.from('team_invites').select('*')
-    const { data: policies } = await supabaseAdmin.rpc('get_rls_policies').catch(() => ({ data: null }))
-    return json({ teams, members, invites, policies })
-  }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-  // Auth: JWT or API key
+  // --- AUTH ---
   const authHeader = req.headers.get('authorization')
   const apiKey = req.headers.get('x-api-key')
 
   let userId: string | null = null
-  const supabase = createClient(supabaseUrl, serviceKey)
 
   if (apiKey) {
-    // Hash and check against api_keys table
     const encoder = new TextEncoder()
     const data = encoder.encode(apiKey)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
@@ -76,37 +64,10 @@ serve(async (req) => {
     if (error || !user) return json({ error: 'Invalid token' }, 401)
     userId = user.id
   } else {
-    return json({ error: 'Missing auth' }, 401)
+    return json({ error: 'Missing auth. Use x-api-key or Authorization: Bearer <jwt>' }, 401)
   }
 
   try {
-    // --- DEBUG TEAMS ---
-    if (path === '/debug-teams' && method === 'GET') {
-      const { data: teams } = await supabase.from('teams').select('*')
-      const { data: members } = await supabase.from('team_members').select('*')
-      const { data: invites } = await supabase.from('team_invites').select('*')
-      
-      // Check policies
-      const { data: policies } = await supabase.rpc('pg_policies_list').catch(() => ({ data: null }))
-      
-      // Try as-user query using anon key + user's token
-      let userTeams = null
-      if (userId) {
-        const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
-        // Sign in as user to test RLS
-        const { data: userData } = await supabase.from('team_members').select('*').eq('user_id', userId)
-        userTeams = { membershipRows: userData }
-      }
-      
-      return json({
-        userId,
-        allTeams: teams,
-        allMembers: members,
-        allInvites: invites,
-        userMemberships: userTeams,
-      })
-    }
-
     // --- PROJECTS ---
     if (path === '/projects' && method === 'GET') {
       const { data, error } = await supabase.from('projects').select('*').eq('owner_id', userId).order('created_at')
@@ -115,9 +76,12 @@ serve(async (req) => {
     }
 
     if (path === '/projects' && method === 'POST') {
-      const { name } = await req.json()
+      const body = await req.json()
+      const { name, team_id } = body
       if (!name) return json({ error: 'name required' }, 400)
-      const { data, error } = await supabase.from('projects').insert({ name, owner_id: userId }).select().single()
+      const insert: Record<string, unknown> = { name, owner_id: userId, type: team_id ? 'team' : 'private' }
+      if (team_id) insert.team_id = team_id
+      const { data, error } = await supabase.from('projects').insert(insert).select().single()
       if (error) throw error
       return json(data, 201)
     }
@@ -134,7 +98,6 @@ serve(async (req) => {
     if (path === '/tasks' && method === 'POST') {
       const { project_id, title } = await req.json()
       if (!project_id || !title) return json({ error: 'project_id and title required' }, 400)
-      // Get next position
       const { data: existing } = await supabase.from('tasks').select('position').eq('project_id', project_id).order('position', { ascending: false }).limit(1)
       const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
       const { data, error } = await supabase.from('tasks').insert({ project_id, title, created_by: userId, position }).select().single()
@@ -167,6 +130,31 @@ serve(async (req) => {
       await Promise.all(task_ids.map((id: string, i: number) =>
         supabase.from('tasks').update({ position: i }).eq('id', id).eq('project_id', project_id)
       ))
+      return json({ ok: true })
+    }
+
+    // --- NOTES ---
+    if (path === '/notes' && method === 'GET') {
+      const taskId = url.searchParams.get('task_id')
+      if (!taskId) return json({ error: 'task_id required' }, 400)
+      const { data, error } = await supabase.from('notes').select('*').eq('task_id', taskId).order('created_at', { ascending: false })
+      if (error) throw error
+      return json(data)
+    }
+
+    if (path === '/notes' && method === 'POST') {
+      const { task_id, content } = await req.json()
+      if (!task_id || !content) return json({ error: 'task_id and content required' }, 400)
+      const { data, error } = await supabase.from('notes').insert({ task_id, user_id: userId, content }).select().single()
+      if (error) throw error
+      return json(data, 201)
+    }
+
+    const noteMatch = path.match(/^\/notes\/([a-f0-9-]+)$/)
+    if (noteMatch && method === 'DELETE') {
+      const id = noteMatch[1]
+      const { error } = await supabase.from('notes').delete().eq('id', id)
+      if (error) throw error
       return json({ ok: true })
     }
 
