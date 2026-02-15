@@ -1,11 +1,11 @@
 import { Task } from '@/hooks/useTasks';
-import { Check, Circle, Loader2, Trash2, GripVertical, Timer, MoreHorizontal } from 'lucide-react';
+import { Check, Circle, PlayCircle, Trash2, GripVertical, Timer, MoreHorizontal } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: Loader2, label: 'In Progress', className: 'text-primary animate-spin' },
+  in_progress: { icon: PlayCircle, label: 'In Progress', className: 'text-primary' },
   complete: { icon: Check, label: 'Done', className: 'text-green-600' },
 };
 
@@ -45,8 +45,8 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
         isTimerActive
           ? 'border-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.1)]'
           : task.status === 'in_progress'
-            ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-            : 'border-border bg-card hover:bg-accent'
+          ? 'border-primary/30 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50'
+          : 'border-border bg-card hover:bg-accent'
       }`}
     >
       <button

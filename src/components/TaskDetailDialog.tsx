@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { Circle, Loader2, Check, Plus, Trash2 } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: Loader2, label: 'In Progress', className: 'text-primary animate-spin' },
+  in_progress: { icon: PlayCircle, label: 'In Progress', className: 'text-primary' },
   complete: { icon: Check, label: 'Done', className: 'text-green-600' },
 };
 
