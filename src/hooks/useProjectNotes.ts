@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export const NOTE_COLORS = [
-  { name: 'Default', value: '', gradient: '', border: 'border-border', text: 'text-foreground', placeholder: 'placeholder:text-muted-foreground', swatch: 'bg-card border-border' },
+  { name: 'Default', value: '', gradient: 'bg-card', border: 'border-border', text: 'text-foreground', placeholder: 'placeholder:text-muted-foreground', swatch: 'bg-card border-border' },
   { name: 'Sunset', value: 'sunset', gradient: 'bg-gradient-to-br from-rose-500/25 via-orange-500/20 to-amber-400/15', border: 'border-rose-500/40', text: 'text-black', placeholder: 'placeholder:text-black/50', swatch: 'bg-gradient-to-br from-rose-500 to-amber-400' },
   { name: 'Ocean', value: 'ocean', gradient: 'bg-gradient-to-br from-cyan-500/25 via-blue-600/20 to-indigo-500/15', border: 'border-cyan-400/40', text: 'text-black', placeholder: 'placeholder:text-black/50', swatch: 'bg-gradient-to-br from-cyan-400 to-indigo-500' },
   { name: 'Forest', value: 'forest', gradient: 'bg-gradient-to-br from-emerald-500/25 via-green-600/20 to-teal-500/15', border: 'border-emerald-400/40', text: 'text-black', placeholder: 'placeholder:text-black/50', swatch: 'bg-gradient-to-br from-emerald-400 to-teal-500' },
