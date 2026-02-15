@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import emailjs from '@emailjs/browser';
 
 export type TeamInvite = {
   id: string;
@@ -56,6 +57,25 @@ export const useTeamInvites = () => {
     const { error } = await supabase.from('team_invites')
       .insert({ team_id: teamId, email, invited_by: user.id });
     if (error) throw error;
+
+    // Fetch team name for the email
+    const { data: teamData } = await supabase.from('teams').select('name').eq('id', teamId).single();
+
+    // Fetch sender's display name
+    const { data: profileData } = await supabase.from('profiles').select('display_name').eq('id', user.id).single();
+
+    // Send invitation email via EmailJS
+    try {
+      await emailjs.send('service_9a115xi', 'template_802w2id', {
+        from_name: profileData?.display_name || user.email || 'A teammate',
+        team_name: teamData?.name || 'a team',
+        to_email: email,
+        app_url: window.location.origin,
+        sent_at: new Date().toLocaleDateString('en-US', { dateStyle: 'medium' }),
+      }, 'kZ9ndq6f7Nm0uSfDz');
+    } catch (emailErr) {
+      console.warn('Email notification failed:', emailErr);
+    }
   };
 
   return { pendingInvites, loading, acceptInvite, declineInvite, sendInvite, refresh: fetchInvites };
