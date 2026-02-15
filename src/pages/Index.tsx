@@ -162,7 +162,14 @@ const Index = () => {
                     ))
                   ) : (
                     <button
-                      onClick={() => setShowCreateProject(true)}
+                      onClick={async () => {
+                        try {
+                          const p = await createProject(`${team.name} Tasks`, 'team', team.id);
+                          if (p) setActiveProjectId(p.id);
+                        } catch (err: any) {
+                          toast.error(err.message);
+                        }
+                      }}
                       className="w-full flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
                       <Plus size={12} /> New Task
