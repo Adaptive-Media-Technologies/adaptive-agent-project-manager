@@ -1,133 +1,77 @@
 
-# Fix: Invited Users Can't See Projects After Signing Up
+# AI Agent API Integration Plan
 
-## Problem
+## Overview
 
-When a user is invited to a team, signs up, and logs in, they don't see the team's projects. This is caused by two issues:
+Local AI agents connect to the product via the REST API edge function (`/api/*`), authenticating with API keys. Agents sign up as normal users, get invited to teams, and receive API keys scoped to their account.
 
-1. **RLS blocks invite visibility** -- The new user likely cannot read their pending invites from the `team_invites` table (and possibly the joined `teams` table) due to Row Level Security policies not accounting for email-based lookups by newly registered users.
+## Architecture
 
-2. **No automatic team join** -- Even if invites were visible, the current flow requires the user to manually find and click "Accept" in the sidebar. A newly signed-up user who was invited before registration won't intuitively know to do this.
-
-## Solution
-
-### Part 1: Database Changes (SQL to run in Supabase)
-
-Add or fix RLS policies so authenticated users can read their own invites by email, and auto-join teams on signup.
-
-```sql
--- 1. Allow authenticated users to read their own pending invites by email
-CREATE POLICY "Users can read own invites"
-  ON public.team_invites FOR SELECT
-  TO authenticated
-  USING (lower(email) = lower(auth.jwt() ->> 'email'));
-
--- 2. Allow authenticated users to update their own invites (accept/decline)
-CREATE POLICY "Users can update own invites"
-  ON public.team_invites FOR UPDATE
-  TO authenticated
-  USING (lower(email) = lower(auth.jwt() ->> 'email'));
-
--- 3. Ensure team_invites RLS is enabled
-ALTER TABLE public.team_invites ENABLE ROW LEVEL SECURITY;
-
--- 4. Allow users to read teams they are invited to (for the join query)
--- (Only if not already covered by existing policies)
-CREATE POLICY "Users can read teams they are invited to"
-  ON public.teams FOR SELECT
-  TO authenticated
-  USING (
-    id IN (
-      SELECT team_id FROM public.team_invites
-      WHERE lower(email) = lower(auth.jwt() ->> 'email')
-      AND status = 'pending'
-    )
-    OR public.is_team_member(id, auth.uid())
-  );
-
--- 5. Auto-accept pending invites on signup via a trigger function
-CREATE OR REPLACE FUNCTION public.handle_pending_invites()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Add user to all teams they were invited to
-  INSERT INTO public.team_members (team_id, user_id, role)
-  SELECT team_id, NEW.id, 'member'
-  FROM public.team_invites
-  WHERE lower(email) = lower(NEW.email)
-    AND status = 'pending';
-
-  -- Mark those invites as accepted
-  UPDATE public.team_invites
-  SET status = 'accepted'
-  WHERE lower(email) = lower(NEW.email)
-    AND status = 'pending';
-
-  RETURN NEW;
-END;
-$$;
-
--- 6. Trigger on profile creation (fires when a new user signs up)
-CREATE TRIGGER on_profile_created_accept_invites
-  AFTER INSERT ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_pending_invites();
+```
+Agent (local) --x-api-key--> Edge Function (/api/*) --> Supabase (service role)
 ```
 
-Note: You may need to check for duplicate/conflicting RLS policies on `team_invites` and `teams` first. If existing SELECT policies exist, you may need to drop and replace them.
+## Authentication Flow
 
-### Part 2: Code Changes
+1. **Agent signs up** as a normal user (email/password via the Auth page or API)
+2. **Team admin invites agent** by email → auto-joins team via existing trigger
+3. **Admin generates API key** for the agent user → stored as SHA-256 hash in `api_keys` table
+4. **Agent uses `x-api-key` header** for all subsequent API calls
 
-**File: `src/hooks/useTeamInvites.ts`**
-- Use case-insensitive email matching by lowercasing the email before querying
-- Add a null guard for `user.email`
+## API Endpoints (Current)
 
-**File: `src/hooks/useTeams.ts`**
-- Call `refresh()` on teams after accepting an invite so the sidebar updates immediately
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/projects` | List user's projects |
+| POST | `/api/projects` | Create project `{ name, team_id? }` |
+| GET | `/api/tasks?project_id=xxx` | List tasks in project |
+| POST | `/api/tasks` | Create task `{ project_id, title }` |
+| PATCH | `/api/tasks/:id` | Update task `{ title?, status? }` |
+| DELETE | `/api/tasks/:id` | Delete task |
+| POST | `/api/tasks/reorder` | Reorder `{ project_id, task_ids[] }` |
+| GET | `/api/notes?task_id=xxx` | List notes on a task |
+| POST | `/api/notes` | Create note `{ task_id, content }` |
+| DELETE | `/api/notes/:id` | Delete note |
+| POST | `/api/time` | Log time `{ task_id, minutes }` |
 
-**File: `src/pages/Index.tsx`**
-- After accepting an invite, refresh both teams and projects so the sidebar reflects the new team and its projects without needing a page reload
+## Remaining Work
 
-### Part 3: Profile Trigger Fix
+### Phase 1: API Key Management (Next)
+- [ ] Add API key generation endpoint: `POST /api/keys { user_id }` (admin only)
+- [ ] Add API key listing: `GET /api/keys` (user sees own keys)
+- [ ] Add API key revocation: `DELETE /api/keys/:id`
+- [ ] Consider adding `team_id` to `api_keys` table to scope keys per team
 
-The `handle_pending_invites` trigger needs access to the user's email. The `profiles` table may not store email. If that's the case, the trigger should instead be placed on `auth.users` or the function should look up the email from `auth.users`:
+### Phase 2: Team-Scoped Access
+- [ ] Update `GET /api/projects` to return team projects the user is a member of (not just owned)
+- [ ] Add `GET /api/teams` endpoint so agents can discover their teams
+- [ ] Add authorization checks: verify user has access to the project/task before CRUD
 
-```sql
--- Alternative: Use auth.users email lookup
-CREATE OR REPLACE FUNCTION public.handle_pending_invites()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  user_email text;
-BEGIN
-  SELECT email INTO user_email FROM auth.users WHERE id = NEW.id;
+### Phase 3: Project Notes (long-form)
+- [ ] Add `GET /api/project-notes?project_id=xxx` for project-level notes
+- [ ] Add `PUT /api/project-notes` for upsert `{ project_id, content }`
 
-  INSERT INTO public.team_members (team_id, user_id, role)
-  SELECT team_id, NEW.id, 'member'
-  FROM public.team_invites
-  WHERE lower(email) = lower(user_email)
-    AND status = 'pending'
-  ON CONFLICT DO NOTHING;
+### Phase 4: Agent SDK / Documentation
+- [ ] Create a simple Python/TypeScript SDK or example scripts
+- [ ] Document the full API with curl examples
+- [ ] Add rate limiting considerations
 
-  UPDATE public.team_invites
-  SET status = 'accepted'
-  WHERE lower(email) = lower(user_email)
-    AND status = 'pending';
+## Example: Agent Connecting
 
-  RETURN NEW;
-END;
-$$;
+```bash
+# List projects
+curl -H "x-api-key: ak_xxx" \
+  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/projects
+
+# Create a task
+curl -X POST -H "x-api-key: ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "uuid", "title": "Investigate bug #42"}' \
+  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/tasks
+
+# Add a note to a task
+curl -X POST -H "x-api-key: ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "uuid", "content": "Found the root cause in auth module"}' \
+  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/notes
 ```
-
-## Expected Result
-
-After these changes:
-- A user who is invited and then signs up will be **automatically added to the team** -- no manual accept needed
-- Their sidebar will immediately show the team and its projects upon login
-- Existing invite UI still works for users who were already registered when invited
