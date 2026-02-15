@@ -33,6 +33,19 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+
+  // Debug route - no auth required (temporary)
+  if (path === '/debug-teams' && method === 'GET') {
+    const { data: teams } = await supabaseAdmin.from('teams').select('*')
+    const { data: members } = await supabaseAdmin.from('team_members').select('*')
+    const { data: invites } = await supabaseAdmin.from('team_invites').select('*')
+    const { data: policies } = await supabaseAdmin.rpc('get_rls_policies').catch(() => ({ data: null }))
+    return json({ teams, members, invites, policies })
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
   // Auth: JWT or API key
   const authHeader = req.headers.get('authorization')
@@ -67,6 +80,33 @@ serve(async (req) => {
   }
 
   try {
+    // --- DEBUG TEAMS ---
+    if (path === '/debug-teams' && method === 'GET') {
+      const { data: teams } = await supabase.from('teams').select('*')
+      const { data: members } = await supabase.from('team_members').select('*')
+      const { data: invites } = await supabase.from('team_invites').select('*')
+      
+      // Check policies
+      const { data: policies } = await supabase.rpc('pg_policies_list').catch(() => ({ data: null }))
+      
+      // Try as-user query using anon key + user's token
+      let userTeams = null
+      if (userId) {
+        const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
+        // Sign in as user to test RLS
+        const { data: userData } = await supabase.from('team_members').select('*').eq('user_id', userId)
+        userTeams = { membershipRows: userData }
+      }
+      
+      return json({
+        userId,
+        allTeams: teams,
+        allMembers: members,
+        allInvites: invites,
+        userMemberships: userTeams,
+      })
+    }
+
     // --- PROJECTS ---
     if (path === '/projects' && method === 'GET') {
       const { data, error } = await supabase.from('projects').select('*').eq('owner_id', userId).order('created_at')
