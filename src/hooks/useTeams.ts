@@ -25,7 +25,9 @@ export const useTeams = () => {
 
   const fetchTeams = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from('teams').select('*').order('created_at');
+    const { data, error } = await supabase.from('teams').select('*').order('created_at');
+    console.log('[useTeams] fetch result:', { data, error, userId: user.id });
+    if (error) console.error('[useTeams] error:', error);
     setTeams((data as Team[]) || []);
     setLoading(false);
   }, [user]);
