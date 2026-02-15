@@ -302,7 +302,7 @@ const Index = () => {
                 />
               )}
             </div>
-            <form onSubmit={handleAddTask} className="border-t border-border px-6 py-3">
+            <form onSubmit={handleAddTask} className="border-t border-border bg-card px-6 py-3">
               <div className="flex gap-2">
                 <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" />
                 <Button type="submit" size="icon" variant="ghost">
