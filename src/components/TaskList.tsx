@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Task } from '@/hooks/useTasks';
 import TaskItem from './TaskItem';
+import TaskDetailDialog from './TaskDetailDialog';
 import Stopwatch from './Stopwatch';
 import {
   DndContext,
@@ -28,6 +29,7 @@ type Props = {
 
 const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes = {} }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -44,6 +46,7 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
 
   const activeTask = activeTimerTaskId ? tasks.find(t => t.id === activeTimerTaskId) : null;
   const existingSeconds = activeTimerTaskId ? (taskMinutes[activeTimerTaskId] || 0) * 60 : 0;
+  const detailTask = detailTaskId ? tasks.find(t => t.id === detailTaskId) : null;
 
   const handleStopTimer = (totalSeconds: number) => {
     if (!activeTimerTaskId || !onLogTime) return;
@@ -67,6 +70,8 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
                 onDelete={() => onDelete(t.id)}
                 onStartTimer={() => setActiveTimerTaskId(activeTimerTaskId === t.id ? null : t.id)}
                 isTimerActive={activeTimerTaskId === t.id}
+                totalMinutes={taskMinutes[t.id] || 0}
+                onOpenDetail={() => setDetailTaskId(t.id)}
               />
             ))}
           </div>
@@ -79,6 +84,15 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
           initialSeconds={existingSeconds}
           onStop={handleStopTimer}
           onClose={() => setActiveTimerTaskId(null)}
+        />
+      )}
+
+      {detailTask && (
+        <TaskDetailDialog
+          task={detailTask}
+          open={!!detailTaskId}
+          onOpenChange={open => { if (!open) setDetailTaskId(null); }}
+          totalMinutes={taskMinutes[detailTask.id] || 0}
         />
       )}
     </>

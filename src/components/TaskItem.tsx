@@ -1,5 +1,5 @@
 import { Task } from '@/hooks/useTasks';
-import { Check, Circle, Loader2, Trash2, GripVertical, Timer } from 'lucide-react';
+import { Check, Circle, Loader2, Trash2, GripVertical, Timer, MoreHorizontal } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -15,9 +15,11 @@ type Props = {
   onDelete: () => void;
   onStartTimer?: () => void;
   isTimerActive?: boolean;
+  totalMinutes?: number;
+  onOpenDetail?: () => void;
 };
 
-const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive }: Props) => {
+const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalMinutes = 0, onOpenDetail }: Props) => {
   const { icon: Icon, label, className } = statusConfig[task.status];
 
   const {
@@ -63,6 +65,12 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive }: Prop
         {task.title}
       </span>
 
+      {totalMinutes > 0 && (
+        <span className="shrink-0 text-xs font-bold text-foreground tabular-nums">
+          {totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : `${totalMinutes}m`}
+        </span>
+      )}
+
       <button
         onClick={onStartTimer}
         className={`shrink-0 transition-opacity ${
@@ -73,6 +81,14 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive }: Prop
         title="Timer"
       >
         <Timer size={14} />
+      </button>
+
+      <button
+        onClick={onOpenDetail}
+        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+        title="Details"
+      >
+        <MoreHorizontal size={14} />
       </button>
 
       <button onClick={onDelete} className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive">
