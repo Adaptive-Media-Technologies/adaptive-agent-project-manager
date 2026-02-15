@@ -1,4 +1,4 @@
-// Supabase Edge Function: API for AI Agents (v2)
+// Supabase Edge Function: API for AI Agents (v3)
 //
 // Routes:
 //   --- Auth & Keys ---
