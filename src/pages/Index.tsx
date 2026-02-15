@@ -12,7 +12,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { format } from 'date-fns';
@@ -148,14 +149,28 @@ const Index = () => {
 
           {/* Team Projects */}
           {teamGroups.map(({ team, projects: teamProjects }) => (
-            <div key={team.id} className="space-y-1">
-              <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Users size={10} /> {team.name}
-              </p>
-              {teamProjects.map(p => (
-                <ProjectButton key={p.id} id={p.id} name={p.name} />
-              ))}
-            </div>
+            <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
+              <div className="space-y-1">
+                <CollapsibleTrigger className="w-full px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1 group cursor-pointer hover:text-foreground transition-colors">
+                  <ChevronRight size={10} className="transition-transform group-data-[state=open]:rotate-90" />
+                  <Users size={10} /> {team.name}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {teamProjects.length > 0 ? (
+                    teamProjects.map(p => (
+                      <ProjectButton key={p.id} id={p.id} name={p.name} />
+                    ))
+                  ) : (
+                    <button
+                      onClick={() => setShowCreateProject(true)}
+                      className="w-full flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Plus size={12} /> New Project
+                    </button>
+                  )}
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           ))}
         </nav>
 
