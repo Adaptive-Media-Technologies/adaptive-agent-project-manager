@@ -32,8 +32,18 @@ const Auth = () => {
         toast.success('Check your email for a password reset link!');
         setIsForgot(false);
       } else if (isSignUp) {
-        await signUp(email, password, displayName);
-        toast.success('Check your email to confirm your account!');
+        const { data, error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: window.location.origin, data: { display_name: displayName } }
+        });
+        if (error) throw error;
+        // If session exists, user is auto-confirmed — redirect will happen via useAuth
+        if (data.session) {
+          toast.success('Account created! Redirecting...');
+        } else {
+          toast.success('Account created! Check your email to confirm, then sign in.');
+          setIsSignUp(false);
+        }
       } else {
         await signIn(email, password);
       }
