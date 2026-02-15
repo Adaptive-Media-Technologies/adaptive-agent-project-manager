@@ -13,23 +13,44 @@ export type TimeEntry = {
 export const useTimeEntries = (projectId: string | null) => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetch = useCallback(async () => {
-    if (!projectId || !user) return;
+  const fetchEntries = useCallback(async () => {
+    if (!projectId || !user) { setEntries([]); return; }
+    setLoading(true);
+    // Get all task IDs for this project, then fetch their time entries
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('project_id', projectId);
+    if (!tasks || tasks.length === 0) { setEntries([]); setLoading(false); return; }
+    const taskIds = tasks.map(t => t.id);
     const { data } = await supabase
       .from('time_entries')
       .select('*')
-      .eq('task_id', projectId); // we'll filter by task in the component
-    // Actually we need all entries for tasks in this project - let's just fetch per-task on demand
+      .in('task_id', taskIds);
+    setEntries((data as TimeEntry[]) || []);
+    setLoading(false);
   }, [projectId, user]);
+
+  useEffect(() => { fetchEntries(); }, [fetchEntries]);
+
+  // Aggregate minutes per task
+  const taskMinutes: Record<string, number> = {};
+  entries.forEach(e => {
+    taskMinutes[e.task_id] = (taskMinutes[e.task_id] || 0) + e.minutes;
+  });
 
   const logTime = async (taskId: string, minutes: number) => {
     if (!user) return;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('time_entries')
-      .insert({ task_id: taskId, user_id: user.id, minutes });
+      .insert({ task_id: taskId, user_id: user.id, minutes })
+      .select()
+      .single();
     if (error) throw error;
+    setEntries(prev => [...prev, data as TimeEntry]);
   };
 
-  return { logTime };
+  return { entries, taskMinutes, logTime, loading, refresh: fetchEntries };
 };
