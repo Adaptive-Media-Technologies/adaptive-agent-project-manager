@@ -237,7 +237,8 @@ const Index = () => {
             </Sheet>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground">Agent Find</h1>
             <p className="text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project'}</p>
           </div>
         )}
