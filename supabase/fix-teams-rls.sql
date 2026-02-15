@@ -1,29 +1,46 @@
 -- =============================================================
--- FIX: Restore team visibility for owners and members
+-- COMPREHENSIVE FIX: Restore team visibility
 -- =============================================================
--- The previous migration may have created a conflicting SELECT
--- policy on the teams table. This script safely drops all
--- SELECT policies on teams and recreates a single correct one.
+-- Run this ENTIRE script in Cloud View > Run SQL
 -- =============================================================
 
--- Step 1: Drop any existing SELECT policies on teams
--- (safe to run even if they don't exist)
-DROP POLICY IF EXISTS "Users can read teams they are invited to" ON public.teams;
-DROP POLICY IF EXISTS "Users can read teams they belong to or are invited to" ON public.teams;
-DROP POLICY IF EXISTS "Users can read own teams" ON public.teams;
-DROP POLICY IF EXISTS "Team members can view teams" ON public.teams;
-DROP POLICY IF EXISTS "Authenticated users can read teams" ON public.teams;
-DROP POLICY IF EXISTS "Users can view their teams" ON public.teams;
-DROP POLICY IF EXISTS "Enable read access for team members" ON public.teams;
+-- Step 1: Ensure is_team_member function exists and works
+CREATE OR REPLACE FUNCTION public.is_team_member(_team_id uuid, _user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.team_members
+    WHERE team_id = _team_id
+      AND user_id = _user_id
+  );
+$$;
 
--- Step 2: Make sure RLS is enabled
+-- Step 2: Drop ALL possible SELECT policies on teams
+DO $$
+DECLARE
+  pol RECORD;
+BEGIN
+  FOR pol IN
+    SELECT policyname
+    FROM pg_policies
+    WHERE tablename = 'teams'
+      AND schemaname = 'public'
+      AND cmd = 'SELECT'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.teams', pol.policyname);
+    RAISE NOTICE 'Dropped policy: %', pol.policyname;
+  END LOOP;
+END $$;
+
+-- Step 3: Make sure RLS is enabled
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
 
--- Step 3: Create the correct SELECT policy
--- Covers three cases:
---   a) User owns the team
---   b) User is a member of the team (via team_members table)
---   c) User has a pending invite to the team (for accept/decline UI)
+-- Step 4: Create the correct SELECT policy
 CREATE POLICY "Users can read teams they belong to or are invited to"
   ON public.teams FOR SELECT
   TO authenticated
@@ -37,3 +54,9 @@ CREATE POLICY "Users can read teams they belong to or are invited to"
         AND status = 'pending'
     )
   );
+
+-- Step 5: Verify - this should show exactly 1 SELECT policy
+SELECT policyname, cmd
+FROM pg_policies
+WHERE tablename = 'teams' AND schemaname = 'public'
+ORDER BY cmd, policyname;
