@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { useProfile } from '@/hooks/useProfile';
-import { useProjectNotes, NOTE_COLORS, getNoteClasses } from '@/hooks/useProjectNotes';
+import { useProjectNotes, NOTE_COLORS, getNoteClasses, getNoteColorConfig } from '@/hooks/useProjectNotes';
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
 import { Navigate, Link } from 'react-router-dom';
@@ -214,6 +214,7 @@ const Index = () => {
             </header>
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {/* Project Note */}
+              {(() => { const noteConf = getNoteColorConfig(noteColor); return (
               <div className={`rounded-md border ${getNoteClasses(noteColor)} transition-colors`}>
                 <textarea
                   value={projectNote}
@@ -221,7 +222,7 @@ const Index = () => {
                   onFocus={() => setNoteExpanded(true)}
                   onBlur={() => setNoteExpanded(false)}
                   placeholder="Project notes..."
-                  className={`w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 ${
+                  className={`w-full resize-none bg-transparent px-3 py-2 text-sm ${noteConf.text} ${noteConf.placeholder} focus:outline-none transition-all duration-200 ${
                     noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
                   }`}
                   rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
@@ -229,7 +230,7 @@ const Index = () => {
                 <div className="flex justify-end px-2 pb-1.5">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors" title="Note colour">
+                      <button className={`rounded p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
                         <Palette size={14} />
                       </button>
                     </PopoverTrigger>
@@ -240,7 +241,7 @@ const Index = () => {
                             key={c.value}
                             onClick={() => setNoteColor(c.value)}
                             title={c.name}
-                            className={`h-6 w-6 rounded-full border-2 transition-all ${c.value === '' ? 'bg-card border-border' : `${c.bg} ${c.border}`} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
+                            className={`h-6 w-6 rounded-full border-2 transition-all ${c.swatch} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
                           >
                             {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
                           </button>
@@ -250,6 +251,7 @@ const Index = () => {
                   </Popover>
                 </div>
               </div>
+              ); })()}
               {tasksLoading ? (
                 <p className="text-sm text-muted-foreground">Loading tasks...</p>
               ) : tasks.length === 0 ? (
