@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const { projects, loading: projLoading, create: createProject, refresh: refreshProjects } = useProjects();
+  const { projects, loading: projLoading, create: createProject, rename: renameProject, refresh: refreshProjects } = useProjects();
   const { teams } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -31,6 +31,8 @@ const Index = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState('');
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -243,10 +245,33 @@ const Index = () => {
               </div>
             </form>
 
-            <Sheet open={showDetails} onOpenChange={setShowDetails}>
+            <Sheet open={showDetails} onOpenChange={(open) => { setShowDetails(open); if (!open) setEditingName(false); }}>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>{activeProject.name}</SheetTitle>
+                  <SheetTitle className="flex items-center gap-2">
+                    {editingName ? (
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!draftName.trim() || !activeProject) return;
+                        try {
+                          await renameProject(activeProject.id, draftName.trim());
+                          setEditingName(false);
+                          toast.success('Project renamed');
+                        } catch (err: any) { toast.error(err.message); }
+                      }} className="flex items-center gap-2 flex-1">
+                        <Input value={draftName} onChange={e => setDraftName(e.target.value)} className="text-sm h-8" autoFocus />
+                        <Button type="submit" size="sm" variant="ghost" disabled={!draftName.trim()}><Check size={14} /></Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setEditingName(false)}><X size={14} /></Button>
+                      </form>
+                    ) : (
+                      <>
+                        {activeProject.name}
+                        <button onClick={() => { setDraftName(activeProject.name); setEditingName(true); }} className="text-muted-foreground hover:text-foreground">
+                          <Pencil size={14} />
+                        </button>
+                      </>
+                    )}
+                  </SheetTitle>
                   <SheetDescription>Project details</SheetDescription>
                 </SheetHeader>
                 <div className="mt-6 space-y-4">
