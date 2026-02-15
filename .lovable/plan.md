@@ -3,75 +3,137 @@
 
 ## Overview
 
-Local AI agents connect to the product via the REST API edge function (`/api/*`), authenticating with API keys. Agents sign up as normal users, get invited to teams, and receive API keys scoped to their account.
+Local AI agents connect to the product via the REST API edge function (`/api/*`), authenticating with API keys. Agents sign up as normal users, get invited to teams, and receive API keys.
 
-## Architecture
+## Base URL
 
 ```
-Agent (local) --x-api-key--> Edge Function (/api/*) --> Supabase (service role)
+https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api
 ```
 
-## Authentication Flow
+## Authentication
 
-1. **Agent signs up** as a normal user (email/password via the Auth page or API)
-2. **Team admin invites agent** by email → auto-joins team via existing trigger
-3. **Admin generates API key** for the agent user → stored as SHA-256 hash in `api_keys` table
-4. **Agent uses `x-api-key` header** for all subsequent API calls
+All requests require one of:
+- `x-api-key: ak_xxx` header (recommended for agents)
+- `Authorization: Bearer <jwt>` header
 
-## API Endpoints (Current)
+## API Reference
+
+### Keys (Phase 1 ✅)
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/keys` | — | List your API keys (hash hidden) |
+| POST | `/keys` | `{ label? }` | Generate new key. Returns raw key **once**. |
+| DELETE | `/keys/:id` | — | Revoke an API key |
+
+### Teams (Phase 2 ✅)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/projects` | List user's projects |
-| POST | `/api/projects` | Create project `{ name, team_id? }` |
-| GET | `/api/tasks?project_id=xxx` | List tasks in project |
-| POST | `/api/tasks` | Create task `{ project_id, title }` |
-| PATCH | `/api/tasks/:id` | Update task `{ title?, status? }` |
-| DELETE | `/api/tasks/:id` | Delete task |
-| POST | `/api/tasks/reorder` | Reorder `{ project_id, task_ids[] }` |
-| GET | `/api/notes?task_id=xxx` | List notes on a task |
-| POST | `/api/notes` | Create note `{ task_id, content }` |
-| DELETE | `/api/notes/:id` | Delete note |
-| POST | `/api/time` | Log time `{ task_id, minutes }` |
+| GET | `/teams` | List teams you belong to |
 
-## Remaining Work
+### Projects (Phase 2 ✅ — team-scoped)
 
-### Phase 1: API Key Management (Next)
-- [ ] Add API key generation endpoint: `POST /api/keys { user_id }` (admin only)
-- [ ] Add API key listing: `GET /api/keys` (user sees own keys)
-- [ ] Add API key revocation: `DELETE /api/keys/:id`
-- [ ] Consider adding `team_id` to `api_keys` table to scope keys per team
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/projects` | — | List owned + team projects |
+| POST | `/projects` | `{ name, team_id? }` | Create project |
 
-### Phase 2: Team-Scoped Access
-- [ ] Update `GET /api/projects` to return team projects the user is a member of (not just owned)
-- [ ] Add `GET /api/teams` endpoint so agents can discover their teams
-- [ ] Add authorization checks: verify user has access to the project/task before CRUD
+### Tasks (Phase 2 ✅ — access-checked)
 
-### Phase 3: Project Notes (long-form)
-- [ ] Add `GET /api/project-notes?project_id=xxx` for project-level notes
-- [ ] Add `PUT /api/project-notes` for upsert `{ project_id, content }`
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/tasks?project_id=xxx` | — | List tasks |
+| POST | `/tasks` | `{ project_id, title }` | Create task |
+| PATCH | `/tasks/:id` | `{ title?, status? }` | Update task (status: open/in_progress/complete) |
+| DELETE | `/tasks/:id` | — | Delete task |
+| POST | `/tasks/reorder` | `{ project_id, task_ids[] }` | Reorder tasks |
 
-### Phase 4: Agent SDK / Documentation
-- [ ] Create a simple Python/TypeScript SDK or example scripts
-- [ ] Document the full API with curl examples
-- [ ] Add rate limiting considerations
+### Task Notes
 
-## Example: Agent Connecting
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/notes?task_id=xxx` | — | List notes on a task |
+| POST | `/notes` | `{ task_id, content }` | Add a note |
+| DELETE | `/notes/:id` | — | Delete a note |
+
+### Project Notes (Phase 3 ✅)
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/project-notes?project_id=x` | — | Get project note |
+| PUT | `/project-notes` | `{ project_id, content, color? }` | Upsert project note |
+
+### Time
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| POST | `/time` | `{ task_id, minutes }` | Log time entry |
+
+## Agent Setup Flow
+
+```
+1. Sign up at the web app (email/password)
+2. Team admin invites agent by email → auto-joins
+3. Generate API key:  POST /api/keys { "label": "my-agent" }
+4. Save the returned `key` — it's shown only once
+5. Use x-api-key header for all subsequent calls
+```
+
+## Examples
 
 ```bash
-# List projects
-curl -H "x-api-key: ak_xxx" \
-  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/projects
+# Generate an API key (using JWT from initial login)
+curl -X POST -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"label": "coding-agent"}' \
+  $BASE_URL/keys
+
+# List your teams
+curl -H "x-api-key: ak_xxx" $BASE_URL/teams
+
+# List projects (includes team projects)
+curl -H "x-api-key: ak_xxx" $BASE_URL/projects
 
 # Create a task
 curl -X POST -H "x-api-key: ak_xxx" \
   -H "Content-Type: application/json" \
-  -d '{"project_id": "uuid", "title": "Investigate bug #42"}' \
-  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/tasks
+  -d '{"project_id": "uuid", "title": "Fix auth bug"}' \
+  $BASE_URL/tasks
+
+# Update task status
+curl -X PATCH -H "x-api-key: ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "complete"}' \
+  $BASE_URL/tasks/<task-id>
 
 # Add a note to a task
 curl -X POST -H "x-api-key: ak_xxx" \
   -H "Content-Type: application/json" \
-  -d '{"task_id": "uuid", "content": "Found the root cause in auth module"}' \
-  https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api/notes
+  -d '{"task_id": "uuid", "content": "Root cause found in auth module"}' \
+  $BASE_URL/notes
+
+# Get/set project notes
+curl -H "x-api-key: ak_xxx" "$BASE_URL/project-notes?project_id=uuid"
+curl -X PUT -H "x-api-key: ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "uuid", "content": "Sprint goals: ..."}' \
+  $BASE_URL/project-notes
 ```
+
+## Database Prerequisite
+
+The `api_keys` table needs `label` and `key_prefix` columns if not already present:
+
+```sql
+ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS label text DEFAULT 'default';
+ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_prefix text;
+```
+
+## Future Work
+
+- [ ] Rate limiting
+- [ ] Agent SDK (Python / TypeScript)
+- [ ] Webhook notifications for task changes
+- [ ] File attachment support
