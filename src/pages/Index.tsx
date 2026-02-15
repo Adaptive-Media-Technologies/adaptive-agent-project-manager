@@ -39,7 +39,7 @@ const Index = () => {
   const teamGroups = teams.map(t => ({
     team: t,
     projects: projects.filter(p => p.type === 'team' && p.team_id === t.id),
-  })).filter(g => g.projects.length > 0);
+  }));
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
