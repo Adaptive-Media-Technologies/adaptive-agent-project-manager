@@ -22,24 +22,10 @@ export const useTeams = () => {
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   const fetchTeams = useCallback(async () => {
     if (!user) return;
     const { data, error } = await supabase.from('teams').select('*').order('created_at');
-    // Also fetch memberships for debug
-    const { data: memberships, error: memErr } = await supabase.from('team_members').select('*').eq('user_id', user.id);
-    const debug = { 
-      userId: user.id, 
-      userEmail: user.email,
-      teamsData: data, 
-      teamsError: error, 
-      memberships, 
-      membershipsError: memErr,
-      timestamp: new Date().toISOString()
-    };
-    console.log('[useTeams] DEBUG:', JSON.stringify(debug, null, 2));
-    setDebugInfo(debug);
     if (error) console.error('[useTeams] error:', error);
     setTeams((data as Team[]) || []);
     setLoading(false);
@@ -64,7 +50,7 @@ export const useTeams = () => {
     setTeams(t => t.filter(tt => tt.id !== id));
   };
 
-  return { teams, loading, createTeam, deleteTeam, refresh: fetchTeams, debugInfo };
+  return { teams, loading, createTeam, deleteTeam, refresh: fetchTeams };
 };
 
 export const useTeamMembers = (teamId: string | null) => {

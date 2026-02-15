@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { projects, loading: projLoading, create: createProject, rename: renameProject, refresh: refreshProjects } = useProjects();
-  const { teams, refresh: teamsRefresh, debugInfo: teamsDebug } = useTeams();
+  const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
@@ -107,15 +107,6 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* TEMPORARY DEBUG BANNER */}
-      {teamsDebug && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-100 text-black p-2 text-xs max-h-40 overflow-auto border-b-2 border-yellow-400">
-          <strong>DEBUG:</strong> User: {teamsDebug.userEmail} | Teams returned: {teamsDebug.teamsData?.length ?? 'null'} | Memberships: {teamsDebug.memberships?.length ?? 'null'}
-          {teamsDebug.teamsError && <span className="text-red-600"> | Error: {JSON.stringify(teamsDebug.teamsError)}</span>}
-          {teamsDebug.membershipsError && <span className="text-red-600"> | MemErr: {JSON.stringify(teamsDebug.membershipsError)}</span>}
-          <details><summary>Full data</summary><pre>{JSON.stringify(teamsDebug, null, 2)}</pre></details>
-        </div>
-      )}
       {/* Sidebar */}
       <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
