@@ -45,7 +45,7 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
         isTimerActive
           ? 'border-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.1)]'
           : task.status === 'in_progress'
-          ? 'border-[#adf0ff] bg-[#adf0ff]/20 hover:bg-[#adf0ff]/30'
+          ? 'border-[#7dd4ed] bg-[#adf0ff] hover:bg-[#9de8f7]'
           : 'border-border bg-card hover:bg-accent'
       }`}
     >
