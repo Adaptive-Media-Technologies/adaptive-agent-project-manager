@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { useProfile } from '@/hooks/useProfile';
+import { useProjectNotes } from '@/hooks/useProjectNotes';
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
 import { Navigate, Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ const Index = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
+  const { content: projectNote, save: saveProjectNote } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
   const [newTask, setNewTask] = useState('');
   const [showDetails, setShowDetails] = useState(false);
@@ -208,7 +210,15 @@ const Index = () => {
                 <Info size={16} />
               </Button>
             </header>
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {/* Project Note */}
+              <textarea
+                value={projectNote}
+                onChange={e => saveProjectNote(e.target.value)}
+                placeholder="Project notes..."
+                className="w-full resize-none rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
+                rows={Math.max(2, projectNote.split('\n').length)}
+              />
               {tasksLoading ? (
                 <p className="text-sm text-muted-foreground">Loading tasks...</p>
               ) : tasks.length === 0 ? (
