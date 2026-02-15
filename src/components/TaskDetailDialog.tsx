@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { Circle, PlayCircle, Check, Plus, Trash2 } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const statusConfig = {
@@ -23,11 +23,16 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   totalMinutes: number;
+  onRename?: (id: string, newTitle: string) => Promise<void>;
 };
 
-const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes }: Props) => {
+const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: Props) => {
   const { notes, loading, addNote, deleteNote } = useNotes(open ? task.id : null);
   const [newNote, setNewNote] = useState('');
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(task.title);
+
+  useEffect(() => { setDraftTitle(task.title); setEditingTitle(false); }, [task.title, open]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
   // Fetch profiles for note authors
@@ -74,7 +79,20 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes }: Props) => 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader className="mb-6">
-          <SheetTitle className="text-lg">{task.title}</SheetTitle>
+          <SheetTitle className="text-lg flex items-center gap-2">
+            {editingTitle ? (
+              <form onSubmit={async (e) => { e.preventDefault(); if (!draftTitle.trim()) return; try { await onRename?.(task.id, draftTitle.trim()); setEditingTitle(false); } catch (err: any) { toast.error(err.message); } }} className="flex items-center gap-1.5 flex-1">
+                <Input value={draftTitle} onChange={e => setDraftTitle(e.target.value)} autoFocus className="h-8 text-lg font-semibold" />
+                <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 shrink-0"><Check size={14} /></Button>
+                <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { setEditingTitle(false); setDraftTitle(task.title); }}><X size={14} /></Button>
+              </form>
+            ) : (
+              <>
+                {task.title}
+                {onRename && <button onClick={() => setEditingTitle(true)} className="text-muted-foreground hover:text-foreground"><Pencil size={14} /></button>}
+              </>
+            )}
+          </SheetTitle>
           <SheetDescription>Task details & notes</SheetDescription>
         </SheetHeader>
 
