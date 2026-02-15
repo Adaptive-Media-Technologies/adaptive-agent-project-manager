@@ -31,6 +31,7 @@ const Index = () => {
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
   const [newTask, setNewTask] = useState('');
+  const [noteExpanded, setNoteExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -217,9 +218,13 @@ const Index = () => {
                 <textarea
                   value={projectNote}
                   onChange={e => saveProjectNote(e.target.value)}
+                  onFocus={() => setNoteExpanded(true)}
+                  onBlur={() => setNoteExpanded(false)}
                   placeholder="Project notes..."
-                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[60px]"
-                  rows={Math.max(2, projectNote.split('\n').length)}
+                  className={`w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 ${
+                    noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
+                  }`}
+                  rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
                 />
                 <div className="flex justify-end px-2 pb-1.5">
                   <Popover>
