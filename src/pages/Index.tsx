@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { useProfile } from '@/hooks/useProfile';
-import { useProjectNotes } from '@/hooks/useProjectNotes';
+import { useProjectNotes, NOTE_COLORS, getNoteClasses } from '@/hooks/useProjectNotes';
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
 import { Navigate, Link } from 'react-router-dom';
@@ -13,7 +13,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -27,7 +28,7 @@ const Index = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
-  const { content: projectNote, save: saveProjectNote } = useProjectNotes(activeProjectId);
+  const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
   const [newTask, setNewTask] = useState('');
   const [showDetails, setShowDetails] = useState(false);
@@ -212,13 +213,38 @@ const Index = () => {
             </header>
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {/* Project Note */}
-              <textarea
-                value={projectNote}
-                onChange={e => saveProjectNote(e.target.value)}
-                placeholder="Project notes..."
-                className="w-full resize-none rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
-                rows={Math.max(2, projectNote.split('\n').length)}
-              />
+              <div className={`rounded-md border ${getNoteClasses(noteColor)} transition-colors`}>
+                <textarea
+                  value={projectNote}
+                  onChange={e => saveProjectNote(e.target.value)}
+                  placeholder="Project notes..."
+                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[60px]"
+                  rows={Math.max(2, projectNote.split('\n').length)}
+                />
+                <div className="flex justify-end px-2 pb-1.5">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors" title="Note colour">
+                        <Palette size={14} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="end">
+                      <div className="flex gap-1.5">
+                        {NOTE_COLORS.map(c => (
+                          <button
+                            key={c.value}
+                            onClick={() => setNoteColor(c.value)}
+                            title={c.name}
+                            className={`h-6 w-6 rounded-full border-2 transition-all ${c.value === '' ? 'bg-card border-border' : `${c.bg} ${c.border}`} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
+                          >
+                            {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
               {tasksLoading ? (
                 <p className="text-sm text-muted-foreground">Loading tasks...</p>
               ) : tasks.length === 0 ? (
