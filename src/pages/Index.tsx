@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { projects, loading: projLoading, create: createProject, rename: renameProject, refresh: refreshProjects } = useProjects();
-  const { teams } = useTeams();
+  const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
@@ -82,7 +82,8 @@ const Index = () => {
     try {
       await acceptInvite(invite);
       toast.success('Joined team!');
-      refreshProjects();
+      // Refresh both teams and projects so sidebar updates immediately
+      await Promise.all([refreshProjects(), teamsRefresh()]);
     } catch (err: any) {
       toast.error(err.message);
     }
