@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Key, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BASE_URL = "https://pdzbejpiilgwwgqhmbrso.supabase.co/functions/v1/api";
+const BASE_URL = "https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
