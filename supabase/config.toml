@@ -1,5 +1,1 @@
-[functions.api]
-verify_jwt = false
-
-[functions.debug-teams]
-verify_jwt = false
+project_id = "pdzbejpiilgwgqhmbrso"
