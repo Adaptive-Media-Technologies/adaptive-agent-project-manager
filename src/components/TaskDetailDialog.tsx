@@ -80,7 +80,13 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent side="right" className={`w-full sm:max-w-2xl overflow-y-auto ${
+          task.status === 'in_progress'
+            ? 'border-l-4 border-l-[#7dd4ed] bg-[#f0fbff]'
+            : task.status === 'complete'
+            ? 'border-l-4 border-l-green-400 bg-green-50/50'
+            : ''
+        }`}>
         <SheetHeader className="mb-6">
           <SheetTitle className="text-lg flex items-center gap-2">
             {editingTitle ? (
