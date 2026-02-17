@@ -4,6 +4,7 @@ import { useNotes } from '@/hooks/useNotes';
 import { useTaskAttachments } from '@/hooks/useTaskAttachments';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import TimeLogSection from './TimeLogSection';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -120,6 +121,9 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
             <span>Created: {format(new Date(task.created_at), 'PPp')}</span>
             {task.completed_at && <span>Completed: {format(new Date(task.completed_at), 'PPp')}</span>}
           </div>
+
+          {/* Time Log */}
+          <TimeLogSection taskId={task.id} />
 
           {/* Notes */}
           <div>
