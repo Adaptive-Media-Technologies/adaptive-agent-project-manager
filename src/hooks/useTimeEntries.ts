@@ -10,6 +10,57 @@ export type TimeEntry = {
   created_at: string;
 };
 
+export const useTaskTimeEntries = (taskId: string | null) => {
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchEntries = useCallback(async () => {
+    if (!taskId || !user) { setEntries([]); return; }
+    setLoading(true);
+    const { data } = await supabase
+      .from('time_entries')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: false });
+    setEntries((data as TimeEntry[]) || []);
+    setLoading(false);
+  }, [taskId, user]);
+
+  useEffect(() => { fetchEntries(); }, [fetchEntries]);
+
+  const addEntry = async (minutes: number) => {
+    if (!user || !taskId) return;
+    const { data, error } = await supabase
+      .from('time_entries')
+      .insert({ task_id: taskId, user_id: user.id, minutes })
+      .select()
+      .single();
+    if (error) throw error;
+    setEntries(prev => [data as TimeEntry, ...prev]);
+  };
+
+  const updateEntry = async (id: string, minutes: number) => {
+    const { error } = await supabase
+      .from('time_entries')
+      .update({ minutes })
+      .eq('id', id);
+    if (error) throw error;
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, minutes } : e));
+  };
+
+  const deleteEntry = async (id: string) => {
+    const { error } = await supabase
+      .from('time_entries')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    setEntries(prev => prev.filter(e => e.id !== id));
+  };
+
+  return { entries, loading, addEntry, updateEntry, deleteEntry, refresh: fetchEntries };
+};
+
 export const useTimeEntries = (projectId: string | null) => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
