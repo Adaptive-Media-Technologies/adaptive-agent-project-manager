@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Task } from '@/hooks/useTasks';
 import { useNotes } from '@/hooks/useNotes';
+import { useTaskAttachments } from '@/hooks/useTaskAttachments';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const statusConfig = {
@@ -28,6 +29,8 @@ type Props = {
 
 const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: Props) => {
   const { notes, loading, addNote, deleteNote } = useNotes(open ? task.id : null);
+  const { attachments, loading: attachLoading, uploading, uploadFiles, deleteAttachment, getPublicUrl } = useTaskAttachments(open ? task.id : null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newNote, setNewNote] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
@@ -149,6 +152,74 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
                       </div>
                       <button
                         onClick={() => deleteNote(note.id)}
+                        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Attachments</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) {
+                  uploadFiles(e.target.files).catch(err => toast.error(err.message));
+                  e.target.value = '';
+                }
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-4 gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
+              {uploading ? 'Uploading...' : 'Attach files'}
+            </Button>
+
+            {attachLoading ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : attachments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No attachments yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {attachments.map(att => {
+                  const isImage = att.content_type?.startsWith('image/');
+                  const url = getPublicUrl(att.file_path);
+                  const sizeKb = att.file_size ? Math.round(att.file_size / 1024) : null;
+                  return (
+                    <div key={att.id} className="group flex items-center gap-3 rounded-lg border border-border p-2.5">
+                      {isImage ? (
+                        <img src={url} alt={att.file_name} className="h-10 w-10 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+                          <FileText size={18} className="text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{att.file_name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {sizeKb !== null && `${sizeKb} KB · `}{format(new Date(att.created_at), 'PP')}
+                        </p>
+                      </div>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-muted-foreground hover:text-foreground">
+                        <Download size={14} />
+                      </a>
+                      <button
+                        onClick={() => deleteAttachment(att).catch(err => toast.error(err.message))}
                         className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                       >
                         <Trash2 size={14} />
