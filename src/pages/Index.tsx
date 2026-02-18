@@ -13,7 +13,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo } from 'lucide-react';
+import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
@@ -40,6 +41,7 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -230,87 +232,107 @@ const Index = () => {
                 {activeProject.type === 'team' ? <Users size={16} className="text-muted-foreground" /> : <Lock size={16} className="text-muted-foreground" />}
                 <h2 className="text-lg font-semibold text-foreground truncate">{activeProject.name}</h2>
               </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === 'tasks' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}
+                >
+                  <ListTodo size={14} /> Tasks
+                </button>
+                <button
+                  onClick={() => setActiveTab('chat')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}
+                >
+                  <MessageSquare size={14} /> Chat
+                </button>
+              </div>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowDetails(true)} title="Project details">
                 <Info size={16} />
               </Button>
             </header>
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              {/* Project Note */}
-              {(() => { const noteConf = getNoteColorConfig(noteColor); return (
-              <div className={`rounded-md border ${getNoteClasses(noteColor)} transition-colors`}>
-                <textarea
-                  value={projectNote}
-                  onChange={e => saveProjectNote(e.target.value)}
-                  onFocus={() => setNoteExpanded(true)}
-                  onBlur={() => setNoteExpanded(false)}
-                  placeholder="Project notes..."
-                  className={`w-full resize-none bg-transparent px-3 py-2 text-sm ${noteConf.text} ${noteConf.placeholder} focus:outline-none transition-all duration-200 ${
-                    noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
-                  }`}
-                  rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
-                />
-                <div className="flex justify-end px-2 pb-1.5">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className={`rounded p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
-                        <Palette size={14} />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="end">
-                      <div className="flex gap-1.5">
-                        {NOTE_COLORS.map(c => (
-                          <button
-                            key={c.value}
-                            onClick={() => setNoteColor(c.value)}
-                            title={c.name}
-                            className={`h-6 w-6 rounded-full border-2 transition-all ${c.swatch} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
-                          >
-                            {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
-                          </button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-              ); })()}
-              {tasksLoading ? (
-                <p className="text-sm text-muted-foreground">Loading tasks...</p>
-              ) : tasks.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16">
-                  <div className="rounded-full bg-accent p-4">
-                    <Plus size={28} className="text-muted-foreground" />
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-base font-medium text-foreground">No tasks yet</p>
-                    <p className="text-sm text-muted-foreground">Create your first task to get started</p>
-                  </div>
-                  <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
-                    <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" autoFocus />
-                    <Button type="submit" size="sm" disabled={!newTask.trim()}>Add</Button>
-                  </form>
-                </div>
-              ) : (
-                <TaskList
-                  tasks={tasks}
-                  onCycle={cycleStatus}
-                  onDelete={deleteTask}
-                  onReorder={reorder}
-                  onLogTime={handleLogTime}
-                  taskMinutes={taskMinutes}
-                  onRenameTask={renameTask}
-                />
-              )}
-            </div>
-            <form onSubmit={handleAddTask} className="border-t border-border bg-card px-6 py-3">
-              <div className="flex gap-2">
-                <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" />
-                <Button type="submit" size="icon" variant="ghost">
-                  <Plus size={16} />
-                </Button>
-              </div>
-            </form>
 
+            {activeTab === 'chat' ? (
+              <ProjectChat projectId={activeProject.id} />
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                  {/* Project Note */}
+                  {(() => { const noteConf = getNoteColorConfig(noteColor); return (
+                  <div className={`rounded-md border ${getNoteClasses(noteColor)} transition-colors`}>
+                    <textarea
+                      value={projectNote}
+                      onChange={e => saveProjectNote(e.target.value)}
+                      onFocus={() => setNoteExpanded(true)}
+                      onBlur={() => setNoteExpanded(false)}
+                      placeholder="Project notes..."
+                      className={`w-full resize-none bg-transparent px-3 py-2 text-sm ${noteConf.text} ${noteConf.placeholder} focus:outline-none transition-all duration-200 ${
+                        noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
+                      }`}
+                      rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
+                    />
+                    <div className="flex justify-end px-2 pb-1.5">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className={`rounded p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
+                            <Palette size={14} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2" align="end">
+                          <div className="flex gap-1.5">
+                            {NOTE_COLORS.map(c => (
+                              <button
+                                key={c.value}
+                                onClick={() => setNoteColor(c.value)}
+                                title={c.name}
+                                className={`h-6 w-6 rounded-full border-2 transition-all ${c.swatch} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
+                              >
+                                {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
+                              </button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  ); })()}
+                  {tasksLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading tasks...</p>
+                  ) : tasks.length === 0 ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16">
+                      <div className="rounded-full bg-accent p-4">
+                        <Plus size={28} className="text-muted-foreground" />
+                      </div>
+                      <div className="text-center space-y-1">
+                        <p className="text-base font-medium text-foreground">No tasks yet</p>
+                        <p className="text-sm text-muted-foreground">Create your first task to get started</p>
+                      </div>
+                      <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
+                        <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" autoFocus />
+                        <Button type="submit" size="sm" disabled={!newTask.trim()}>Add</Button>
+                      </form>
+                    </div>
+                  ) : (
+                    <TaskList
+                      tasks={tasks}
+                      onCycle={cycleStatus}
+                      onDelete={deleteTask}
+                      onReorder={reorder}
+                      onLogTime={handleLogTime}
+                      taskMinutes={taskMinutes}
+                      onRenameTask={renameTask}
+                    />
+                  )}
+                </div>
+                <form onSubmit={handleAddTask} className="border-t border-border bg-card px-6 py-3">
+                  <div className="flex gap-2">
+                    <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" />
+                    <Button type="submit" size="icon" variant="ghost">
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                </form>
+              </>
+            )}
             <Sheet open={showDetails} onOpenChange={(open) => { setShowDetails(open); if (!open) setEditingName(false); }}>
               <SheetContent>
                 <SheetHeader>
