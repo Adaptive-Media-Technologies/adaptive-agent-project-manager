@@ -129,7 +129,7 @@ const Index = () => {
         <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-4 py-4">
           <div className="flex items-center gap-2.5">
             <img src={agntfindLogo} alt="AgntFind" className="h-7 w-7 rounded-xl" />
-            <span className="text-sm font-bold text-[hsl(var(--sidebar-foreground))] tracking-tight">AgntFind</span>
+            <span className="text-sm font-bold text-[hsl(var(--sidebar-foreground))] tracking-tight">Agntive</span>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={() => setShowProfile(true)} title="Profile">
