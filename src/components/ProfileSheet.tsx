@@ -20,20 +20,46 @@ const ProfileSheet = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const { profile, updateProfile, uploadAvatar } = useProfile();
   const [displayName, setDisplayName] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [usernameVal, setUsernameVal] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [saving, setSaving] = useState(false);
+
   // Sync local state when profile loads
   const currentName = displayName || profile?.display_name || '';
+  const currentUsername = usernameVal || profile?.username || '';
 
   const handleSave = async () => {
     if (!currentName.trim()) return;
+    const updates: any = { display_name: currentName.trim() };
+    
+    const cleanUsername = currentUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (cleanUsername && cleanUsername !== profile?.username) {
+      if (cleanUsername.length < 3) {
+        setUsernameError('Min 3 characters');
+        return;
+      }
+      // Check uniqueness
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('username', cleanUsername)
+        .neq('id', user?.id || '')
+        .limit(1);
+      if (existing && existing.length > 0) {
+        setUsernameError('Username already taken');
+        return;
+      }
+      updates.username = cleanUsername;
+    }
+    
     setSaving(true);
     try {
-      await updateProfile({ display_name: currentName.trim() });
+      await updateProfile(updates);
       toast.success('Profile updated');
     } catch (err: any) {
       toast.error(err.message);
@@ -104,7 +130,26 @@ const ProfileSheet = ({ open, onOpenChange }: Props) => {
             />
           </div>
 
-          {/* Email (read-only) */}
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+              <Input
+                id="username"
+                value={currentUsername}
+                onChange={e => {
+                  const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                  setUsernameVal(v);
+                  setUsernameError(v.length > 0 && v.length < 3 ? 'Min 3 characters' : '');
+                }}
+                className="pl-7"
+                placeholder="username"
+                maxLength={30}
+              />
+            </div>
+            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
+          </div>
           <div className="space-y-2">
             <Label>Email</Label>
             <Input value={user?.email || ''} disabled className="text-muted-foreground" />

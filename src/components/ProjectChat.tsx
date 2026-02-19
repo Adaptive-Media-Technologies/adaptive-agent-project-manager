@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useProjectChat, ChatMessage } from '@/hooks/useProjectChat';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import EmojiPicker from '@/components/EmojiPicker';
 import GifPicker from '@/components/GifPicker';
@@ -16,6 +16,13 @@ interface ProjectChatProps {
   onNewMessage?: (msg: ChatMessage) => void;
 }
 
+type MemberSuggestion = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const { user } = useAuth();
   const { messages, loading, sendMessage, deleteMessage, getAttachmentUrl, scrollRef } = useProjectChat(projectId, onNewMessage);
@@ -26,11 +33,114 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // @mention state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStart, setMentionStart] = useState(-1);
+  const [members, setMembers] = useState<MemberSuggestion[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<MemberSuggestion[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+
+  // Fetch team members for this project
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!projectId) return;
+      // Get project to find team_id
+      const { data: project } = await (supabase.from('projects' as any).select('team_id, owner_id').eq('id', projectId).single() as any);
+      if (!project) return;
+
+      let userIds: string[] = [project.owner_id];
+      if (project.team_id) {
+        const { data: teamMembers } = await (supabase.from('team_members' as any).select('user_id').eq('team_id', project.team_id) as any);
+        if (teamMembers) userIds = [...new Set([...userIds, ...teamMembers.map((m: any) => m.user_id)])];
+      }
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .in('id', userIds);
+      
+      setMembers((profiles || []) as MemberSuggestion[]);
+    };
+    fetchMembers();
+  }, [projectId]);
+
+  // Filter members based on mention query
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setFilteredMembers([]);
+      return;
+    }
+    const q = mentionQuery.toLowerCase();
+    const filtered = members.filter(m => {
+      if (m.id === user?.id) return false; // don't suggest self
+      return (m.username && m.username.toLowerCase().includes(q)) ||
+             (m.display_name && m.display_name.toLowerCase().includes(q));
+    });
+    setFilteredMembers(filtered);
+    setMentionIndex(0);
+  }, [mentionQuery, members, user?.id]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setText(val);
+
+    const cursorPos = e.target.selectionStart || val.length;
+    // Find @ before cursor
+    const beforeCursor = val.slice(0, cursorPos);
+    const atIdx = beforeCursor.lastIndexOf('@');
+    
+    if (atIdx >= 0 && (atIdx === 0 || beforeCursor[atIdx - 1] === ' ')) {
+      const query = beforeCursor.slice(atIdx + 1);
+      if (!query.includes(' ')) {
+        setMentionQuery(query);
+        setMentionStart(atIdx);
+        return;
+      }
+    }
+    setMentionQuery(null);
+    setMentionStart(-1);
+  };
+
+  const insertMention = (member: MemberSuggestion) => {
+    const handle = member.username || member.display_name || 'user';
+    const before = text.slice(0, mentionStart);
+    const after = text.slice((inputRef.current?.selectionStart || text.length));
+    setText(`${before}@${handle} ${after}`);
+    setMentionQuery(null);
+    setMentionStart(-1);
+    inputRef.current?.focus();
+  };
+
   const handleSend = async () => {
     if (!text.trim() && !gifUrl && files.length === 0) return;
     setSending(true);
     try {
-      await sendMessage(text.trim(), gifUrl || undefined, files.length > 0 ? files : undefined);
+      const content = text.trim();
+      await sendMessage(content, gifUrl || undefined, files.length > 0 ? files : undefined);
+
+      // Create notifications for @mentions
+      if (content && user) {
+        const mentionRegex = /@([a-z0-9_]+)/gi;
+        let match;
+        const mentionedUsernames = new Set<string>();
+        while ((match = mentionRegex.exec(content)) !== null) {
+          mentionedUsernames.add(match[1].toLowerCase());
+        }
+        
+        for (const uname of mentionedUsernames) {
+          const mentioned = members.find(m => m.username?.toLowerCase() === uname);
+          if (mentioned && mentioned.id !== user.id) {
+            await (supabase.from('notifications' as any).insert({
+              user_id: mentioned.id,
+              type: 'mention',
+              message: content.slice(0, 200),
+              project_id: projectId,
+              from_user_id: user.id,
+            } as any) as any);
+          }
+        }
+      }
+
       setText('');
       setGifUrl(null);
       setFiles([]);
@@ -42,6 +152,27 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (mentionQuery !== null && filteredMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(i => Math.min(i + 1, filteredMembers.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(i => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredMembers[mentionIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setMentionQuery(null);
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
@@ -104,7 +235,34 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
       )}
 
       {/* Input bar */}
-      <div className="bg-card px-4 md:px-6 py-3">
+      <div className="bg-card px-4 md:px-6 py-3 relative">
+        {/* @mention dropdown */}
+        {mentionQuery !== null && filteredMembers.length > 0 && (
+          <div className="absolute bottom-full left-4 right-4 mb-1 rounded-xl border border-border bg-popover shadow-lg overflow-hidden z-50">
+            {filteredMembers.map((m, i) => (
+              <button
+                key={m.id}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors ${
+                  i === mentionIndex ? 'bg-accent' : 'hover:bg-accent/50'
+                }`}
+                onMouseDown={e => { e.preventDefault(); insertMention(m); }}
+                onMouseEnter={() => setMentionIndex(i)}
+              >
+                <Avatar className="h-7 w-7">
+                  {m.avatar_url && <AvatarImage src={m.avatar_url} />}
+                  <AvatarFallback className="text-[10px]">
+                    {m.display_name ? m.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-foreground">{m.username || 'no handle'}</span>
+                  {m.display_name && <span className="ml-2 text-muted-foreground">{m.display_name}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-2 shadow-sm">
           <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
           <GifPicker onSelect={url => setGifUrl(url)} />
@@ -123,13 +281,13 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
             className="hidden"
             onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
           />
-          <Input
+          <input
             ref={inputRef}
-            placeholder="Type a message..."
+            placeholder="Type a message... Use @ to mention"
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent"
+            className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2.5 text-foreground placeholder:text-muted-foreground"
             disabled={sending}
           />
           <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0" onClick={handleSend} disabled={sending || (!text.trim() && !gifUrl && files.length === 0)}>
@@ -138,6 +296,26 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Render message content with highlighted @mentions
+const renderMessageContent = (content: string) => {
+  if (!content) return null;
+  const parts = content.split(/(@[a-z0-9_]+)/gi);
+  return (
+    <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">
+      {parts.map((part, i) => {
+        if (/^@[a-z0-9_]+$/i.test(part)) {
+          return (
+            <span key={i} className="rounded px-1 py-0.5 bg-[hsl(var(--sidebar-panel-active)/0.15)] text-[hsl(var(--sidebar-panel-active))] font-semibold">
+              {part}
+            </span>
+          );
+        }
+        return part;
+      })}
+    </p>
   );
 };
 
@@ -163,7 +341,7 @@ const MessageBubble = ({
       </Avatar>
       <div className={`flex-1 min-w-0 rounded-xl px-3 py-2 ${isOwn ? 'bg-primary/5' : 'bg-muted/50'}`}>
         <div className="flex items-baseline gap-2">
-          <span className="text-[13px] font-semibold text-foreground">{msg.profile?.display_name || 'User'}</span>
+          <span className="text-[13px] font-semibold text-foreground">{msg.profile?.username || msg.profile?.display_name || 'User'}</span>
           <span className="text-[10px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
           {isOwn && (
             <button
@@ -175,7 +353,7 @@ const MessageBubble = ({
             </button>
           )}
         </div>
-        {msg.content && <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{msg.content}</p>}
+        {msg.content && renderMessageContent(msg.content)}
 
         {/* Attachments */}
         {msg.attachments && msg.attachments.length > 0 && (

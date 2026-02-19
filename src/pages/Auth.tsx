@@ -14,6 +14,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { signIn, signUp } = useAuth();
 
@@ -32,12 +34,28 @@ const Auth = () => {
         toast.success('Check your email for a password reset link!');
         setIsForgot(false);
       } else if (isSignUp) {
+        if (!username.trim()) { toast.error('Username is required'); return; }
+        const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+        if (cleanUsername.length < 3) { toast.error('Username must be at least 3 characters'); return; }
+        // Check uniqueness
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id')
+          .ilike('username', cleanUsername)
+          .limit(1);
+        if (existing && existing.length > 0) { toast.error('Username already taken'); return; }
+
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin, data: { display_name: displayName } }
+          options: { emailRedirectTo: window.location.origin, data: { display_name: displayName, username: cleanUsername } }
         });
         if (error) throw error;
-        // If session exists, user is auto-confirmed — redirect will happen via useAuth
+
+        // Set username on profile after signup
+        if (data.user) {
+          await supabase.from('profiles').update({ username: cleanUsername }).eq('id', data.user.id);
+        }
+
         if (data.session) {
           toast.success('Account created! Redirecting...');
         } else {
@@ -66,6 +84,27 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && !isForgot && (
               <Input placeholder="Display name" value={displayName} onChange={e => setDisplayName(e.target.value)} required />
+            )}
+            {isSignUp && !isForgot && (
+              <div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                  <Input
+                    placeholder="username"
+                    value={username}
+                    onChange={e => {
+                      const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                      setUsername(v);
+                      setUsernameError(v.length > 0 && v.length < 3 ? 'Min 3 characters' : '');
+                    }}
+                    className="pl-7"
+                    required
+                    minLength={3}
+                    maxLength={30}
+                  />
+                </div>
+                {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
+              </div>
             )}
             <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
             {!isForgot && (

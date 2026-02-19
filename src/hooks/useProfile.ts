@@ -5,6 +5,7 @@ import { useAuth } from './useAuth';
 export type Profile = {
   id: string;
   display_name: string | null;
+  username: string | null;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
@@ -28,7 +29,7 @@ export const useProfile = () => {
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-  const updateProfile = async (updates: { display_name?: string; avatar_url?: string }) => {
+  const updateProfile = async (updates: { display_name?: string; username?: string; avatar_url?: string }) => {
     if (!user) return;
     const { data, error } = await supabase
       .from('profiles')

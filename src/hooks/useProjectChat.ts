@@ -20,7 +20,7 @@ export type ChatMessage = {
   content: string;
   gif_url: string | null;
   created_at: string;
-  profile?: { display_name: string | null; avatar_url: string | null };
+  profile?: { display_name: string | null; avatar_url: string | null; username: string | null };
   attachments?: ChatAttachment[];
 };
 
@@ -53,7 +53,7 @@ export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: Ch
 
     const [profilesRes, attachRes] = await Promise.all([
       userIds.length > 0
-        ? supabase.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+        ? supabase.from('profiles').select('id, display_name, avatar_url, username').in('id', userIds)
         : Promise.resolve({ data: [] }),
       msgIds.length > 0
         ? (supabase.from('message_attachments' as any).select('*').in('message_id', msgIds) as any)
@@ -94,7 +94,7 @@ export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: Ch
       }, async (payload: any) => {
         const msg = payload.new as any;
         // Fetch profile
-        const { data: prof } = await supabase.from('profiles').select('id, display_name, avatar_url').eq('id', msg.user_id).single();
+        const { data: prof } = await supabase.from('profiles').select('id, display_name, avatar_url, username').eq('id', msg.user_id).single();
         // Fetch attachments
         const { data: atts } = await (supabase.from('message_attachments' as any).select('*').eq('message_id', msg.id) as any);
         const enriched: ChatMessage = { ...msg, profile: prof, attachments: atts || [] };
