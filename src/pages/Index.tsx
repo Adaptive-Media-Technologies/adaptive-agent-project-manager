@@ -234,7 +234,7 @@ const Index = () => {
               {teamGroups.length > 0 && (
                 <div className="space-y-0.5">
                   <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
-                    Spaces
+                    Team Projects
                   </p>
                   {teamGroups.map(({ team, projects: teamProjects }) => (
                     <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
