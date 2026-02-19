@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen, Bot } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -42,7 +42,7 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeRailTab, setActiveRailTab] = useState<'home' | 'settings'>('home');
+  const [activeRailTab, setActiveRailTab] = useState<'home' | 'teams' | 'agents' | 'settings'>('home');
   const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
   const [unreadChat, setUnreadChat] = useState(false);
   const handleChatNewMessage = useCallback(() => {
@@ -119,7 +119,8 @@ const Index = () => {
 
   const railItems = [
     { key: 'home' as const, icon: Home, label: 'Home' },
-    { key: 'settings' as const, icon: Settings, label: 'Settings' },
+    { key: 'teams' as const, icon: Users, label: 'Manage Teams' },
+    { key: 'agents' as const, icon: Bot, label: 'Manage Agents' },
   ];
 
   return (
@@ -157,6 +158,19 @@ const Index = () => {
           {/* Spacer */}
           <div className="flex-1" />
 
+          {/* Settings at bottom */}
+          <button
+            onClick={() => setActiveRailTab('settings')}
+            title="Settings"
+            className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+              activeRailTab === 'settings'
+                ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-foreground))]'
+                : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
+            }`}
+          >
+            <Settings size={18} />
+          </button>
+
           {/* Profile avatar at bottom of rail */}
           <button onClick={() => setShowProfile(true)} title="Profile" className="mb-1">
             <Avatar className="h-8 w-8">
@@ -166,11 +180,6 @@ const Index = () => {
               </AvatarFallback>
             </Avatar>
           </button>
-
-          {/* Apps grid icon */}
-          <button className="flex h-9 w-9 items-center justify-center rounded-xl text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)] transition-all" title="More">
-            <LayoutGrid size={18} />
-          </button>
         </div>
 
         {/* Level 2: Content Panel */}
@@ -178,7 +187,7 @@ const Index = () => {
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
             <span className="text-sm font-bold text-[hsl(var(--sidebar-panel-foreground))] tracking-tight">
-              {activeRailTab === 'home' ? 'Home' : 'Settings'}
+              {activeRailTab === 'home' ? 'Home' : activeRailTab === 'teams' ? 'Manage Teams' : activeRailTab === 'agents' ? 'Manage Agents' : 'Settings'}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -274,14 +283,39 @@ const Index = () => {
                 </div>
               )}
             </nav>
-          ) : (
+          ) : activeRailTab === 'teams' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
               <Link to="/teams">
-                <button className="w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-[13px] text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors">
-                  <Users size={14} className="shrink-0 opacity-50" />
-                  <span>Manage Teams</span>
+                <button className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-[hsl(var(--sidebar-panel-foreground)/0.8)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors">
+                  <Users size={14} className="shrink-0 text-[hsl(var(--sidebar-panel-active))]" />
+                  <span>View & Manage Teams</span>
                 </button>
               </Link>
+            </nav>
+          ) : activeRailTab === 'agents' ? (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--sidebar-panel-muted))]">
+                  <Bot size={24} className="text-[hsl(var(--sidebar-panel-active))]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[hsl(var(--sidebar-panel-foreground))]">AI Agents</p>
+                  <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)] mt-1">Coming Soon</p>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-[hsl(var(--sidebar-panel-active)/0.1)] px-2.5 py-0.5 text-[10px] font-semibold text-[hsl(var(--sidebar-panel-active))]">
+                  Coming Soon
+                </span>
+              </div>
+            </nav>
+          ) : (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+              <button
+                onClick={() => setShowProfile(true)}
+                className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-[hsl(var(--sidebar-panel-foreground)/0.8)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
+              >
+                <Settings size={14} className="shrink-0 opacity-50" />
+                <span>Profile Settings</span>
+              </button>
             </nav>
           )}
         </div>
