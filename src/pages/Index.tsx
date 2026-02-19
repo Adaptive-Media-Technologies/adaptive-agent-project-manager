@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { format } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
+import LandingPage from '@/pages/LandingPage';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -51,7 +52,7 @@ const Index = () => {
   }, [activeTab]);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <LandingPage />;
 
   const activeProject = projects.find(p => p.id === activeProjectId);
   const privateProjects = projects.filter(p => p.type === 'private');

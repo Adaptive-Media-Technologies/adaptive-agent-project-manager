@@ -62,6 +62,16 @@ All colors MUST be HSL.
     --sidebar-panel-muted: 220 14% 96%;
     --sidebar-panel-active: 270 60% 52%;
     --sidebar-panel-active-bg: 270 60% 96%;
+
+    --marketing-gradient-start: 262 83% 58%;
+    --marketing-gradient-mid: 292 84% 61%;
+    --marketing-gradient-end: 330 81% 60%;
+    --marketing-accent: 262 83% 58%;
+    --marketing-accent-foreground: 0 0% 100%;
+    --marketing-surface: 0 0% 100%;
+    --marketing-surface-alt: 260 20% 97%;
+    --marketing-text: 260 25% 11%;
+    --marketing-text-muted: 260 10% 46%;
   }
 
   .dark {
