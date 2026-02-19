@@ -61,7 +61,7 @@ export const useTeamMembers = (teamId: string | null) => {
     if (!teamId) { setMembers([]); setLoading(false); return; }
     const { data } = await supabase
       .from('team_members')
-      .select('id, team_id, user_id, role, joined_at, profiles:user_id(display_name, avatar_url, username)')
+      .select('id, team_id, user_id, role, joined_at, profiles:team_members_user_id_profiles_fkey(display_name, avatar_url, username)')
       .eq('team_id', teamId)
       .order('joined_at');
     const mapped = (data || []).map((d: any) => ({
