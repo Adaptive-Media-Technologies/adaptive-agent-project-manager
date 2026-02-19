@@ -26,9 +26,10 @@ type Props = {
   onLogTime?: (taskId: string, minutes: number) => void;
   taskMinutes?: Record<string, number>;
   onRenameTask?: (id: string, newTitle: string) => Promise<void>;
+  onUpdateDueDate?: (id: string, dueDate: string | null) => Promise<void>;
 };
 
-const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes = {}, onRenameTask }: Props) => {
+const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes = {}, onRenameTask, onUpdateDueDate }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
@@ -95,6 +96,7 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
           onOpenChange={open => { if (!open) setDetailTaskId(null); }}
           totalMinutes={taskMinutes[detailTask.id] || 0}
           onRename={onRenameTask}
+          onUpdateDueDate={onUpdateDueDate}
         />
       )}
     </>

@@ -292,6 +292,7 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           created_by: string
+          due_date: string | null
           id: string
           position: number
           project_id: string
@@ -303,6 +304,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by: string
+          due_date?: string | null
           id?: string
           position?: number
           project_id: string
@@ -314,6 +316,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by?: string
+          due_date?: string | null
           id?: string
           position?: number
           project_id?: string
