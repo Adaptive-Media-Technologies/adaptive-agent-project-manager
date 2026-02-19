@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -42,6 +42,7 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeRailTab, setActiveRailTab] = useState<'home' | 'settings'>('home');
   const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
   const [unreadChat, setUnreadChat] = useState(false);
   const handleChatNewMessage = useCallback(() => {
@@ -105,16 +106,21 @@ const Index = () => {
   const ProjectButton = ({ id, name, icon }: { id: string; name: string; icon?: React.ReactNode }) => (
     <button
       onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
-      className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] transition-card ${
+      className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-[13px] transition-card ${
         id === activeProjectId
-          ? 'bg-[hsl(var(--sidebar-active)/0.12)] text-[hsl(var(--sidebar-active))] font-semibold border border-[hsl(var(--sidebar-active)/0.5)]'
-          : 'text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent)/0.6)] hover:text-[hsl(var(--sidebar-foreground))]'
+          ? 'bg-[hsl(var(--sidebar-panel-active-bg))] text-[hsl(var(--sidebar-panel-active))] font-semibold border border-[hsl(var(--sidebar-panel-active)/0.4)]'
+          : 'text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))]'
       }`}
     >
-      {icon}
+      {icon || <FolderOpen size={14} className="shrink-0 opacity-50" />}
       <span className="truncate flex-1">{name}</span>
     </button>
   );
+
+  const railItems = [
+    { key: 'home' as const, icon: Home, label: 'Home' },
+    { key: 'settings' as const, icon: Settings, label: 'Settings' },
+  ];
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -123,117 +129,161 @@ const Index = () => {
         <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-60 shrink-0'} flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
-        {/* Sidebar header with branding */}
-        <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-4 py-4">
-          <div className="flex items-center gap-2.5">
-            <img src={agntfindLogo} alt="Agntive" className="h-7 w-7 rounded-xl" />
-            <span className="text-sm font-bold text-[hsl(var(--sidebar-foreground))] tracking-tight">Agntive</span>
+      {/* 2-Level Sidebar */}
+      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 transition-transform duration-200' : 'shrink-0'} flex ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+        {/* Level 1: Icon Rail */}
+        <div className="flex w-[52px] flex-col items-center bg-[hsl(var(--sidebar-background))] py-3 gap-1 border-r border-[hsl(var(--sidebar-border))]">
+          {/* Logo */}
+          <div className="mb-3">
+            <img src={agntfindLogo} alt="Agntive" className="h-8 w-8 rounded-xl" />
           </div>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setShowProfile(true)} title="Profile">
-              <Avatar className="h-7 w-7">
-                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
-                <AvatarFallback className="text-[10px]">
-                  {profile?.display_name ? profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
-                </AvatarFallback>
-              </Avatar>
+
+          {/* Rail nav icons */}
+          {railItems.map(item => (
+            <button
+              key={item.key}
+              onClick={() => setActiveRailTab(item.key)}
+              title={item.label}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+                activeRailTab === item.key
+                  ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-foreground))]'
+                  : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
+              }`}
+            >
+              <item.icon size={18} />
             </button>
-            {isMobile && (
-              <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground">
-                <X size={18} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Create button */}
-        <div className="px-3 pt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-sm font-medium rounded-xl text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]"
-            onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
-          >
-            <Plus size={14} /> New Project
-          </Button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto p-3 space-y-5">
-          {/* Pending Invites */}
-          {pendingInvites.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1">
-                <Mail size={10} /> Invites
-              </p>
-              {pendingInvites.map(inv => (
-                <div key={inv.id} className="flex items-center justify-between rounded-xl bg-[hsl(var(--sidebar-accent))] px-2.5 py-2">
-                  <span className="text-xs text-[hsl(var(--sidebar-foreground))] truncate flex-1 font-medium">{inv.team?.name}</span>
-                  <div className="flex gap-1">
-                    <button onClick={() => handleAcceptInvite(inv)} className="rounded-md p-1 hover:bg-background transition-colors">
-                      <Check size={12} className="text-primary" />
-                    </button>
-                    <button onClick={() => declineInvite(inv.id)} className="rounded-md p-1 hover:bg-background transition-colors">
-                      <X size={12} className="text-destructive" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* My Projects */}
-          <div className="space-y-1">
-            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1">
-              <Lock size={10} /> My Projects
-            </p>
-            {privateProjects.map(p => (
-              <ProjectButton key={p.id} id={p.id} name={p.name} />
-            ))}
-          </div>
-
-          {/* Team Projects */}
-          {teamGroups.map(({ team, projects: teamProjects }) => (
-            <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
-              <div className="space-y-1">
-                <CollapsibleTrigger className="w-full px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1 group cursor-pointer hover:text-[hsl(var(--sidebar-foreground))] transition-colors">
-                  <ChevronRight size={10} className="transition-transform group-data-[state=open]:rotate-90" />
-                  <Users size={10} /> {team.name}
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {teamProjects.length > 0 ? (
-                    teamProjects.map(p => (
-                      <ProjectButton key={p.id} id={p.id} name={p.name} />
-                    ))
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        try {
-                          const p = await createProject(`${team.name} Tasks`, 'team', team.id);
-                          if (p) setActiveProjectId(p.id);
-                          if (isMobile) setSidebarOpen(false);
-                        } catch (err: any) {
-                          toast.error(err.message);
-                        }
-                      }}
-                      className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))] transition-colors"
-                    >
-                      <Plus size={12} /> New Task
-                    </button>
-                  )}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
           ))}
-        </nav>
 
-        <div className="border-t border-[hsl(var(--sidebar-border))] p-3">
-          <Link to="/teams">
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs text-[hsl(var(--sidebar-foreground)/0.6)] rounded-xl hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]">
-              <Users size={13} /> Manage Teams
-            </Button>
-          </Link>
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Profile avatar at bottom of rail */}
+          <button onClick={() => setShowProfile(true)} title="Profile" className="mb-1">
+            <Avatar className="h-8 w-8">
+              {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
+              <AvatarFallback className="text-[10px] bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-foreground))]">
+                {profile?.display_name ? profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+
+          {/* Apps grid icon */}
+          <button className="flex h-9 w-9 items-center justify-center rounded-xl text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)] transition-all" title="More">
+            <LayoutGrid size={18} />
+          </button>
+        </div>
+
+        {/* Level 2: Content Panel */}
+        <div className="flex w-[220px] flex-col bg-[hsl(var(--sidebar-panel-background))] border-r border-[hsl(var(--sidebar-panel-border))]">
+          {/* Panel header */}
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
+            <span className="text-sm font-bold text-[hsl(var(--sidebar-panel-foreground))] tracking-tight">
+              {activeRailTab === 'home' ? 'Home' : 'Settings'}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
+                title="New Project"
+              >
+                <Plus size={15} />
+              </button>
+              {isMobile && (
+                <button onClick={() => setSidebarOpen(false)} className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:text-[hsl(var(--sidebar-panel-foreground))]">
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {activeRailTab === 'home' ? (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+              {/* Pending Invites */}
+              {pendingInvites.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)] flex items-center gap-1">
+                    <Mail size={10} /> Invites
+                  </p>
+                  {pendingInvites.map(inv => (
+                    <div key={inv.id} className="flex items-center justify-between rounded-lg bg-[hsl(var(--sidebar-panel-muted))] px-2.5 py-2">
+                      <span className="text-xs text-[hsl(var(--sidebar-panel-foreground))] truncate flex-1 font-medium">{inv.team?.name}</span>
+                      <div className="flex gap-1">
+                        <button onClick={() => handleAcceptInvite(inv)} className="rounded-md p-1 hover:bg-background transition-colors">
+                          <Check size={12} className="text-primary" />
+                        </button>
+                        <button onClick={() => declineInvite(inv.id)} className="rounded-md p-1 hover:bg-background transition-colors">
+                          <X size={12} className="text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* My Projects */}
+              <div className="space-y-0.5">
+                <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)] flex items-center gap-1">
+                  <Lock size={10} /> My Projects
+                </p>
+                {privateProjects.map(p => (
+                  <ProjectButton key={p.id} id={p.id} name={p.name} />
+                ))}
+              </div>
+
+              {/* Team Projects (Spaces) */}
+              {teamGroups.length > 0 && (
+                <div className="space-y-0.5">
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
+                    Spaces
+                  </p>
+                  {teamGroups.map(({ team, projects: teamProjects }) => (
+                    <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
+                      <div className="space-y-0.5">
+                        <CollapsibleTrigger className="w-full px-3 py-1.5 text-[13px] font-semibold text-[hsl(var(--sidebar-panel-foreground)/0.8)] flex items-center gap-2 group cursor-pointer hover:bg-[hsl(var(--sidebar-panel-muted))] rounded-lg transition-colors">
+                          <ChevronRight size={12} className="transition-transform group-data-[state=open]:rotate-90 text-[hsl(var(--sidebar-panel-foreground)/0.4)]" />
+                          <Users size={13} className="text-[hsl(var(--sidebar-panel-active))]" />
+                          <span className="truncate">{team.name}</span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="ml-4 pl-3 border-l border-[hsl(var(--sidebar-panel-border))] space-y-0.5">
+                            {teamProjects.length > 0 ? (
+                              teamProjects.map(p => (
+                                <ProjectButton key={p.id} id={p.id} name={p.name} />
+                              ))
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const p = await createProject(`${team.name} Tasks`, 'team', team.id);
+                                    if (p) setActiveProjectId(p.id);
+                                    if (isMobile) setSidebarOpen(false);
+                                  } catch (err: any) {
+                                    toast.error(err.message);
+                                  }
+                                }}
+                                className="w-full flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs text-[hsl(var(--sidebar-panel-foreground)/0.4)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
+                              >
+                                <Plus size={12} /> New Task
+                              </button>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  ))}
+                </div>
+              )}
+            </nav>
+          ) : (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+              <Link to="/teams">
+                <button className="w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-[13px] text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors">
+                  <Users size={14} className="shrink-0 opacity-50" />
+                  <span>Manage Teams</span>
+                </button>
+              </Link>
+            </nav>
+          )}
         </div>
       </aside>
 
