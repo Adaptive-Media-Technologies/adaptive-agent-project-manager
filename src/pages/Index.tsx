@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen, Bot } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen, Bot, CalendarDays } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
+import CalendarView from '@/pages/CalendarView';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -30,7 +31,7 @@ const Index = () => {
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
@@ -42,7 +43,7 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeRailTab, setActiveRailTab] = useState<'home' | 'teams' | 'agents' | 'settings'>('home');
+  const [activeRailTab, setActiveRailTab] = useState<'home' | 'teams' | 'agents' | 'calendar' | 'settings'>('home');
   const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
   const [unreadChat, setUnreadChat] = useState(false);
   const handleChatNewMessage = useCallback(() => {
@@ -119,6 +120,7 @@ const Index = () => {
 
   const railItems = [
     { key: 'home' as const, icon: Home, label: 'Home' },
+    { key: 'calendar' as const, icon: CalendarDays, label: 'Calendar' },
     { key: 'teams' as const, icon: Users, label: 'Manage Teams' },
     { key: 'agents' as const, icon: Bot, label: 'Manage Agents' },
   ];
@@ -187,7 +189,7 @@ const Index = () => {
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
             <span className="text-sm font-bold text-[hsl(var(--sidebar-panel-foreground))] tracking-tight">
-              {activeRailTab === 'home' ? 'Home' : activeRailTab === 'teams' ? 'Manage Teams' : activeRailTab === 'agents' ? 'Manage Agents' : 'Settings'}
+              {activeRailTab === 'home' ? 'Home' : activeRailTab === 'calendar' ? 'Calendar' : activeRailTab === 'teams' ? 'Manage Teams' : activeRailTab === 'agents' ? 'Manage Agents' : 'Settings'}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -283,6 +285,13 @@ const Index = () => {
                 </div>
               )}
             </nav>
+          ) : activeRailTab === 'calendar' ? (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
+                <CalendarDays size={20} className="text-[hsl(var(--sidebar-panel-active))]" />
+                <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)]">View your task schedule in the main panel</p>
+              </div>
+            </nav>
           ) : activeRailTab === 'teams' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
               <Link to="/teams">
@@ -323,7 +332,9 @@ const Index = () => {
 
       {/* Main */}
       <main className="flex flex-1 flex-col">
-        {activeProject ? (
+        {activeRailTab === 'calendar' ? (
+          <CalendarView />
+        ) : activeProject ? (
           <>
             <header className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
@@ -450,6 +461,7 @@ const Index = () => {
                       onLogTime={handleLogTime}
                       taskMinutes={taskMinutes}
                       onRenameTask={renameTask}
+                      onUpdateDueDate={updateDueDate}
                     />
                   )}
                 </div>

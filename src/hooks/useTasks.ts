@@ -10,6 +10,7 @@ export type Task = {
   position: number;
   completed_at: string | null;
   created_at: string;
+  due_date: string | null;
 };
 
 export type Project = {
@@ -107,5 +108,11 @@ export const useTasks = (projectId: string | null) => {
     setTasks(t => t.map(tt => tt.id === id ? { ...tt, title: newTitle } : tt));
   };
 
-  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, refresh: fetch };
+  const updateDueDate = async (id: string, dueDate: string | null) => {
+    const { error } = await supabase.from('tasks').update({ due_date: dueDate }).eq('id', id);
+    if (error) throw error;
+    setTasks(t => t.map(tt => tt.id === id ? { ...tt, due_date: dueDate } : tt));
+  };
+
+  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, refresh: fetch };
 };

@@ -1,5 +1,6 @@
 import { Task } from '@/hooks/useTasks';
-import { Check, Circle, PlayCircle, Trash2, GripVertical, Timer, MoreHorizontal } from 'lucide-react';
+import { Check, Circle, PlayCircle, Trash2, GripVertical, Timer, MoreHorizontal, CalendarDays } from 'lucide-react';
+import { format, parseISO, isPast, isToday } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -70,6 +71,21 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
       {totalMinutes > 0 && (
         <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground tabular-nums">
           {totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : `${totalMinutes}m`}
+        </span>
+      )}
+
+      {task.due_date && (
+        <span className={`shrink-0 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${
+          task.status === 'complete'
+            ? 'bg-muted text-muted-foreground'
+            : isPast(parseISO(task.due_date)) && !isToday(parseISO(task.due_date))
+              ? 'bg-destructive/10 text-destructive'
+              : isToday(parseISO(task.due_date))
+                ? 'bg-[hsl(var(--status-progress)/0.1)] text-[hsl(var(--status-progress))]'
+                : 'bg-muted text-muted-foreground'
+        }`}>
+          <CalendarDays size={10} />
+          {format(parseISO(task.due_date), 'MMM d')}
         </span>
       )}
 

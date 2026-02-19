@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2, Clock, StickyNote, File } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2, Clock, StickyNote, File, CalendarDays } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
 const statusConfig = {
@@ -27,9 +30,10 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   totalMinutes: number;
   onRename?: (id: string, newTitle: string) => Promise<void>;
+  onUpdateDueDate?: (id: string, dueDate: string | null) => Promise<void>;
 };
 
-const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: Props) => {
+const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, onUpdateDueDate }: Props) => {
   const { notes, loading, addNote, deleteNote } = useNotes(open ? task.id : null);
   const { attachments, loading: attachLoading, uploading, uploadFiles, deleteAttachment, getPublicUrl } = useTaskAttachments(open ? task.id : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,9 +115,45 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
           </div>
 
           {/* Dates */}
-          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <div className="flex flex-col gap-2 text-xs text-muted-foreground">
             <span>Created: {format(new Date(task.created_at), 'PPp')}</span>
             {task.completed_at && <span>Completed: {format(new Date(task.completed_at), 'PPp')}</span>}
+            
+            {/* Due Date */}
+            <div className="flex items-center gap-2">
+              <span>Due:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs rounded-lg">
+                    <CalendarDays size={12} />
+                    {task.due_date ? format(parseISO(task.due_date), 'PPP') : 'Set due date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={task.due_date ? parseISO(task.due_date) : undefined}
+                    onSelect={(date) => {
+                      const val = date ? format(date, 'yyyy-MM-dd') : null;
+                      onUpdateDueDate?.(task.id, val);
+                    }}
+                    className="p-3 pointer-events-auto"
+                  />
+                  {task.due_date && (
+                    <div className="px-3 pb-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs text-destructive hover:text-destructive"
+                        onClick={() => onUpdateDueDate?.(task.id, null)}
+                      >
+                        Clear due date
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <Separator />
