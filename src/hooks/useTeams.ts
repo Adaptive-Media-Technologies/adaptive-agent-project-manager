@@ -15,7 +15,7 @@ export type TeamMember = {
   user_id: string;
   role: string;
   joined_at: string;
-  profile?: { display_name: string | null; avatar_url: string | null };
+  profile?: { display_name: string | null; avatar_url: string | null; username: string | null };
 };
 
 export const useTeams = () => {
@@ -61,10 +61,14 @@ export const useTeamMembers = (teamId: string | null) => {
     if (!teamId) { setMembers([]); setLoading(false); return; }
     const { data } = await supabase
       .from('team_members')
-      .select('id, team_id, user_id, role, joined_at')
+      .select('id, team_id, user_id, role, joined_at, profiles:user_id(display_name, avatar_url, username)')
       .eq('team_id', teamId)
       .order('joined_at');
-    setMembers((data as TeamMember[]) || []);
+    const mapped = (data || []).map((d: any) => ({
+      ...d,
+      profile: d.profiles || null,
+    }));
+    setMembers(mapped as TeamMember[]);
     setLoading(false);
   }, [teamId]);
 

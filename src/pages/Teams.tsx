@@ -51,17 +51,24 @@ const TeamMembersSection = ({ team, isOwner }: { team: Team; isOwner: boolean })
         <div className="space-y-2">
           {members.map(m => (
             <div key={m.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
                   {m.profile?.avatar_url && <AvatarImage src={m.profile.avatar_url} />}
-                  <AvatarFallback className="text-[9px]">
+                  <AvatarFallback className="text-[10px]">
                     {m.profile?.display_name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm text-foreground">{m.profile?.display_name || 'Unknown'}</span>
-                {m.role === 'owner' && (
-                  <span className="text-[10px] rounded bg-primary/10 px-1.5 py-0.5 text-primary font-medium">Owner</span>
-                )}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{m.profile?.display_name || 'Unknown'}</span>
+                    {m.role === 'owner' && (
+                      <span className="text-[10px] rounded bg-primary/10 px-1.5 py-0.5 text-primary font-medium">Owner</span>
+                    )}
+                  </div>
+                  {m.profile?.username && (
+                    <span className="text-xs text-muted-foreground">@{m.profile.username}</span>
+                  )}
+                </div>
               </div>
               {isOwner && m.role !== 'owner' && (
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemove(m.id, m.profile?.display_name || 'member')}>
