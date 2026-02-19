@@ -4,9 +4,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 const statusConfig = {
-  open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: PlayCircle, label: 'In Progress', className: 'text-primary' },
-  complete: { icon: Check, label: 'Done', className: 'text-green-600' },
+  open: { label: 'Open', dot: 'bg-[hsl(var(--status-open))]', border: 'border-l-[hsl(var(--status-open)/0.3)]', badge: 'bg-[hsl(var(--status-open)/0.1)] text-[hsl(var(--status-open))]' },
+  in_progress: { label: 'In Progress', dot: 'bg-[hsl(var(--status-progress))]', border: 'border-l-[hsl(var(--status-progress))]', badge: 'bg-[hsl(var(--status-progress)/0.1)] text-[hsl(var(--status-progress))]' },
+  complete: { label: 'Done', dot: 'bg-[hsl(var(--status-done))]', border: 'border-l-[hsl(var(--status-done))]', badge: 'bg-[hsl(var(--status-done)/0.1)] text-[hsl(var(--status-done))]' },
 };
 
 type Props = {
@@ -20,7 +20,7 @@ type Props = {
 };
 
 const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalMinutes = 0, onOpenDetail }: Props) => {
-  const { icon: Icon, label, className } = statusConfig[task.status];
+  const config = statusConfig[task.status];
 
   const {
     attributes,
@@ -41,34 +41,34 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2 rounded-lg border px-2 py-2 transition-colors ${
+      className={`group flex items-center gap-2.5 rounded-xl border border-l-[3px] ${config.border} px-3 py-3 transition-card ${
         isTimerActive
-          ? 'border-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.1)]'
-          : task.status === 'in_progress'
-          ? 'border-[#7dd4ed] bg-[#adf0ff] hover:bg-[#9de8f7]'
-          : 'border-border bg-card hover:bg-accent'
+          ? 'border-[hsl(var(--timer-active))] border-l-[hsl(var(--timer-active))] bg-[hsl(var(--timer-active)/0.08)] shadow-sm'
+          : 'border-border bg-card hover:bg-accent/50 hover:shadow-sm'
       }`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="shrink-0 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+        className="shrink-0 cursor-grab text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
         title="Drag to reorder"
       >
         <GripVertical size={14} />
       </button>
 
-      <button onClick={onCycle} className={`shrink-0 flex items-center gap-1.5 ${className}`} title="Cycle status">
-        <Icon size={16} />
-        <span className="text-xs font-medium">{label}</span>
+      <button onClick={onCycle} className="shrink-0" title="Cycle status">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${config.badge}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+          {config.label}
+        </span>
       </button>
 
-      <span className={`flex-1 text-sm ${task.status === 'complete' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+      <span className={`flex-1 text-sm font-medium ${task.status === 'complete' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
         {task.title}
       </span>
 
       {totalMinutes > 0 && (
-        <span className="shrink-0 text-xs font-bold text-foreground tabular-nums">
+        <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground tabular-nums">
           {totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : `${totalMinutes}m`}
         </span>
       )}

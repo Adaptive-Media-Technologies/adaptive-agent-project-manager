@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -21,6 +21,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { format } from 'date-fns';
+import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -91,7 +92,6 @@ const Index = () => {
     try {
       await acceptInvite(invite);
       toast.success('Joined team!');
-      // Refresh both teams and projects so sidebar updates immediately
       await Promise.all([refreshProjects(), teamsRefresh()]);
     } catch (err: any) {
       toast.error(err.message);
@@ -105,12 +105,14 @@ const Index = () => {
   const ProjectButton = ({ id, name, icon }: { id: string; name: string; icon?: React.ReactNode }) => (
     <button
       onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
-      className={`w-full flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
-        id === activeProjectId ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+      className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-card ${
+        id === activeProjectId
+          ? 'bg-accent text-accent-foreground font-semibold border-l-[3px] border-l-primary'
+          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
       }`}
     >
       {icon}
-      <span className="truncate">{name}</span>
+      <span className="truncate flex-1">{name}</span>
     </button>
   );
 
@@ -118,14 +120,18 @@ const Index = () => {
     <div className="flex min-h-screen bg-background">
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-56 shrink-0'} flex flex-col border-r border-border bg-card ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h1 className="text-sm font-semibold text-foreground">Projects</h1>
-          <div className="flex items-center gap-2">
+      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-60 shrink-0'} flex flex-col border-r border-border bg-card ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+        {/* Sidebar header with branding */}
+        <div className="flex items-center justify-between border-b border-border px-4 py-4">
+          <div className="flex items-center gap-2.5">
+            <img src={agntfindLogo} alt="AgntFind" className="h-7 w-7 rounded-lg" />
+            <span className="text-sm font-bold text-foreground tracking-tight">AgntFind</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <button onClick={() => setShowProfile(true)} title="Profile">
               <Avatar className="h-7 w-7">
                 {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
@@ -142,21 +148,33 @@ const Index = () => {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-2 space-y-4">
+        {/* Create button */}
+        <div className="px-3 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-sm font-medium rounded-lg border-dashed"
+            onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
+          >
+            <Plus size={14} /> New Project
+          </Button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-5">
           {/* Pending Invites */}
           {pendingInvites.length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Mail size={10} /> Invites
               </p>
               {pendingInvites.map(inv => (
-                <div key={inv.id} className="flex items-center justify-between rounded-md bg-accent px-2 py-1.5">
-                  <span className="text-xs text-foreground truncate flex-1">{inv.team?.name}</span>
-                  <div className="flex gap-0.5">
-                    <button onClick={() => handleAcceptInvite(inv)} className="rounded p-0.5 hover:bg-background">
+                <div key={inv.id} className="flex items-center justify-between rounded-lg bg-accent px-2.5 py-2">
+                  <span className="text-xs text-foreground truncate flex-1 font-medium">{inv.team?.name}</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => handleAcceptInvite(inv)} className="rounded-md p-1 hover:bg-background transition-colors">
                       <Check size={12} className="text-primary" />
                     </button>
-                    <button onClick={() => declineInvite(inv.id)} className="rounded p-0.5 hover:bg-background">
+                    <button onClick={() => declineInvite(inv.id)} className="rounded-md p-1 hover:bg-background transition-colors">
                       <X size={12} className="text-destructive" />
                     </button>
                   </div>
@@ -167,7 +185,7 @@ const Index = () => {
 
           {/* My Projects */}
           <div className="space-y-1">
-            <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
               <Lock size={10} /> My Projects
             </p>
             {privateProjects.map(p => (
@@ -179,7 +197,7 @@ const Index = () => {
           {teamGroups.map(({ team, projects: teamProjects }) => (
             <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
               <div className="space-y-1">
-                <CollapsibleTrigger className="w-full px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1 group cursor-pointer hover:text-foreground transition-colors">
+                <CollapsibleTrigger className="w-full px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1 group cursor-pointer hover:text-foreground transition-colors">
                   <ChevronRight size={10} className="transition-transform group-data-[state=open]:rotate-90" />
                   <Users size={10} /> {team.name}
                 </CollapsibleTrigger>
@@ -199,7 +217,7 @@ const Index = () => {
                           toast.error(err.message);
                         }
                       }}
-                      className="w-full flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
                       <Plus size={12} /> New Task
                     </button>
@@ -210,13 +228,10 @@ const Index = () => {
           ))}
         </nav>
 
-        <div className="border-t border-border p-2 space-y-1">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sm" onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}>
-            <Plus size={14} /> New Project
-          </Button>
+        <div className="border-t border-border p-3">
           <Link to="/teams">
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sm text-muted-foreground">
-              <Users size={14} /> Manage Teams
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs text-muted-foreground rounded-lg">
+              <Users size={13} /> Manage Teams
             </Button>
           </Link>
         </div>
@@ -226,44 +241,67 @@ const Index = () => {
       <main className="flex flex-1 flex-col">
         {activeProject ? (
           <>
-            <header className="flex items-center justify-between border-b border-border px-4 md:px-6 py-4">
-              <div className="flex items-center gap-2">
+            <header className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 shadow-sm">
+              <div className="flex items-center gap-3 min-w-0">
                 {isMobile && (
                   <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
                     <Menu size={20} />
                   </button>
                 )}
-                {activeProject.type === 'team' ? <Users size={16} className="text-muted-foreground" /> : <Lock size={16} className="text-muted-foreground" />}
-                <h2 className="text-lg font-semibold text-foreground truncate">{activeProject.name}</h2>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-foreground truncate">{activeProject.name}</h2>
+                    <button onClick={() => setShowDetails(true)} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                      <Info size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                      {activeProject.type === 'team' ? <Users size={9} /> : <Lock size={9} />}
+                      {activeProject.type === 'team' ? 'Team' : 'Private'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+
+              {/* Segmented tab control */}
+              <div className="flex items-center bg-muted rounded-lg p-0.5">
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === 'tasks' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    activeTab === 'tasks'
+                      ? 'bg-card text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <ListTodo size={14} /> Tasks
+                  <ListTodo size={13} /> Tasks
                 </button>
                 <button
                   onClick={() => { setActiveTab('chat'); setUnreadChat(false); }}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    activeTab === 'chat'
+                      ? 'bg-card text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <MessageSquare size={14} /> Chat
-                  {unreadChat && <span className="h-2 w-2 rounded-full bg-destructive" />}
+                  <MessageSquare size={13} /> Chat
+                  {unreadChat && <span className="h-2 w-2 rounded-full bg-destructive animate-pulse-dot" />}
                 </button>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowDetails(true)} title="Project details">
-                <Info size={16} />
-              </Button>
             </header>
 
             {activeTab === 'chat' ? (
               <ProjectChat projectId={activeProject.id} onNewMessage={handleChatNewMessage} />
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4">
                   {/* Project Note */}
                   {(() => { const noteConf = getNoteColorConfig(noteColor); return (
-                  <div className={`rounded-md border ${getNoteClasses(noteColor)} transition-colors`}>
+                  <div className={`rounded-xl border shadow-sm ${getNoteClasses(noteColor)} transition-card`}>
+                    <div className="flex items-center gap-1.5 px-3 pt-2.5">
+                      <StickyNote size={12} className={noteConf.value ? noteConf.text : 'text-muted-foreground'} />
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${noteConf.value ? noteConf.text : 'text-muted-foreground'}`}>Notes</span>
+                    </div>
                     <textarea
                       value={projectNote}
                       onChange={e => saveProjectNote(e.target.value)}
@@ -275,11 +313,11 @@ const Index = () => {
                       }`}
                       rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
                     />
-                    <div className="flex justify-end px-2 pb-1.5">
+                    <div className="flex justify-end px-2 pb-2">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className={`rounded p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
-                            <Palette size={14} />
+                          <button className={`rounded-md p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
+                            <Palette size={13} />
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-2" align="end">
@@ -303,17 +341,20 @@ const Index = () => {
                   {tasksLoading ? (
                     <p className="text-sm text-muted-foreground">Loading tasks...</p>
                   ) : tasks.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16">
-                      <div className="rounded-full bg-accent p-4">
-                        <Plus size={28} className="text-muted-foreground" />
+                    <div className="flex flex-1 flex-col items-center justify-center gap-5 py-20">
+                      <div className="rounded-2xl bg-accent p-5">
+                        <ListTodo size={32} className="text-muted-foreground" />
                       </div>
-                      <div className="text-center space-y-1">
-                        <p className="text-base font-medium text-foreground">No tasks yet</p>
+                      <div className="text-center space-y-1.5">
+                        <p className="text-lg font-semibold text-foreground">No tasks yet</p>
                         <p className="text-sm text-muted-foreground">Create your first task to get started</p>
                       </div>
                       <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
-                        <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" autoFocus />
-                        <Button type="submit" size="sm" disabled={!newTask.trim()}>Add</Button>
+                        <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 shadow-sm">
+                          <Plus size={15} className="text-muted-foreground shrink-0" />
+                          <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" autoFocus />
+                        </div>
+                        <Button type="submit" size="sm" disabled={!newTask.trim()} className="rounded-lg px-4">Add</Button>
                       </form>
                     </div>
                   ) : (
@@ -328,11 +369,13 @@ const Index = () => {
                     />
                   )}
                 </div>
-                <form onSubmit={handleAddTask} className="border-t border-border bg-card px-6 py-3">
-                  <div className="flex gap-2">
-                    <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm" />
-                    <Button type="submit" size="icon" variant="ghost">
-                      <Plus size={16} />
+                {/* Floating task input */}
+                <form onSubmit={handleAddTask} className="bg-card px-4 md:px-6 py-3">
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
+                    <Plus size={15} className="text-muted-foreground shrink-0" />
+                    <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" />
+                    <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3" disabled={!newTask.trim()}>
+                      <Plus size={14} />
                     </Button>
                   </div>
                 </form>
@@ -389,15 +432,15 @@ const Index = () => {
             </Sheet>
           </>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 relative">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 relative">
             {isMobile && (
               <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
                 <Menu size={20} />
               </button>
             )}
-            <img src="/favicon.png" alt="AgntFind" className="h-16 w-16 mb-2" />
-            <h1 className="text-3xl font-bold text-foreground">AgntFind</h1>
-            <p className="text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project'}</p>
+            <img src={agntfindLogo} alt="AgntFind" className="h-20 w-20 mb-1 rounded-2xl shadow-sm" />
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">AgntFind</h1>
+            <p className="text-sm text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project to get started'}</p>
           </div>
         )}
       </main>

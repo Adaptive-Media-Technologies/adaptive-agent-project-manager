@@ -8,14 +8,15 @@ import TimeLogSection from './TimeLogSection';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2 } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2, Clock, StickyNote, File } from 'lucide-react';
 import { toast } from 'sonner';
 
 const statusConfig = {
-  open: { icon: Circle, label: 'Open', className: 'text-muted-foreground' },
-  in_progress: { icon: PlayCircle, label: 'In Progress', className: 'text-primary' },
-  complete: { icon: Check, label: 'Done', className: 'text-green-600' },
+  open: { icon: Circle, label: 'Open', dot: 'bg-[hsl(var(--status-open))]', badge: 'bg-[hsl(var(--status-open)/0.1)] text-[hsl(var(--status-open))]' },
+  in_progress: { icon: PlayCircle, label: 'In Progress', dot: 'bg-[hsl(var(--status-progress))]', badge: 'bg-[hsl(var(--status-progress)/0.1)] text-[hsl(var(--status-progress))]' },
+  complete: { icon: Check, label: 'Done', dot: 'bg-[hsl(var(--status-done))]', badge: 'bg-[hsl(var(--status-done)/0.1)] text-[hsl(var(--status-done))]' },
 };
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
@@ -39,7 +40,6 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
   useEffect(() => { setDraftTitle(task.title); setEditingTitle(false); }, [task.title, open]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
-  // Fetch profiles for note authors
   useEffect(() => {
     if (!notes.length) return;
     const userIds = [...new Set(notes.map(n => n.user_id))];
@@ -57,7 +57,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
       });
   }, [notes]);
 
-  const { icon: StatusIcon, label, className } = statusConfig[task.status];
+  const config = statusConfig[task.status];
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,13 +81,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className={`w-full sm:max-w-2xl overflow-y-auto ${
-          task.status === 'in_progress'
-            ? 'border-l-4 border-l-[#7dd4ed] bg-[#f0fbff]'
-            : task.status === 'complete'
-            ? 'border-l-4 border-l-green-400 bg-green-50/50'
-            : ''
-        }`}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-lg flex items-center gap-2">
             {editingTitle ? (
@@ -109,10 +103,10 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
         <div className="space-y-6">
           {/* Status & Time */}
           <div className="flex items-center gap-4 text-sm">
-            <div className={`flex items-center gap-1.5 ${className}`}>
-              <StatusIcon size={16} />
-              <span className="font-medium">{label}</span>
-            </div>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${config.badge}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+              {config.label}
+            </span>
             <span className="text-muted-foreground">Time: <span className="font-bold text-foreground">{timeDisplay}</span></span>
           </div>
 
@@ -122,20 +116,33 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
             {task.completed_at && <span>Completed: {format(new Date(task.completed_at), 'PPp')}</span>}
           </div>
 
+          <Separator />
+
           {/* Time Log */}
-          <TimeLogSection taskId={task.id} />
+          <div>
+            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Clock size={12} /> Time Log
+            </p>
+            <TimeLogSection taskId={task.id} />
+          </div>
+
+          <Separator />
 
           {/* Notes */}
           <div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</p>
+            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <StickyNote size={12} /> Notes
+            </p>
             <form onSubmit={handleAddNote} className="mb-4 flex gap-2">
-              <Input
-                placeholder="Add a note..."
-                value={newNote}
-                onChange={e => setNewNote(e.target.value)}
-                className="text-sm"
-              />
-              <Button type="submit" size="icon" variant="ghost" className="shrink-0">
+              <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
+                <Input
+                  placeholder="Add a note..."
+                  value={newNote}
+                  onChange={e => setNewNote(e.target.value)}
+                  className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0"
+                />
+              </div>
+              <Button type="submit" size="icon" variant="ghost" className="shrink-0 rounded-lg">
                 <Plus size={16} />
               </Button>
             </form>
@@ -144,18 +151,18 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
             ) : notes.length === 0 ? (
               <p className="text-sm text-muted-foreground">No notes yet.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {notes.map(note => {
                   const profile = profiles[note.user_id];
                   return (
-                    <div key={note.id} className="group flex items-start gap-3 rounded-lg border border-border p-3">
+                    <div key={note.id} className="group flex items-start gap-3 rounded-xl border border-border p-3 transition-card hover:shadow-sm">
                       <Avatar className="h-7 w-7 shrink-0 mt-0.5">
                         {profile?.avatar_url && <AvatarImage src={profile.avatar_url} />}
                         <AvatarFallback className="text-[10px]">{getInitials(profile?.display_name ?? null)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-foreground">{profile?.display_name ?? 'Unknown'}</span>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xs font-semibold text-foreground">{profile?.display_name ?? 'Unknown'}</span>
                           <span className="text-[10px] text-muted-foreground">{format(new Date(note.created_at), 'PP p')}</span>
                         </div>
                         <p className="text-sm text-foreground">{note.content}</p>
@@ -173,9 +180,13 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
             )}
           </div>
 
+          <Separator />
+
           {/* Attachments */}
           <div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Attachments</p>
+            <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <File size={12} /> Attachments
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -192,7 +203,7 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
             <Button
               variant="outline"
               size="sm"
-              className="mb-4 gap-2"
+              className="mb-4 gap-2 rounded-lg"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
             >
@@ -211,11 +222,11 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename }: 
                   const url = getPublicUrl(att.file_path);
                   const sizeKb = att.file_size ? Math.round(att.file_size / 1024) : null;
                   return (
-                    <div key={att.id} className="group flex items-center gap-3 rounded-lg border border-border p-2.5">
+                    <div key={att.id} className="group flex items-center gap-3 rounded-xl border border-border p-3 transition-card hover:bg-accent/50 hover:shadow-sm">
                       {isImage ? (
-                        <img src={url} alt={att.file_name} className="h-10 w-10 rounded object-cover shrink-0" />
+                        <img src={url} alt={att.file_name} className="h-10 w-10 rounded-lg object-cover shrink-0" />
                       ) : (
-                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                           <FileText size={18} className="text-muted-foreground" />
                         </div>
                       )}
