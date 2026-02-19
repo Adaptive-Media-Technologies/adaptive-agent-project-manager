@@ -107,7 +107,7 @@ const Index = () => {
       onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
       className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] transition-card ${
         id === activeProjectId
-          ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-accent-foreground))] font-semibold border-l-[3px] border-l-primary'
+          ? 'bg-[hsl(var(--sidebar-active)/0.15)] text-[hsl(var(--sidebar-active))] font-semibold border-l-[3px] border-l-[hsl(var(--sidebar-active))]'
           : 'text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent)/0.6)] hover:text-[hsl(var(--sidebar-foreground))]'
       }`}
     >
@@ -151,9 +151,9 @@ const Index = () => {
         {/* Create button */}
         <div className="px-3 pt-3">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-sm font-medium rounded-xl border-dashed border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]"
+            className="w-full justify-start gap-2 text-sm font-medium rounded-xl text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]"
             onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
           >
             <Plus size={14} /> New Project
