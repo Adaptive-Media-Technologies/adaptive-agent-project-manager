@@ -13,11 +13,12 @@ import { toast } from 'sonner';
 
 interface ProjectChatProps {
   projectId: string;
+  onNewMessage?: (msg: ChatMessage) => void;
 }
 
-const ProjectChat = ({ projectId }: ProjectChatProps) => {
+const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const { user } = useAuth();
-  const { messages, loading, sendMessage, deleteMessage, getAttachmentUrl, scrollRef } = useProjectChat(projectId);
+  const { messages, loading, sendMessage, deleteMessage, getAttachmentUrl, scrollRef } = useProjectChat(projectId, onNewMessage);
   const [text, setText] = useState('');
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);

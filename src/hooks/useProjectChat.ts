@@ -24,7 +24,7 @@ export type ChatMessage = {
   attachments?: ChatAttachment[];
 };
 
-export const useProjectChat = (projectId: string | null) => {
+export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: ChatMessage) => void) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +103,15 @@ export const useProjectChat = (projectId: string | null) => {
           return [...prev, enriched];
         });
         scrollToBottom();
+        // Notify if message is from another user
+        if (user && msg.user_id !== user.id) {
+          onNewMessage?.(enriched);
+          if (document.hidden && Notification.permission === 'granted') {
+            const sender = prof?.display_name || 'Someone';
+            const preview = (msg.content || '').slice(0, 80) || (msg.gif_url ? 'sent a GIF' : 'sent an attachment');
+            new Notification(sender, { body: preview, icon: '/favicon.png' });
+          }
+        }
       })
       .on('postgres_changes', {
         event: 'DELETE',
@@ -115,7 +124,14 @@ export const useProjectChat = (projectId: string | null) => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [projectId, scrollToBottom]);
+  }, [projectId, scrollToBottom, user, onNewMessage]);
+
+  // Request notification permission once
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const sendMessage = async (content: string, gifUrl?: string, files?: File[]) => {
     if (!projectId || !user) return;
