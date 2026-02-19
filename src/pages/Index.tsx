@@ -150,7 +150,7 @@ const Index = () => {
               title={item.label}
               className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
                 activeRailTab === item.key
-                  ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-foreground))]'
+                  ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]'
                   : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
               }`}
             >
@@ -167,7 +167,7 @@ const Index = () => {
             title="Settings"
             className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
               activeRailTab === 'settings'
-                ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-foreground))]'
+                ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]'
                 : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
             }`}
           >
@@ -186,7 +186,7 @@ const Index = () => {
         </div>
 
         {/* Level 2: Content Panel */}
-        <div className="flex w-[220px] flex-col bg-[hsl(var(--sidebar-panel-background))] border-r border-[hsl(var(--sidebar-panel-border))]">
+        <div className="flex w-[232px] flex-col bg-[hsl(var(--sidebar-panel-background))] border-r border-[hsl(var(--sidebar-panel-border))]">
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
             <span className="text-sm font-bold text-[hsl(var(--sidebar-panel-foreground))] tracking-tight">
@@ -337,7 +337,7 @@ const Index = () => {
           <CalendarView />
         ) : activeProject ? (
           <>
-            <header className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 shadow-sm">
+            <header className="flex items-center justify-between border-b border-border bg-card px-4 md:px-6 py-3">
               <div className="flex items-center gap-3 min-w-0">
                 {isMobile && (
                   <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
@@ -352,7 +352,7 @@ const Index = () => {
                     </button>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                       {activeProject.type === 'team' ? <Users size={9} /> : <Lock size={9} />}
                       {activeProject.type === 'team' ? 'Team' : 'Private'}
                     </span>
@@ -390,7 +390,7 @@ const Index = () => {
               <ProjectChat projectId={activeProject.id} onNewMessage={handleChatNewMessage} />
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4">
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-5">
                   {/* Project Note */}
                   {(() => { const noteConf = getNoteColorConfig(noteColor); return (
                   <div className={`rounded-xl border shadow-sm ${getNoteClasses(noteColor)} transition-card`}>
@@ -454,25 +454,42 @@ const Index = () => {
                       </form>
                     </div>
                   ) : (
-                    <TaskList
-                      tasks={tasks}
-                      onCycle={cycleStatus}
-                      onDelete={deleteTask}
-                      onReorder={reorder}
-                      onLogTime={handleLogTime}
-                      taskMinutes={taskMinutes}
-                      onRenameTask={renameTask}
-                      onUpdateDueDate={updateDueDate}
-                    />
+                    /* Task list — card with clean row layout matching the mockup */
+                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                      {/* Header row */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                        </span>
+                        <button
+                          onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
+                          className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
+                        >
+                          + Add Task
+                        </button>
+                      </div>
+                      <div className="px-3">
+                        <TaskList
+                          tasks={tasks}
+                          onCycle={cycleStatus}
+                          onDelete={deleteTask}
+                          onReorder={reorder}
+                          onLogTime={handleLogTime}
+                          taskMinutes={taskMinutes}
+                          onRenameTask={renameTask}
+                          onUpdateDueDate={updateDueDate}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
                 {/* Floating task input */}
-                <form onSubmit={handleAddTask} className="bg-card px-4 md:px-6 py-3">
+                <form onSubmit={handleAddTask} className="bg-card border-t border-border px-4 md:px-6 py-3">
                   <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
-                    <Plus size={15} className="text-muted-foreground shrink-0" />
+                    <Plus size={15} className="text-[hsl(var(--sidebar-panel-active))] shrink-0" />
                     <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" />
-                    <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3" disabled={!newTask.trim()}>
-                      <Plus size={14} />
+                    <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3 text-[hsl(var(--sidebar-panel-active))]" disabled={!newTask.trim()}>
+                      Add
                     </Button>
                   </div>
                 </form>
