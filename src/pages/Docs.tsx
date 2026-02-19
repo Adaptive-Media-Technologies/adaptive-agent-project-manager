@@ -277,7 +277,7 @@ export default function Docs() {
             <BookOpen className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">Agent API Reference</h1>
           </div>
-          <p className="text-muted-foreground">Interactive documentation for the AgntFind REST API</p>
+          <p className="text-muted-foreground">Interactive documentation for the Agntive REST API</p>
         </div>
       </header>
 

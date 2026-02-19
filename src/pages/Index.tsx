@@ -107,7 +107,7 @@ const Index = () => {
       onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
       className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] transition-card ${
         id === activeProjectId
-          ? 'bg-[hsl(var(--sidebar-active)/0.15)] text-[hsl(var(--sidebar-active))] font-semibold border-l-[3px] border-l-[hsl(var(--sidebar-active))]'
+          ? 'bg-[hsl(var(--sidebar-active)/0.12)] text-[hsl(var(--sidebar-active))] font-semibold border border-[hsl(var(--sidebar-active)/0.5)]'
           : 'text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent)/0.6)] hover:text-[hsl(var(--sidebar-foreground))]'
       }`}
     >
@@ -128,7 +128,7 @@ const Index = () => {
         {/* Sidebar header with branding */}
         <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-4 py-4">
           <div className="flex items-center gap-2.5">
-            <img src={agntfindLogo} alt="AgntFind" className="h-7 w-7 rounded-xl" />
+            <img src={agntfindLogo} alt="Agntive" className="h-7 w-7 rounded-xl" />
             <span className="text-sm font-bold text-[hsl(var(--sidebar-foreground))] tracking-tight">Agntive</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -438,8 +438,8 @@ const Index = () => {
                 <Menu size={20} />
               </button>
             )}
-            <img src={agntfindLogo} alt="AgntFind" className="h-20 w-20 mb-1 rounded-2xl shadow-sm" />
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">AgntFind</h1>
+            <img src={agntfindLogo} alt="Agntive" className="h-20 w-20 mb-1 rounded-2xl shadow-sm" />
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Agntive</h1>
             <p className="text-sm text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project to get started'}</p>
           </div>
         )}
