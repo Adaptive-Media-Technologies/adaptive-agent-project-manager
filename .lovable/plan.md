@@ -1,129 +1,111 @@
 
-
-# UI/UX Polish: From Prototype to Production
+# Agntive.ai Landing Page Overhaul
 
 ## Overview
-Refine the visual design across the entire application to match the quality level shown in the reference designs (ChronoTask and Black Wallet). The focus is on spacing, typography hierarchy, visual depth, component polish, and micro-interactions -- not new features.
 
----
+Transform the current short landing page into a long-form, high-converting homepage inspired by ClickUp's structure, with AI agent task management as the unique differentiator and a dedicated OpenClaw integration section.
 
-## 1. Sidebar Refinement
+## Current State
 
-**Current issues**: Flat appearance, cramped spacing, no branding, basic project buttons.
+The existing `LandingPage.tsx` has 5 sections: Nav, Hero, 6-card Features grid, 3-step How It Works, and a CTA banner. It's ~200 lines and feels like a template rather than a product homepage.
 
-**Changes to `src/pages/Index.tsx` (sidebar section)**:
-- Add the AgntFind logo and brand name at the top of the sidebar (import the existing `agntfind-logo.png` asset)
-- Increase vertical padding between sections (from `space-y-4` to `space-y-6`)
-- Add a subtle left border accent (3px) on the active project button instead of just a background change
-- Use slightly larger text (text-[13px]) for project names with better truncation
-- Add a task count badge (small pill) next to each project name showing open task count
-- Style section headers ("My Projects", team names) with slightly more spacing above them
-- Add a "Create" button at the top of the sidebar (similar to ChronoTask's prominent Create button) as a styled outlined button, replacing the bottom "New Project" ghost button
-- Move "Manage Teams" into a small icon-only button in the sidebar footer alongside the profile avatar
-- Add a subtle gradient or slightly different shade at the sidebar top for visual separation
+## New Page Structure (12 sections)
 
-## 2. Main Header / Project Header
+### 1. Sticky Nav (enhanced)
+- Add more nav links: Features, Integrations, How It Works, Pricing
+- Add an announcement bar at the very top (e.g. "NEW: OpenClaw Integration - Give your AI agents a project manager")
 
-**Current issues**: Tab toggle and project name look basic. Info button floats awkwardly.
+### 2. Hero (rewritten)
+- Bold headline: "The project manager your AI agents actually need"
+- Sub-headline emphasizing the unique angle: humans and AI agents working side-by-side with full visibility
+- Animated gradient text for the key phrase
+- Two CTAs: "Get Started Free" + "Watch Demo" (ghost button)
+- Below the CTA: a mock screenshot/illustration of the app dashboard built with CSS (showing the sidebar, task list, and an agent avatar completing a task)
 
-**Changes to `src/pages/Index.tsx` (header section)**:
-- Make the project name larger and bolder (`text-xl font-bold`)
-- Add breadcrumb-style context below the project name: project type badge (Private/Team) as a small styled chip
-- Restyle the Tasks/Chat tab toggle as a proper segmented control with a sliding background indicator (using a `div` with rounded-lg background that moves), giving it a more polished feel
-- Move the Info button into the project name row as a subtle icon, not a separate floating button
-- Add a subtle bottom shadow on the header instead of just a border (`shadow-sm`)
+### 3. Logo Bar / Social Proof
+- "Trusted by AI-first teams" with placeholder company logos or community stats
+- Subtle auto-scrolling marquee effect
 
-## 3. Task Items
+### 4. Problem Statement Section
+- "Your AI agents are working in the dark" - a bold callout section
+- Three pain points shown as cards: No visibility into agent activity, Token costs spiraling without tracking, No way to coordinate humans + agents
+- Uses alternating icon + text layout
 
-**Current issues**: Tasks look like basic list rows. Status labels are tiny. No visual richness.
+### 5. Feature Showcase (tabbed/interactive)
+- Replace the static grid with a tabbed section inspired by ClickUp's feature tabs
+- Tabs: Task Management, Agent Tracking, Time & Token Logs, Team Chat, Calendar, API & Automations
+- Each tab shows a headline, description, and a CSS-illustrated mockup of that feature
+- The active tab highlights with the purple gradient
 
-**Changes to `src/components/TaskItem.tsx`**:
-- Increase vertical padding from `py-2` to `py-3`
-- Make the status indicator a colored dot/pill badge instead of icon + text (similar to the reference's colored tags)
-- Add a subtle left border color based on status: muted for open, blue for in-progress, green for complete
-- Show the task time as a styled badge/chip rather than plain text
-- Add a hover shadow effect (`hover:shadow-sm`) for depth
-- Make the drag handle always slightly visible (opacity-30 instead of opacity-0) for discoverability
-- Use `rounded-xl` instead of `rounded-lg` for softer card feel
+### 6. OpenClaw Integration Section (NEW - dedicated)
+- Full-width section with a dark background (matching OpenClaw's dark aesthetic)
+- OpenClaw logo + "Powered by OpenClaw" badge
+- Headline: "Give OpenClaw a command center"
+- Description: OpenClaw agents connect to Agntive via API, automatically logging tasks, tracking token usage, and reporting status in real-time
+- Three integration highlights:
+  - "Assign tasks from chat" - OpenClaw picks up tasks and updates status
+  - "Automatic token tracking" - Every API call logged and attributed
+  - "Real-time status updates" - See your agents working live in the dashboard
+- CTA: "Connect OpenClaw" button + link to docs
 
-## 4. Task Input Bar
+### 7. How It Works (expanded to 4 steps)
+- Step 1: Create your workspace
+- Step 2: Connect your AI agents (OpenClaw, custom agents via API)
+- Step 3: Assign tasks and track progress
+- Step 4: Ship faster with human + AI collaboration
+- Each step with a numbered badge and brief description
+- Connected by a vertical line/timeline on desktop
 
-**Current issues**: Bottom input bar is flat and basic.
+### 8. AI Agent Management Deep-Dive
+- "A new era of human + agent collaboration" (inspired by ClickUp's "Super Agents" section)
+- Three illustrated use-cases:
+  - Code Agent: auto-creates PRs, updates task status, logs time
+  - Research Agent: gathers data, summarizes findings, attaches to tasks
+  - Ops Agent: monitors deployments, creates incident tasks, notifies team
+- Each with a mini card showing the agent type and what it does
 
-**Changes to `src/pages/Index.tsx` (task form)**:
-- Restyle as a floating input bar with shadow and rounded corners, inset from edges
-- Add a subtle icon (Plus in a circle) inside the input as a prefix
-- Make the submit button a proper styled button with icon, not just a ghost icon button
-- Add `shadow-sm` and `rounded-xl` to the container
+### 9. Stats / Impact Section
+- Large numbers in gradient text:
+  - "10x faster task completion with AI agents"
+  - "Zero token waste with usage tracking"
+  - "100% visibility across human + AI work"
 
-## 5. Project Notes
+### 10. Testimonials / Social Proof
+- Quote cards from hypothetical users (placeholder content)
+- Similar layout to OpenClaw's testimonial wall but with 3-4 featured quotes
 
-**Current issues**: Note area is functional but looks like a raw textarea.
+### 11. Final CTA Banner
+- Full-width gradient banner (keep existing style)
+- "Ready to put your AI agents to work?"
+- Get Started Free button
 
-**Changes to `src/pages/Index.tsx` (note section)**:
-- Add a small label above ("Notes") with a notepad icon
-- Add `rounded-xl` and subtle `shadow-sm` for card-like appearance
-- Slightly increase padding inside the note area
+### 12. Footer (expanded)
+- Multi-column layout: Product, Resources, Company, Legal
+- Social links
+- Copyright
 
-## 6. Empty States
+## Technical Details
 
-**Current issues**: Empty state (no tasks, no project selected) looks bare.
+### File changes:
+- **`src/pages/LandingPage.tsx`**: Complete rewrite with all 12 sections. The file will grow to approximately 600-800 lines. Each section will be a clearly commented block within the component.
 
-**Changes to `src/pages/Index.tsx`**:
-- For the "no project selected" state: increase logo size, add a subtle tagline, style the text with better hierarchy
-- For "no tasks" empty state: use a more visually appealing illustration-style icon, improve copy styling
+### New CSS additions to `src/index.css`:
+- Marquee animation keyframes for the logo bar
+- A subtle "float" animation for the dashboard mockup in the hero
+- Tab indicator transition styles
 
-## 7. Chat Interface Polish
+### Component approach:
+- Everything stays in `LandingPage.tsx` as inline sections (no new component files needed)
+- CSS mockups of the dashboard/features will be built with Tailwind utility classes and border/shadow tricks rather than actual screenshots
+- All responsive - mobile-first with `md:` and `lg:` breakpoints
 
-**Changes to `src/components/ProjectChat.tsx`**:
-- Add `rounded-xl` to message bubbles with a very subtle background tint for own messages vs others
-- Improve attachment chips with better padding and rounded corners
-- Add smooth entry animation for new messages (CSS `animate-in fade-in slide-in-from-bottom-2`)
-- Style the input bar to match the task input bar improvements (floating, shadow, rounded)
+### Design tokens used:
+- All existing `--marketing-*` CSS variables will be reused
+- The OpenClaw section will use inline dark background colors (no new variables needed)
+- Gradient accents continue using `--marketing-gradient-start/mid/end`
 
-## 8. Stopwatch Widget
-
-**Changes to `src/components/Stopwatch.tsx`**:
-- Add a colored header bar (using timer-active color) similar to the ChronoTask time tracker card
-- Increase overall size slightly for better readability
-- Use `shadow-xl` for more prominent floating feel
-- Add a pulsing dot indicator when timer is running
-
-## 9. Task Detail Sheet
-
-**Changes to `src/components/TaskDetailDialog.tsx`**:
-- Add section dividers (horizontal rules) between Status, Time Log, Notes, and Attachments
-- Style section headers consistently with icon + label
-- Improve note cards with better avatar sizing and spacing
-- Add subtle background tint to attachment rows on hover
-
-## 10. Global CSS Refinements
-
-**Changes to `src/index.css`**:
-- Add a custom scrollbar style (thin, subtle) for webkit browsers
-- Add subtle transition utility class for card hover effects
-- Ensure consistent focus ring styling across all interactive elements
-
----
-
-## Files Changed
-
-| Action | File | Summary |
-|--------|------|---------|
-| Edit | `src/pages/Index.tsx` | Sidebar branding, header polish, tab segmented control, input bar, empty states, note styling |
-| Edit | `src/components/TaskItem.tsx` | Card padding, status badges, left border accent, hover shadow, rounded corners |
-| Edit | `src/components/ProjectChat.tsx` | Message bubble styling, input bar, entry animations |
-| Edit | `src/components/Stopwatch.tsx` | Colored header, shadow, running indicator |
-| Edit | `src/components/TaskDetailDialog.tsx` | Section dividers, consistent headers, spacing |
-| Edit | `src/index.css` | Custom scrollbars, transition utilities |
-
----
-
-## Technical Notes
-
-- No new dependencies needed -- all changes use existing Tailwind classes and shadcn components
-- No database or API changes
-- All changes are purely visual/CSS -- no logic changes
-- The existing component structure is preserved; only className props and minor JSX restructuring
-- The AgntFind logo asset already exists at `src/assets/agntfind-logo.png`
+### No new dependencies required
+- All animations via CSS keyframes and Tailwind
+- Tab switching via React `useState`
+- No external carousel or animation libraries
 
