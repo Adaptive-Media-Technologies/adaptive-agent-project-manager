@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
@@ -42,6 +42,10 @@ const Index = () => {
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
+  const [unreadChat, setUnreadChat] = useState(false);
+  const handleChatNewMessage = useCallback(() => {
+    if (activeTab !== 'chat') setUnreadChat(true);
+  }, [activeTab]);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -240,10 +244,11 @@ const Index = () => {
                   <ListTodo size={14} /> Tasks
                 </button>
                 <button
-                  onClick={() => setActiveTab('chat')}
+                  onClick={() => { setActiveTab('chat'); setUnreadChat(false); }}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}
                 >
                   <MessageSquare size={14} /> Chat
+                  {unreadChat && <span className="h-2 w-2 rounded-full bg-destructive" />}
                 </button>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowDetails(true)} title="Project details">
@@ -252,7 +257,7 @@ const Index = () => {
             </header>
 
             {activeTab === 'chat' ? (
-              <ProjectChat projectId={activeProject.id} />
+              <ProjectChat projectId={activeProject.id} onNewMessage={handleChatNewMessage} />
             ) : (
               <>
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
