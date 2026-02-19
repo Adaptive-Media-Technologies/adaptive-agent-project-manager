@@ -105,10 +105,10 @@ const Index = () => {
   const ProjectButton = ({ id, name, icon }: { id: string; name: string; icon?: React.ReactNode }) => (
     <button
       onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
-      className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-card ${
+      className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] transition-card ${
         id === activeProjectId
-          ? 'bg-accent text-accent-foreground font-semibold border-l-[3px] border-l-primary'
-          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+          ? 'bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-accent-foreground))] font-semibold border-l-[3px] border-l-primary'
+          : 'text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent)/0.6)] hover:text-[hsl(var(--sidebar-foreground))]'
       }`}
     >
       {icon}
@@ -124,12 +124,12 @@ const Index = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-60 shrink-0'} flex flex-col border-r border-border bg-card ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+      <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200' : 'w-60 shrink-0'} flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
         {/* Sidebar header with branding */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-4">
+        <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-4 py-4">
           <div className="flex items-center gap-2.5">
-            <img src={agntfindLogo} alt="AgntFind" className="h-7 w-7 rounded-lg" />
-            <span className="text-sm font-bold text-foreground tracking-tight">AgntFind</span>
+            <img src={agntfindLogo} alt="AgntFind" className="h-7 w-7 rounded-xl" />
+            <span className="text-sm font-bold text-[hsl(var(--sidebar-foreground))] tracking-tight">AgntFind</span>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={() => setShowProfile(true)} title="Profile">
@@ -153,7 +153,7 @@ const Index = () => {
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-start gap-2 text-sm font-medium rounded-lg border-dashed"
+            className="w-full justify-start gap-2 text-sm font-medium rounded-xl border-dashed border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]"
             onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
           >
             <Plus size={14} /> New Project
@@ -164,12 +164,12 @@ const Index = () => {
           {/* Pending Invites */}
           {pendingInvites.length > 0 && (
             <div className="space-y-1.5">
-              <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1">
                 <Mail size={10} /> Invites
               </p>
               {pendingInvites.map(inv => (
-                <div key={inv.id} className="flex items-center justify-between rounded-lg bg-accent px-2.5 py-2">
-                  <span className="text-xs text-foreground truncate flex-1 font-medium">{inv.team?.name}</span>
+                <div key={inv.id} className="flex items-center justify-between rounded-xl bg-[hsl(var(--sidebar-accent))] px-2.5 py-2">
+                  <span className="text-xs text-[hsl(var(--sidebar-foreground))] truncate flex-1 font-medium">{inv.team?.name}</span>
                   <div className="flex gap-1">
                     <button onClick={() => handleAcceptInvite(inv)} className="rounded-md p-1 hover:bg-background transition-colors">
                       <Check size={12} className="text-primary" />
@@ -185,7 +185,7 @@ const Index = () => {
 
           {/* My Projects */}
           <div className="space-y-1">
-            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1">
               <Lock size={10} /> My Projects
             </p>
             {privateProjects.map(p => (
@@ -197,7 +197,7 @@ const Index = () => {
           {teamGroups.map(({ team, projects: teamProjects }) => (
             <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeProjectId)}>
               <div className="space-y-1">
-                <CollapsibleTrigger className="w-full px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1 group cursor-pointer hover:text-foreground transition-colors">
+                <CollapsibleTrigger className="w-full px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-foreground)/0.5)] flex items-center gap-1 group cursor-pointer hover:text-[hsl(var(--sidebar-foreground))] transition-colors">
                   <ChevronRight size={10} className="transition-transform group-data-[state=open]:rotate-90" />
                   <Users size={10} /> {team.name}
                 </CollapsibleTrigger>
@@ -217,7 +217,7 @@ const Index = () => {
                           toast.error(err.message);
                         }
                       }}
-                      className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))] transition-colors"
                     >
                       <Plus size={12} /> New Task
                     </button>
@@ -228,9 +228,9 @@ const Index = () => {
           ))}
         </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="border-t border-[hsl(var(--sidebar-border))] p-3">
           <Link to="/teams">
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs text-muted-foreground rounded-lg">
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs text-[hsl(var(--sidebar-foreground)/0.6)] rounded-xl hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]">
               <Users size={13} /> Manage Teams
             </Button>
           </Link>
