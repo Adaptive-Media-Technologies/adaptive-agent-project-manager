@@ -66,7 +66,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
     <div className="flex flex-1 flex-col min-h-0">
       {/* Messages */}
       <ScrollArea className="flex-1 px-4 md:px-6" ref={scrollRef as any}>
-        <div className="py-4 space-y-3">
+        <div className="py-4 space-y-4">
           {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">No messages yet. Start the conversation!</p>
           )}
@@ -86,17 +86,17 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
 
       {/* Attachment preview strip */}
       {(files.length > 0 || gifUrl) && (
-        <div className="border-t border-border bg-card px-4 md:px-6 py-2 flex flex-wrap gap-2 items-center">
+        <div className="border-t border-border bg-card px-4 md:px-6 py-2.5 flex flex-wrap gap-2 items-center">
           {gifUrl && (
             <div className="relative">
-              <img src={gifUrl} alt="GIF" className="h-16 rounded border border-border" />
-              <button onClick={() => setGifUrl(null)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"><X size={12} /></button>
+              <img src={gifUrl} alt="GIF" className="h-16 rounded-lg border border-border" />
+              <button onClick={() => setGifUrl(null)} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-sm"><X size={12} /></button>
             </div>
           )}
           {files.map((f, i) => (
-            <div key={i} className="flex items-center gap-1.5 rounded bg-accent px-2 py-1 text-xs">
+            <div key={i} className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1.5 text-xs">
               <FileText size={12} className="text-muted-foreground shrink-0" />
-              <span className="truncate max-w-[120px]">{f.name}</span>
+              <span className="truncate max-w-[120px] font-medium">{f.name}</span>
               <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive"><X size={12} /></button>
             </div>
           ))}
@@ -104,17 +104,17 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
       )}
 
       {/* Input bar */}
-      <div className="border-t border-border bg-card px-4 md:px-6 py-3">
-        <div className="flex items-center gap-1">
+      <div className="bg-card px-4 md:px-6 py-3">
+        <div className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-2 shadow-sm">
           <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
           <GifPicker onSelect={url => setGifUrl(url)} />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             title="Attach files"
           >
-            <Paperclip size={18} />
+            <Paperclip size={16} />
           </button>
           <input
             ref={fileInputRef}
@@ -129,11 +129,11 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="text-sm flex-1"
+            className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent"
             disabled={sending}
           />
-          <Button size="icon" variant="ghost" onClick={handleSend} disabled={sending || (!text.trim() && !gifUrl && files.length === 0)}>
-            <Send size={16} />
+          <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0" onClick={handleSend} disabled={sending || (!text.trim() && !gifUrl && files.length === 0)}>
+            <Send size={15} />
           </Button>
         </div>
       </div>
@@ -156,14 +156,14 @@ const MessageBubble = ({
     : '?';
 
   return (
-    <div className="group flex gap-2.5">
+    <div className="group flex gap-3 animate-fade-in-up">
       <Avatar className="h-8 w-8 mt-0.5 shrink-0">
         {msg.profile?.avatar_url && <AvatarImage src={msg.profile.avatar_url} />}
         <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
+      <div className={`flex-1 min-w-0 rounded-xl px-3 py-2 ${isOwn ? 'bg-primary/5' : 'bg-muted/50'}`}>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-foreground">{msg.profile?.display_name || 'User'}</span>
+          <span className="text-[13px] font-semibold text-foreground">{msg.profile?.display_name || 'User'}</span>
           <span className="text-[10px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
           {isOwn && (
             <button
@@ -175,17 +175,17 @@ const MessageBubble = ({
             </button>
           )}
         </div>
-        {msg.content && <p className="text-sm text-foreground whitespace-pre-wrap break-words">{msg.content}</p>}
+        {msg.content && <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{msg.content}</p>}
 
         {/* Attachments */}
         {msg.attachments && msg.attachments.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {msg.attachments.map(att => {
               const url = getAttachmentUrl(att.file_path);
               if (isImage(att.content_type)) {
                 return (
                   <a key={att.id} href={url} target="_blank" rel="noopener noreferrer" className="block">
-                    <img src={url} alt={att.file_name} className="max-h-40 max-w-[240px] rounded border border-border object-cover" loading="lazy" />
+                    <img src={url} alt={att.file_name} className="max-h-40 max-w-[240px] rounded-lg border border-border object-cover" loading="lazy" />
                   </a>
                 );
               }
@@ -195,7 +195,7 @@ const MessageBubble = ({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded bg-accent px-2.5 py-1.5 text-xs hover:bg-accent/80 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-accent/80 px-3 py-2 text-xs font-medium hover:bg-accent transition-colors"
                 >
                   <FileText size={14} className="text-muted-foreground shrink-0" />
                   <span className="truncate max-w-[140px]">{att.file_name}</span>
@@ -209,7 +209,7 @@ const MessageBubble = ({
 
         {/* GIF */}
         {msg.gif_url && (
-          <img src={msg.gif_url} alt="GIF" className="mt-1.5 max-h-48 rounded border border-border" loading="lazy" />
+          <img src={msg.gif_url} alt="GIF" className="mt-2 max-h-48 rounded-lg border border-border" loading="lazy" />
         )}
       </div>
     </div>
