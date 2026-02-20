@@ -446,46 +446,25 @@ const Index = () => {
           ) : activeRailTab === 'chat' ? (
             /* ============ CHAT PANEL ============ */
             <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-              {/* My Projects */}
+              {/* MY CHATS */}
               {privateProjects.length > 0 && (
                 <div className="space-y-0.5">
-                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)] flex items-center gap-1">
-                    <Lock size={10} /> My Projects
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
+                    My Chats
                   </p>
                   {privateProjects.map(p => <ChatProjectRow key={p.id} project={p} />)}
                 </div>
               )}
 
-              {/* Team Channels */}
-              {teamGroups.length > 0 && (
+              {/* TEAM CHATS — flat list, no collapsible */}
+              {teamGroups.some(g => g.projects.length > 0) && (
                 <div className="space-y-0.5">
                   <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
-                    Team Channels
+                    Team Chats
                   </p>
-                  {teamGroups.map(({ team, projects: teamProjects }) => (
-                    <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeChatProjectId)}>
-                      <div className="space-y-0.5">
-                        <CollapsibleTrigger className="w-full px-3 py-1.5 text-[13px] font-semibold text-[hsl(var(--sidebar-panel-foreground)/0.8)] flex items-center gap-2 group cursor-pointer hover:bg-[hsl(var(--sidebar-panel-muted))] rounded-lg transition-colors">
-                          <ChevronRight size={12} className="transition-transform group-data-[state=open]:rotate-90 text-[hsl(var(--sidebar-panel-foreground)/0.4)]" />
-                          <Users size={13} className="text-[hsl(var(--sidebar-panel-active))]" />
-                          <span className="truncate flex-1">{team.name}</span>
-                          {/* Badge showing total unread for this team */}
-                          {teamProjects.some(p => unreadCounts[p.id]) && (
-                            <span className="shrink-0 h-2 w-2 rounded-full bg-destructive" />
-                          )}
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <div className="ml-4 pl-3 border-l border-[hsl(var(--sidebar-panel-border))] space-y-0.5">
-                            {teamProjects.length > 0 ? (
-                              teamProjects.map(p => <ChatProjectRow key={p.id} project={p} />)
-                            ) : (
-                              <p className="px-2 py-1.5 text-xs text-[hsl(var(--sidebar-panel-foreground)/0.35)] italic">No projects yet</p>
-                            )}
-                          </div>
-                        </CollapsibleContent>
-                      </div>
-                    </Collapsible>
-                  ))}
+                  {teamGroups.flatMap(({ projects: teamProjects }) =>
+                    teamProjects.map(p => <ChatProjectRow key={p.id} project={p} />)
+                  )}
                 </div>
               )}
 
