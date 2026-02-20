@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Key, Shield } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Key, Shield, Bot, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BASE_URL = "https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api";
@@ -56,9 +56,10 @@ interface Endpoint {
   response: string;
 }
 
-const endpointGroups: { title: string; endpoints: Endpoint[] }[] = [
+const endpointGroups: { title: string; agentRestricted?: boolean; endpoints: Endpoint[] }[] = [
   {
     title: "API Keys",
+    agentRestricted: true,
     endpoints: [
       {
         method: "GET",
@@ -86,6 +87,7 @@ const endpointGroups: { title: string; endpoints: Endpoint[] }[] = [
   },
   {
     title: "Teams",
+    agentRestricted: true,
     endpoints: [
       {
         method: "GET",
@@ -210,6 +212,27 @@ const endpointGroups: { title: string; endpoints: Endpoint[] }[] = [
     ],
   },
   {
+    title: "Chat",
+    endpoints: [
+      {
+        method: "GET",
+        path: "/chat",
+        description: "List the 50 most recent messages for a project (newest first).",
+        queryParams: "project_id (required)",
+        curl: `curl -H "x-api-key: ak_xxx" \\\n  "${BASE_URL}/chat?project_id=<project-id>"`,
+        response: `[{ "id": "uuid", "project_id": "uuid", "user_id": "uuid", "content": "Task completed ✓", "created_at": "..." }]`,
+      },
+      {
+        method: "POST",
+        path: "/chat",
+        description: "Send a message to a project's chat channel.",
+        body: `{ "project_id": "uuid", "content": "Deployment finished successfully" }`,
+        curl: `curl -X POST -H "x-api-key: ak_xxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{"project_id":"uuid","content":"Deployment finished successfully"}' \\\n  ${BASE_URL}/chat`,
+        response: `{ "id": "uuid", "project_id": "uuid", "user_id": "uuid", "content": "Deployment finished successfully", "created_at": "..." }`,
+      },
+    ],
+  },
+  {
     title: "Time Entries",
     endpoints: [
       {
@@ -268,6 +291,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
   );
 }
 
+
 export default function Docs() {
   return (
     <div className="min-h-screen bg-background">
@@ -301,15 +325,24 @@ export default function Docs() {
           </div>
           <Card>
             <CardContent className="pt-6 space-y-4">
+              <p className="text-sm font-medium text-foreground">For human users (full access):</p>
               <ol className="list-decimal list-inside space-y-3 text-sm text-foreground">
-                <li><strong>Sign up</strong> — Create a user account (email/password via the app or Supabase auth).</li>
-                <li><strong>Join a team</strong> — Get invited to a team by an existing team owner.</li>
-                <li><strong>Generate an API key</strong> — Use a JWT or existing key to call <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">POST /keys</code>. Save the returned key — it's shown only once.</li>
+                <li><strong>Sign up</strong> — Create a user account (email/password via the app).</li>
+                <li><strong>Generate an API key</strong> — Call <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">POST /keys</code> with a JWT. Save the returned key — it's shown only once.</li>
                 <li><strong>Make your first call:</strong></li>
               </ol>
-              <CodeBlock
-                code={`curl -H "x-api-key: ak_YOUR_KEY" \\\n  ${BASE_URL}/projects`}
-              />
+              <CodeBlock code={`curl -H "x-api-key: ak_YOUR_KEY" \\\n  ${BASE_URL}/projects`} />
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-primary" />
+                  For AI agents (project-scoped):
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+                  <li>A human user <strong>creates an agent</strong> from the Agents panel in the app.</li>
+                  <li>The agent receives a <strong>project-scoped API key</strong> — it can only access one project.</li>
+                  <li>Use that key with any task, note, or chat endpoint below.</li>
+                </ol>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -321,15 +354,25 @@ export default function Docs() {
             <h2 className="text-xl font-semibold text-foreground">Authentication</h2>
           </div>
           <Card>
-            <CardContent className="pt-6 space-y-3 text-sm">
+            <CardContent className="pt-6 space-y-4 text-sm">
               <p>Every request must include one of:</p>
               <ul className="list-disc list-inside space-y-1.5 text-foreground">
                 <li><code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">x-api-key: ak_xxx</code> — API key header (recommended for agents)</li>
                 <li><code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">Authorization: Bearer &lt;jwt&gt;</code> — Supabase JWT token</li>
               </ul>
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 flex gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">Two key types, different scopes</p>
+                  <p className="text-muted-foreground">
+                    <strong className="text-foreground">User keys</strong> (from <code className="font-mono bg-muted px-1 rounded text-xs">POST /keys</code>) have full access to all your teams and projects.
+                    <br />
+                    <strong className="text-foreground">Agent keys</strong> (generated in the Agents panel) are <em>project-scoped</em> — they can only read/write data within the single assigned project, and cannot manage API keys, teams, or create new projects.
+                  </p>
+                </div>
+              </div>
               <p className="text-muted-foreground">
-                API keys are scoped to the user who created them. The key inherits all team memberships and project access of that user.
-                Keys are hashed server-side — the raw key is returned only once at creation.
+                All keys are hashed (SHA-256) server-side — the raw key is returned only once at creation.
               </p>
             </CardContent>
           </Card>
@@ -341,7 +384,15 @@ export default function Docs() {
           <div className="space-y-8">
             {endpointGroups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-lg font-medium text-foreground mb-3">{group.title}</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-lg font-medium text-foreground">{group.title}</h3>
+                  {group.agentRestricted && (
+                    <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                      <Bot className="h-3 w-3" />
+                      user keys only
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {group.endpoints.map((ep, i) => (
                     <EndpointCard key={`${ep.method}-${ep.path}-${i}`} endpoint={ep} />
