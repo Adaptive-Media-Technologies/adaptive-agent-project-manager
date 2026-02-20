@@ -236,6 +236,39 @@ export type Database = {
         }
         Relationships: []
       }
+      project_last_read: {
+        Row: {
+          last_read_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          last_read_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_last_read_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_last_read_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_messages: {
         Row: {
           content: string
