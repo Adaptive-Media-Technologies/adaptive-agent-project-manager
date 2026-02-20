@@ -522,14 +522,14 @@ const Index = () => {
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 flex-col min-w-0">
+      <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
         {activeRailTab === 'calendar' ? (
           <CalendarView />
 
         ) : activeRailTab === 'chat' ? (
           /* ============ FULL-SCREEN CHAT MAIN AREA ============ */
           activeChatProject ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-hidden">
               {/* Chat header */}
               <header className="flex items-center gap-3 border-b border-border bg-card px-4 md:px-6 py-3 shrink-0">
                 {isMobile && (
@@ -550,7 +550,7 @@ const Index = () => {
                   </div>
                 </div>
               </header>
-              <div className="flex-1 min-h-0">
+              <div className="flex flex-1 flex-col min-h-0">
                 <ProjectChat projectId={activeChatProject.id} onNewMessage={handleChatNewMessage} />
               </div>
             </div>

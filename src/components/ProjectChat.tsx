@@ -6,10 +6,10 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import EmojiPicker from '@/components/EmojiPicker';
-import GifPicker from '@/components/GifPicker';
 import { Send, Paperclip, X, Download, Trash2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+// GifPicker removed — GIPHY public key was rate-limited
 
 interface ProjectChatProps {
   projectId: string;
@@ -27,7 +27,6 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const { user } = useAuth();
   const { messages, loading, sendMessage, deleteMessage, getAttachmentUrl, scrollRef } = useProjectChat(projectId, onNewMessage);
   const [text, setText] = useState('');
-  const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,11 +111,11 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   };
 
   const handleSend = async () => {
-    if (!text.trim() && !gifUrl && files.length === 0) return;
+    if (!text.trim() && files.length === 0) return;
     setSending(true);
     try {
       const content = text.trim();
-      await sendMessage(content, gifUrl || undefined, files.length > 0 ? files : undefined);
+      await sendMessage(content, undefined, files.length > 0 ? files : undefined);
 
       // Create notifications for @mentions
       if (content && user) {
@@ -142,7 +141,6 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
       }
 
       setText('');
-      setGifUrl(null);
       setFiles([]);
     } catch (err: any) {
       toast.error(err.message || 'Failed to send');
@@ -216,14 +214,8 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
       </ScrollArea>
 
       {/* Attachment preview strip */}
-      {(files.length > 0 || gifUrl) && (
+      {files.length > 0 && (
         <div className="border-t border-border bg-card px-4 md:px-6 py-2.5 flex flex-wrap gap-2 items-center">
-          {gifUrl && (
-            <div className="relative">
-              <img src={gifUrl} alt="GIF" className="h-16 rounded-lg border border-border" />
-              <button onClick={() => setGifUrl(null)} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-sm"><X size={12} /></button>
-            </div>
-          )}
           {files.map((f, i) => (
             <div key={i} className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1.5 text-xs">
               <FileText size={12} className="text-muted-foreground shrink-0" />
@@ -265,7 +257,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
 
         <div className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-2 shadow-sm">
           <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
-          <GifPicker onSelect={url => setGifUrl(url)} />
+          
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -290,7 +282,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
             className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2.5 text-foreground placeholder:text-muted-foreground"
             disabled={sending}
           />
-          <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0" onClick={handleSend} disabled={sending || (!text.trim() && !gifUrl && files.length === 0)}>
+          <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0" onClick={handleSend} disabled={sending || (!text.trim() && files.length === 0)}>
             <Send size={15} />
           </Button>
         </div>
