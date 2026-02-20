@@ -7,6 +7,7 @@ import { useProjectNotes, NOTE_COLORS, getNoteClasses, getNoteColorConfig } from
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
 import { useAgents, type Agent } from '@/hooks/useAgents';
+import { useUnreadCounts } from '@/hooks/useUnreadCounts';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +54,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Project } from '@/hooks/useTasks';
-import type { ChatMessage } from '@/hooks/useProjectChat';
+
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -88,37 +89,23 @@ const Index = () => {
 
   // Chat state
   const [activeChatProjectId, setActiveChatProjectId] = useState<string | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+  const projectIds = projects.map(p => p.id);
+  const { counts: unreadCounts, totalUnread, markRead } = useUnreadCounts(projectIds);
 
   // When entering chat rail, auto-select first project if none selected
   useEffect(() => {
     if (activeRailTab === 'chat' && !activeChatProjectId && projects.length > 0) {
-      setActiveChatProjectId(projects[0].id);
+      const firstId = projects[0].id;
+      setActiveChatProjectId(firstId);
+      markRead(firstId);
     }
-  }, [activeRailTab, activeChatProjectId, projects]);
-
-  const handleChatNewMessage = useCallback((msg: ChatMessage) => {
-    const pid = msg.project_id;
-    // Only increment unread if not currently viewing this project's chat
-    setActiveChatProjectId(current => {
-      if (current !== pid) {
-        setUnreadCounts(prev => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));
-      }
-      return current;
-    });
-  }, []);
+  }, [activeRailTab, activeChatProjectId, projects, markRead]);
 
   const selectChatProject = useCallback((projectId: string) => {
     setActiveChatProjectId(projectId);
-    setUnreadCounts(prev => {
-      if (!prev[projectId]) return prev;
-      const next = { ...prev };
-      delete next[projectId];
-      return next;
-    });
+    markRead(projectId);
     if (isMobile) setSidebarOpen(false);
-  }, [isMobile]);
+  }, [isMobile, markRead]);
 
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -605,7 +592,7 @@ const Index = () => {
                 </div>
               </header>
               <div className="flex flex-1 flex-col min-h-0">
-                <ProjectChat projectId={activeChatProject.id} onNewMessage={handleChatNewMessage} />
+                <ProjectChat projectId={activeChatProject.id} />
               </div>
             </div>
           ) : (
