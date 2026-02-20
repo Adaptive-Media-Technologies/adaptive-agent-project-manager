@@ -6,14 +6,14 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProjectNotes, NOTE_COLORS, getNoteClasses, getNoteColorConfig } from '@/hooks/useProjectNotes';
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
-import { Navigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, LayoutGrid, FolderOpen, Bot, CalendarDays } from 'lucide-react';
+import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot, CalendarDays, GripVertical } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -24,11 +24,28 @@ import { format } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { Project } from '@/hooks/useTasks';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
-  const { projects, loading: projLoading, create: createProject, rename: renameProject, refresh: refreshProjects } = useProjects();
+  const { projects, loading: projLoading, create: createProject, rename: renameProject, reorderProjects, refresh: refreshProjects } = useProjects();
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -50,6 +67,10 @@ const Index = () => {
   const handleChatNewMessage = useCallback(() => {
     if (activeTab !== 'chat') setUnreadChat(true);
   }, [activeTab]);
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><p className="text-muted-foreground">Loading...</p></div>;
   if (!user) return <LandingPage />;
@@ -105,19 +126,47 @@ const Index = () => {
   const doingCount = tasks.filter(t => t.status === 'in_progress').length;
   const doneCount = tasks.filter(t => t.status === 'complete').length;
 
-  const ProjectButton = ({ id, name, icon }: { id: string; name: string; icon?: React.ReactNode }) => (
-    <button
-      onClick={() => { setActiveProjectId(id); if (isMobile) setSidebarOpen(false); }}
-      className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-[13px] transition-card ${
-        id === activeProjectId
-          ? 'bg-[hsl(var(--sidebar-panel-active-bg))] text-[hsl(var(--sidebar-panel-active))] font-semibold border border-[hsl(var(--sidebar-panel-active)/0.4)]'
-          : 'text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))]'
-      }`}
-    >
-      {icon || <FolderOpen size={14} className="shrink-0 opacity-50" />}
-      <span className="truncate flex-1">{name}</span>
-    </button>
-  );
+  const SortableProjectButton = ({ project }: { project: Project }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: project.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.4 : 1,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} className="group flex items-center gap-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="shrink-0 cursor-grab text-[hsl(var(--sidebar-panel-foreground)/0.2)] opacity-0 group-hover:opacity-100 transition-opacity active:cursor-grabbing px-0.5"
+          title="Drag to reorder"
+        >
+          <GripVertical size={12} />
+        </button>
+        <button
+          onClick={() => { setActiveProjectId(project.id); if (isMobile) setSidebarOpen(false); }}
+          className={`flex-1 flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-card min-w-0 ${
+            project.id === activeProjectId
+              ? 'bg-[hsl(var(--sidebar-panel-active-bg))] text-[hsl(var(--sidebar-panel-active))] font-semibold border border-[hsl(var(--sidebar-panel-active)/0.4)]'
+              : 'text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))]'
+          }`}
+        >
+          <FolderOpen size={14} className="shrink-0 opacity-50" />
+          <span className="truncate flex-1">{project.name}</span>
+        </button>
+      </div>
+    );
+  };
+
 
   const railItems = [
     { key: 'home' as const, icon: Home, label: 'Home' },
@@ -232,17 +281,31 @@ const Index = () => {
                 </div>
               )}
 
-              {/* My Projects */}
+              {/* My Projects — sortable */}
               <div className="space-y-0.5">
                 <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)] flex items-center gap-1">
                   <Lock size={10} /> My Projects
                 </p>
-                {privateProjects.map(p => (
-                  <ProjectButton key={p.id} id={p.id} name={p.name} />
-                ))}
+                <DndContext
+                  sensors={dndSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event: DragEndEvent) => {
+                    const { active, over } = event;
+                    if (!over || active.id === over.id) return;
+                    const from = privateProjects.findIndex(p => p.id === active.id);
+                    const to = privateProjects.findIndex(p => p.id === over.id);
+                    if (from !== -1 && to !== -1) reorderProjects(privateProjects, from, to);
+                  }}
+                >
+                  <SortableContext items={privateProjects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                    {privateProjects.map(p => (
+                      <SortableProjectButton key={p.id} project={p} />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
 
-              {/* Team Projects (Spaces) */}
+              {/* Team Projects (Spaces) — sortable per team */}
               {teamGroups.length > 0 && (
                 <div className="space-y-0.5">
                   <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
@@ -259,9 +322,23 @@ const Index = () => {
                         <CollapsibleContent>
                           <div className="ml-4 pl-3 border-l border-[hsl(var(--sidebar-panel-border))] space-y-0.5">
                             {teamProjects.length > 0 ? (
-                              teamProjects.map(p => (
-                                <ProjectButton key={p.id} id={p.id} name={p.name} />
-                              ))
+                              <DndContext
+                                sensors={dndSensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(event: DragEndEvent) => {
+                                  const { active, over } = event;
+                                  if (!over || active.id === over.id) return;
+                                  const from = teamProjects.findIndex(p => p.id === active.id);
+                                  const to = teamProjects.findIndex(p => p.id === over.id);
+                                  if (from !== -1 && to !== -1) reorderProjects(teamProjects, from, to);
+                                }}
+                              >
+                                <SortableContext items={teamProjects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                                  {teamProjects.map(p => (
+                                    <SortableProjectButton key={p.id} project={p} />
+                                  ))}
+                                </SortableContext>
+                              </DndContext>
                             ) : (
                               <button
                                 onClick={async () => {

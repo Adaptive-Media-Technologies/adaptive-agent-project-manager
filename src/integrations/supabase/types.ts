@@ -264,6 +264,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          position: number
           team_id: string | null
           type: string
         }
@@ -272,6 +273,7 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
+          position?: number
           team_id?: string | null
           type?: string
         }
@@ -280,6 +282,7 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          position?: number
           team_id?: string | null
           type?: string
         }

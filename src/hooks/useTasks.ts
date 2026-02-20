@@ -20,6 +20,7 @@ export type Project = {
   type: 'private' | 'team';
   team_id: string | null;
   created_at: string;
+  position: number;
 };
 
 export const useProjects = () => {
@@ -29,7 +30,7 @@ export const useProjects = () => {
 
   const fetch = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from('projects').select('*').order('created_at');
+    const { data } = await supabase.from('projects').select('*').order('position').order('created_at');
     setProjects((data as Project[]) || []);
     setLoading(false);
   }, [user]);
@@ -38,7 +39,10 @@ export const useProjects = () => {
 
   const create = async (name: string, type: 'private' | 'team' = 'private', teamId?: string) => {
     if (!user) return;
-    const insert: any = { name, owner_id: user.id, type };
+    // Determine position as max existing position + 1 within group
+    const group = projects.filter(p => type === 'team' ? p.team_id === teamId : p.type === 'private');
+    const position = group.length;
+    const insert: any = { name, owner_id: user.id, type, position };
     if (type === 'team' && teamId) insert.team_id = teamId;
     const { data, error } = await supabase.from('projects').insert(insert).select().single();
     if (error) throw error;
@@ -52,7 +56,20 @@ export const useProjects = () => {
     setProjects(p => p.map(pp => pp.id === id ? { ...pp, name: newName } : pp));
   };
 
-  return { projects, loading, create, rename, refresh: fetch };
+  const reorderProjects = async (groupProjects: Project[], fromIndex: number, toIndex: number) => {
+    const updated = [...groupProjects];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    const reordered = updated.map((p, i) => ({ ...p, position: i }));
+    // Optimistic update
+    setProjects(prev => {
+      const ids = new Set(reordered.map(p => p.id));
+      return [...prev.filter(p => !ids.has(p.id)), ...reordered].sort((a, b) => a.position - b.position);
+    });
+    await Promise.all(reordered.map(p => supabase.from('projects').update({ position: p.position }).eq('id', p.id)));
+  };
+
+  return { projects, loading, create, rename, reorderProjects, refresh: fetch };
 };
 
 export const useTasks = (projectId: string | null) => {
