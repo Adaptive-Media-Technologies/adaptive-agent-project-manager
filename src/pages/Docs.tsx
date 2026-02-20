@@ -308,11 +308,17 @@ export default function Docs() {
       <main className="container max-w-4xl py-8 space-y-10">
         {/* Base URL */}
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-3">
             <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Base URL</h3>
             <div className="flex items-center gap-2 bg-muted rounded-md px-4 py-2.5 font-mono text-sm">
               <span className="truncate">{BASE_URL}</span>
               <CopyButton text={BASE_URL} />
+            </div>
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 flex gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground">
+                <strong>Do not use <code className="font-mono bg-muted px-1 rounded text-xs">api.agntive.ai</code></strong> — that points to the web app and returns HTML, not JSON. Always use the Supabase edge function URL above.
+              </p>
             </div>
           </CardContent>
         </Card>
