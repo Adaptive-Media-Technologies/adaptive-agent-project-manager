@@ -1,111 +1,116 @@
 
-# Agntive.ai Landing Page Overhaul
+# Chat UI/UX Overhaul — Slack-Style Navigation
 
-## Overview
+## Current Problem
 
-Transform the current short landing page into a long-form, high-converting homepage inspired by ClickUp's structure, with AI agent task management as the unique differentiator and a dedicated OpenClaw integration section.
+Chat is deeply hidden: users must first pick a project in the sidebar, then switch to the "Chat" tab in the top header. There's no way to see chat activity across projects at a glance, and no unread indicators visible until you're already inside a project.
 
-## Current State
+## Proposed Solution
 
-The existing `LandingPage.tsx` has 5 sections: Nav, Hero, 6-card Features grid, 3-step How It Works, and a CTA banner. It's ~200 lines and feels like a template rather than a product homepage.
+Bring **Chat** up as a first-class icon in the icon rail (Level 1 sidebar), then use the Level 2 content panel to list all projects that have chats — similar to Slack's channel list. Clicking a project in the chat panel opens the full-screen chat in the main area.
 
-## New Page Structure (12 sections)
+---
 
-### 1. Sticky Nav (enhanced)
-- Add more nav links: Features, Integrations, How It Works, Pricing
-- Add an announcement bar at the very top (e.g. "NEW: OpenClaw Integration - Give your AI agents a project manager")
+## New Navigation Structure
 
-### 2. Hero (rewritten)
-- Bold headline: "The project manager your AI agents actually need"
-- Sub-headline emphasizing the unique angle: humans and AI agents working side-by-side with full visibility
-- Animated gradient text for the key phrase
-- Two CTAs: "Get Started Free" + "Watch Demo" (ghost button)
-- Below the CTA: a mock screenshot/illustration of the app dashboard built with CSS (showing the sidebar, task list, and an agent avatar completing a task)
+```text
+Icon Rail (Level 1)      Content Panel (Level 2)        Main Area
+┌──────────────┐         ┌────────────────────────┐     ┌──────────────────────────┐
+│  🏠 Home     │         │ DIRECT MESSAGES        │     │                          │
+│  💬 Chat  ←  │ active  │  • My Projects         │     │  [Project Name] Chat     │
+│  📅 Calendar │         │    ○ Project Alpha  🔴2 │────▶│  ┌──────────────────┐   │
+│  👥 Teams    │         │    ○ Project Beta       │     │  │ message bubbles  │   │
+│  🤖 Agents   │         │ TEAM CHANNELS          │     │  │ ...              │   │
+│              │         │  ▸ Team Orion           │     │  └──────────────────┘   │
+│  ⚙ Settings  │         │    ○ #dev-ops      🔴1 │     │  [input bar]             │
+│  👤 Avatar   │         │    ○ #marketing         │     │                          │
+└──────────────┘         └────────────────────────┘     └──────────────────────────┘
+```
 
-### 3. Logo Bar / Social Proof
-- "Trusted by AI-first teams" with placeholder company logos or community stats
-- Subtle auto-scrolling marquee effect
+---
 
-### 4. Problem Statement Section
-- "Your AI agents are working in the dark" - a bold callout section
-- Three pain points shown as cards: No visibility into agent activity, Token costs spiraling without tracking, No way to coordinate humans + agents
-- Uses alternating icon + text layout
+## Detailed Changes
 
-### 5. Feature Showcase (tabbed/interactive)
-- Replace the static grid with a tabbed section inspired by ClickUp's feature tabs
-- Tabs: Task Management, Agent Tracking, Time & Token Logs, Team Chat, Calendar, API & Automations
-- Each tab shows a headline, description, and a CSS-illustrated mockup of that feature
-- The active tab highlights with the purple gradient
+### 1. Add "Chat" to the Icon Rail
+- Insert a `MessageSquare` icon between Home and Calendar in `railItems`
+- Show a red badge on the rail icon with the **total unread count** across all projects
+- Rail key: `'chat'`
 
-### 6. OpenClaw Integration Section (NEW - dedicated)
-- Full-width section with a dark background (matching OpenClaw's dark aesthetic)
-- OpenClaw logo + "Powered by OpenClaw" badge
-- Headline: "Give OpenClaw a command center"
-- Description: OpenClaw agents connect to Agntive via API, automatically logging tasks, tracking token usage, and reporting status in real-time
-- Three integration highlights:
-  - "Assign tasks from chat" - OpenClaw picks up tasks and updates status
-  - "Automatic token tracking" - Every API call logged and attributed
-  - "Real-time status updates" - See your agents working live in the dashboard
-- CTA: "Connect OpenClaw" button + link to docs
+### 2. Chat Content Panel (Level 2 when `activeRailTab === 'chat'`)
+Replace the blank panel with a Slack-style channel/project list:
 
-### 7. How It Works (expanded to 4 steps)
-- Step 1: Create your workspace
-- Step 2: Connect your AI agents (OpenClaw, custom agents via API)
-- Step 3: Assign tasks and track progress
-- Step 4: Ship faster with human + AI collaboration
-- Each step with a numbered badge and brief description
-- Connected by a vertical line/timeline on desktop
+**Section: My Projects**
+- List all private projects
+- Show an unread dot/badge next to any with new messages
+- Clicking a project sets `activeChatProjectId` and opens full chat in main
 
-### 8. AI Agent Management Deep-Dive
-- "A new era of human + agent collaboration" (inspired by ClickUp's "Super Agents" section)
-- Three illustrated use-cases:
-  - Code Agent: auto-creates PRs, updates task status, logs time
-  - Research Agent: gathers data, summarizes findings, attaches to tasks
-  - Ops Agent: monitors deployments, creates incident tasks, notifies team
-- Each with a mini card showing the agent type and what it does
+**Section: Team Channels** (grouped by team, collapsible like current sidebar)
+- List each team's projects as "channels"
+- Show team name as a group header
+- Unread badges per project
 
-### 9. Stats / Impact Section
-- Large numbers in gradient text:
-  - "10x faster task completion with AI agents"
-  - "Zero token waste with usage tracking"
-  - "100% visibility across human + AI work"
+**Visual style:** mirrors the existing sidebar panel — same font sizes, hover states, active highlight, and collapsible team groups.
 
-### 10. Testimonials / Social Proof
-- Quote cards from hypothetical users (placeholder content)
-- Similar layout to OpenClaw's testimonial wall but with 3-4 featured quotes
+### 3. New `activeChatProjectId` State
+- A new `useState<string | null>('activeChatProjectId')` tracks which project's chat is open when `activeRailTab === 'chat'`
+- Separate from `activeProjectId` (the tasks view) so switching to chat doesn't disrupt your tasks context
+- On first entering Chat rail, auto-select the most recently active project
 
-### 11. Final CTA Banner
-- Full-width gradient banner (keep existing style)
-- "Ready to put your AI agents to work?"
-- Get Started Free button
+### 4. Main Area — Full-Screen Chat View
+When `activeRailTab === 'chat'`:
+- Show a full-height chat panel with a proper header showing the project name and type badge
+- Remove the tab switcher (Tasks / Chat) — it's now only in the Tasks context
+- The existing `<ProjectChat>` component renders here unchanged
+- Show an empty state if no `activeChatProjectId` is selected ("Select a project to start chatting")
 
-### 12. Footer (expanded)
-- Multi-column layout: Product, Resources, Company, Legal
-- Social links
-- Copyright
+### 5. Unread Tracking Improvements
+- Extend the existing `unreadChat` boolean into a `Map<string, number>` — `unreadCounts: Map<string, number>`
+- Increment count when a new message arrives for a project that isn't currently open in chat view
+- Clear count when a project is selected in the chat panel
+- The rail icon badge shows `Object.values(unreadCounts).reduce((a,b) => a+b, 0)`
+- Small red dot/number badge appears next to each project name in the content panel
 
-## Technical Details
+### 6. Remove the In-Project Tab Switcher (simplification)
+- The current Tasks/Chat tab switcher in the project header becomes **Tasks only**
+- Chat is accessed exclusively via the Chat rail icon
+- This declutters the project header and makes Chat feel like its own first-class space
 
-### File changes:
-- **`src/pages/LandingPage.tsx`**: Complete rewrite with all 12 sections. The file will grow to approximately 600-800 lines. Each section will be a clearly commented block within the component.
+---
 
-### New CSS additions to `src/index.css`:
-- Marquee animation keyframes for the logo bar
-- A subtle "float" animation for the dashboard mockup in the hero
-- Tab indicator transition styles
+## Technical Implementation
 
-### Component approach:
-- Everything stays in `LandingPage.tsx` as inline sections (no new component files needed)
-- CSS mockups of the dashboard/features will be built with Tailwind utility classes and border/shadow tricks rather than actual screenshots
-- All responsive - mobile-first with `md:` and `lg:` breakpoints
+### Files to modify:
 
-### Design tokens used:
-- All existing `--marketing-*` CSS variables will be reused
-- The OpenClaw section will use inline dark background colors (no new variables needed)
-- Gradient accents continue using `--marketing-gradient-start/mid/end`
+**`src/pages/Index.tsx`** — main changes:
+1. Add `'chat'` to `railItems` array with `MessageSquare` icon
+2. Add `activeChatProjectId` state (`useState<string | null>(null)`)
+3. Add `unreadCounts` state (`useState<Record<string, number>>({})`)
+4. Update `handleChatNewMessage` to accept a `projectId` param and increment the correct counter
+5. Add the chat content panel section (`activeRailTab === 'chat'`) to Level 2 sidebar — project list with unread badges
+6. Add the full-screen chat main area when `activeRailTab === 'chat'`
+7. Remove the Tasks/Chat tab switcher from the project header (keep only Tasks view)
+8. Remove the `activeTab` and `unreadChat` state (replaced by new system)
+9. Add the total unread badge on the Chat rail icon
 
-### No new dependencies required
-- All animations via CSS keyframes and Tailwind
-- Tab switching via React `useState`
-- No external carousel or animation libraries
+**No new files, no new dependencies** — the existing `<ProjectChat>` component is reused as-is.
 
+---
+
+## Visual Design Details
+
+- **Unread badge on rail icon**: small red circle with number (or just a dot if ≤ 0), positioned top-right of the `MessageSquare` icon, using `absolute` positioning within a `relative` wrapper
+- **Project rows in chat panel**: same 13px text, `FolderOpen` icon, active highlight with the purple `--sidebar-panel-active` variable; unread counts shown as a small `bg-destructive text-white rounded-full px-1.5 text-[10px]` chip on the right
+- **Chat main area header**: mirrors the existing project header style with the project name, type badge, and a "Members" count — but no tab switcher
+- **Empty state**: centered illustration with `MessageSquare` icon and "Select a project to chat" prompt
+
+---
+
+## Before vs After
+
+| Aspect | Before | After |
+|---|---|---|
+| Accessing chat | Project → Tab switch | Chat icon in rail |
+| Seeing all project chats | Not possible | Channel list in panel |
+| Unread visibility | Only when inside a project | Badge on rail icon + per-project |
+| Navigation depth | 3 clicks minimum | 2 clicks maximum |
+| Full-screen chat | No (split with tasks header) | Yes, dedicated full-height view |
