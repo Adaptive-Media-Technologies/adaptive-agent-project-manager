@@ -6,9 +6,11 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProjectNotes, NOTE_COLORS, getNoteClasses, getNoteColorConfig } from '@/hooks/useProjectNotes';
 import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
+import { useAgents, type Agent } from '@/hooks/useAgents';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
@@ -16,7 +18,7 @@ import CreateProjectDialog from '@/components/CreateProjectDialog';
 import {
   Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban,
   Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot,
-  CalendarDays, GripVertical, Hash,
+  CalendarDays, GripVertical, Hash, Trash2, Copy, Key,
 } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,6 +26,12 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
@@ -58,6 +66,7 @@ const Index = () => {
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
+  const { agents, loading: agentsLoading, createAgent, deleteAgent } = useAgents();
   const [newTask, setNewTask] = useState('');
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -67,6 +76,15 @@ const Index = () => {
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeRailTab, setActiveRailTab] = useState<'home' | 'chat' | 'teams' | 'agents' | 'calendar' | 'settings'>('home');
+
+  // Agent dialog state
+  const [showAddAgent, setShowAddAgent] = useState(false);
+  const [agentName, setAgentName] = useState('');
+  const [agentEmail, setAgentEmail] = useState('');
+  const [agentProjectId, setAgentProjectId] = useState('');
+  const [agentCreating, setAgentCreating] = useState(false);
+  const [newKeyModal, setNewKeyModal] = useState<{ agent: Agent; rawKey: string } | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // Chat state
   const [activeChatProjectId, setActiveChatProjectId] = useState<string | null>(null);
@@ -318,11 +336,20 @@ const Index = () => {
               {panelTitle}
             </span>
             <div className="flex items-center gap-1">
-              {activeRailTab !== 'chat' && (
+              {activeRailTab !== 'chat' && activeRailTab !== 'agents' && (
                 <button
                   onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
                   className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
                   title="New Project"
+                >
+                  <Plus size={15} />
+                </button>
+              )}
+              {activeRailTab === 'agents' && (
+                <button
+                  onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectId(''); }}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
+                  title="Add Agent"
                 >
                   <Plus size={15} />
                 </button>
@@ -493,19 +520,46 @@ const Index = () => {
               </Link>
             </nav>
           ) : activeRailTab === 'agents' ? (
-            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-              <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--sidebar-panel-muted))]">
-                  <Bot size={24} className="text-[hsl(var(--sidebar-panel-active))]" />
+            <nav className="flex-1 overflow-y-auto p-3 space-y-2">
+              {agentsLoading ? (
+                <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.4)] px-2 py-4 text-center">Loading agents...</p>
+              ) : agents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center space-y-3 px-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--sidebar-panel-muted))]">
+                    <Bot size={20} className="text-[hsl(var(--sidebar-panel-active))]" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[hsl(var(--sidebar-panel-foreground))]">No agents yet</p>
+                    <p className="text-[11px] text-[hsl(var(--sidebar-panel-foreground)/0.45)] mt-0.5">Click + to add your first agent</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[hsl(var(--sidebar-panel-foreground))]">AI Agents</p>
-                  <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)] mt-1">Coming Soon</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {agents.map(agent => {
+                    const agentProject = projects.find(p => p.id === agent.project_id);
+                    const isSelected = selectedAgent?.id === agent.id;
+                    return (
+                      <button
+                        key={agent.id}
+                        onClick={() => setSelectedAgent(isSelected ? null : agent)}
+                        className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-2 text-left text-[13px] transition-colors min-w-0 group ${
+                          isSelected
+                            ? 'bg-[hsl(var(--sidebar-panel-active-bg))] text-[hsl(var(--sidebar-panel-active))] border border-[hsl(var(--sidebar-panel-active)/0.4)]'
+                            : 'text-[hsl(var(--sidebar-panel-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))]'
+                        }`}
+                      >
+                        <Bot size={14} className="shrink-0 opacity-60" />
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-[13px] font-medium leading-tight">{agent.display_name}</p>
+                          {agentProject && (
+                            <p className="text-[10px] opacity-50 truncate">{agentProject.name}</p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                <span className="inline-flex items-center rounded-full bg-[hsl(var(--sidebar-panel-active)/0.1)] px-2.5 py-0.5 text-[10px] font-semibold text-[hsl(var(--sidebar-panel-active))]">
-                  Coming Soon
-                </span>
-              </div>
+              )}
             </nav>
           ) : (
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -569,6 +623,109 @@ const Index = () => {
                 <p className="text-lg font-semibold text-foreground">Select a project to chat</p>
                 <p className="text-sm text-muted-foreground">Choose a project from the sidebar to open its chat</p>
               </div>
+            </div>
+          )
+
+        ) : activeRailTab === 'agents' ? (
+          /* ============ AGENTS MAIN AREA ============ */
+          selectedAgent ? (() => {
+            const agentProject = projects.find(p => p.id === selectedAgent.project_id);
+            const supabaseProjectUrl = `https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api`;
+            const snippet = `curl -X GET "${supabaseProjectUrl}/tasks?project_id=${selectedAgent.project_id}" \\
+  -H "x-api-key: ${selectedAgent.key_prefix}..."
+
+curl -X POST "${supabaseProjectUrl}/tasks" \\
+  -H "x-api-key: ${selectedAgent.key_prefix}..." \\
+  -H "Content-Type: application/json" \\
+  -d '{"project_id":"${selectedAgent.project_id}","title":"New task"}'
+
+curl -X POST "${supabaseProjectUrl}/chat" \\
+  -H "x-api-key: ${selectedAgent.key_prefix}..." \\
+  -H "Content-Type: application/json" \\
+  -d '{"project_id":"${selectedAgent.project_id}","content":"Hello from agent"}'`;
+            return (
+              <div className="flex-1 overflow-y-auto px-6 py-8 max-w-2xl mx-auto w-full space-y-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--sidebar-panel-active)/0.1)]">
+                      <Bot size={24} className="text-[hsl(var(--sidebar-panel-active))]" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground">{selectedAgent.display_name}</h2>
+                      {selectedAgent.email && <p className="text-sm text-muted-foreground">{selectedAgent.email}</p>}
+                    </div>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await deleteAgent(selectedAgent.id);
+                        setSelectedAgent(null);
+                        toast.success('Agent revoked');
+                      } catch (err: any) {
+                        toast.error(err.message);
+                      }
+                    }}
+                    className="gap-1.5"
+                  >
+                    <Trash2 size={13} /> Revoke
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned Project</p>
+                    <p className="text-sm font-medium text-foreground">{agentProject?.name ?? '—'}</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</p>
+                    <p className="text-sm font-medium text-foreground">{format(new Date(selectedAgent.created_at), 'PP')}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Key size={13} className="text-muted-foreground" />
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">API Key Prefix</p>
+                  </div>
+                  <code className="block text-sm font-mono text-foreground bg-muted rounded-lg px-3 py-2">
+                    {selectedAgent.key_prefix}
+                  </code>
+                  <p className="text-[11px] text-muted-foreground">The full key was shown once at creation and cannot be retrieved again.</p>
+                </div>
+
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Example Usage</p>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(snippet); toast.success('Copied!'); }}
+                      className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Copy size={11} /> Copy
+                    </button>
+                  </div>
+                  <pre className="text-[11px] font-mono bg-muted rounded-lg p-3 overflow-x-auto text-foreground leading-relaxed whitespace-pre-wrap">{snippet}</pre>
+                </div>
+              </div>
+            );
+          })() : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                <Bot size={32} className="text-muted-foreground" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-lg font-semibold text-foreground">AI Agents</p>
+                <p className="text-sm text-muted-foreground">Select an agent from the sidebar, or click + to create one.</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectId(''); }}
+                className="gap-1.5"
+              >
+                <Plus size={14} /> Add Agent
+              </Button>
             </div>
           )
 
@@ -775,8 +932,120 @@ const Index = () => {
 
       <ProfileSheet open={showProfile} onOpenChange={setShowProfile} />
       <CreateProjectDialog open={showCreateProject} onOpenChange={setShowCreateProject} teams={teams} onCreate={handleCreateProject} />
+
+      {/* ===== ADD AGENT DIALOG ===== */}
+      <Dialog open={showAddAgent} onOpenChange={setShowAddAgent}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Bot size={18} /> Add AI Agent</DialogTitle>
+            <DialogDescription>Create a project-scoped API key for your AI agent.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="agent-name">Agent Name <span className="text-destructive">*</span></Label>
+              <Input
+                id="agent-name"
+                placeholder="e.g. Task Manager Bot"
+                value={agentName}
+                onChange={e => setAgentName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="agent-email">Email <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="agent-email"
+                type="email"
+                placeholder="agent@example.com"
+                value={agentEmail}
+                onChange={e => setAgentEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Assign to Project <span className="text-destructive">*</span></Label>
+              <Select value={agentProjectId} onValueChange={setAgentProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        {p.type === 'team' ? <Users size={12} /> : <Lock size={12} />}
+                        {p.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddAgent(false)}>Cancel</Button>
+            <Button
+              disabled={!agentName.trim() || !agentProjectId || agentCreating}
+              onClick={async () => {
+                setAgentCreating(true);
+                try {
+                  const result = await createAgent(agentName.trim(), agentProjectId, agentEmail.trim() || undefined);
+                  setShowAddAgent(false);
+                  setNewKeyModal(result);
+                } catch (err: any) {
+                  toast.error(err.message);
+                } finally {
+                  setAgentCreating(false);
+                }
+              }}
+            >
+              {agentCreating ? 'Creating...' : 'Create Agent'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== NEW KEY REVEAL MODAL ===== */}
+      {newKeyModal && (
+        <Dialog open onOpenChange={() => setNewKeyModal(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-primary">
+                <Key size={18} /> Agent Created — Save Your Key
+              </DialogTitle>
+              <DialogDescription>
+                This is the <strong>only time</strong> you'll see this key. Copy it now and store it securely.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="rounded-xl bg-muted border border-border p-4 space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Agent API Key</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-sm font-mono break-all text-foreground">{newKeyModal.rawKey}</code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(newKeyModal.rawKey); toast.success('Key copied!'); }}
+                    className="shrink-0 flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent transition-colors"
+                  >
+                    <Copy size={12} /> Copy
+                  </button>
+                </div>
+              </div>
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 flex gap-2">
+                <span className="shrink-0">⚠️</span>
+                <p className="text-[12px] text-destructive">
+                  This key grants access to <strong>{projects.find(p => p.id === newKeyModal.agent.project_id)?.name}</strong> only. Treat it like a password — it won't be shown again.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setNewKeyModal(null); setSelectedAgent(newKeyModal.agent); setActiveRailTab('agents'); }}>
+                Done — View Agent
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
 
 export default Index;
+
