@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
@@ -13,7 +13,11 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban, Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot, CalendarDays, GripVertical } from 'lucide-react';
+import {
+  Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban,
+  Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot,
+  CalendarDays, GripVertical, Hash,
+} from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -41,6 +45,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Project } from '@/hooks/useTasks';
+import type { ChatMessage } from '@/hooks/useProjectChat';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -61,12 +66,42 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeRailTab, setActiveRailTab] = useState<'home' | 'teams' | 'agents' | 'calendar' | 'settings'>('home');
-  const [activeTab, setActiveTab] = useState<'tasks' | 'chat'>('tasks');
-  const [unreadChat, setUnreadChat] = useState(false);
-  const handleChatNewMessage = useCallback(() => {
-    if (activeTab !== 'chat') setUnreadChat(true);
-  }, [activeTab]);
+  const [activeRailTab, setActiveRailTab] = useState<'home' | 'chat' | 'teams' | 'agents' | 'calendar' | 'settings'>('home');
+
+  // Chat state
+  const [activeChatProjectId, setActiveChatProjectId] = useState<string | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+
+  // When entering chat rail, auto-select first project if none selected
+  useEffect(() => {
+    if (activeRailTab === 'chat' && !activeChatProjectId && projects.length > 0) {
+      setActiveChatProjectId(projects[0].id);
+    }
+  }, [activeRailTab, activeChatProjectId, projects]);
+
+  const handleChatNewMessage = useCallback((msg: ChatMessage) => {
+    const pid = msg.project_id;
+    // Only increment unread if not currently viewing this project's chat
+    setActiveChatProjectId(current => {
+      if (current !== pid) {
+        setUnreadCounts(prev => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));
+      }
+      return current;
+    });
+  }, []);
+
+  const selectChatProject = useCallback((projectId: string) => {
+    setActiveChatProjectId(projectId);
+    setUnreadCounts(prev => {
+      if (!prev[projectId]) return prev;
+      const next = { ...prev };
+      delete next[projectId];
+      return next;
+    });
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
+
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -76,6 +111,7 @@ const Index = () => {
   if (!user) return <LandingPage />;
 
   const activeProject = projects.find(p => p.id === activeProjectId);
+  const activeChatProject = projects.find(p => p.id === activeChatProjectId);
   const privateProjects = projects.filter(p => p.type === 'private');
   const teamGroups = teams.map(t => ({
     team: t,
@@ -126,6 +162,7 @@ const Index = () => {
   const doingCount = tasks.filter(t => t.status === 'in_progress').length;
   const doneCount = tasks.filter(t => t.status === 'complete').length;
 
+  // Sortable project button (used in home rail)
   const SortableProjectButton = ({ project }: { project: Project }) => {
     const {
       attributes,
@@ -167,13 +204,46 @@ const Index = () => {
     );
   };
 
+  // Chat channel row (used in chat rail panel)
+  const ChatProjectRow = ({ project }: { project: Project }) => {
+    const unread = unreadCounts[project.id] || 0;
+    const isActive = project.id === activeChatProjectId;
+    return (
+      <button
+        onClick={() => selectChatProject(project.id)}
+        className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors min-w-0 ${
+          isActive
+            ? 'bg-[hsl(var(--sidebar-panel-active-bg))] text-[hsl(var(--sidebar-panel-active))] font-semibold border border-[hsl(var(--sidebar-panel-active)/0.4)]'
+            : 'text-[hsl(var(--sidebar-panel-foreground)/0.6)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))]'
+        }`}
+      >
+        <Hash size={13} className="shrink-0 opacity-50" />
+        <span className="truncate flex-1">{project.name}</span>
+        {unread > 0 && (
+          <span className="shrink-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   const railItems = [
     { key: 'home' as const, icon: Home, label: 'Home' },
+    { key: 'chat' as const, icon: MessageSquare, label: 'Chat' },
     { key: 'calendar' as const, icon: CalendarDays, label: 'Calendar' },
     { key: 'teams' as const, icon: Users, label: 'Manage Teams' },
     { key: 'agents' as const, icon: Bot, label: 'Manage Agents' },
   ];
+
+  // Panel header label
+  const panelTitle =
+    activeRailTab === 'home' ? 'Home'
+    : activeRailTab === 'chat' ? 'Messages'
+    : activeRailTab === 'calendar' ? 'Calendar'
+    : activeRailTab === 'teams' ? 'Manage Teams'
+    : activeRailTab === 'agents' ? 'Manage Agents'
+    : 'Settings';
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -197,13 +267,19 @@ const Index = () => {
               key={item.key}
               onClick={() => setActiveRailTab(item.key)}
               title={item.label}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+              className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
                 activeRailTab === item.key
                   ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]'
                   : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
               }`}
             >
               <item.icon size={18} />
+              {/* Unread badge on chat icon */}
+              {item.key === 'chat' && totalUnread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-0.5 leading-none">
+                  {totalUnread > 9 ? '9+' : totalUnread}
+                </span>
+              )}
             </button>
           ))}
 
@@ -239,16 +315,18 @@ const Index = () => {
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
             <span className="text-sm font-bold text-[hsl(var(--sidebar-panel-foreground))] tracking-tight">
-              {activeRailTab === 'home' ? 'Home' : activeRailTab === 'calendar' ? 'Calendar' : activeRailTab === 'teams' ? 'Manage Teams' : activeRailTab === 'agents' ? 'Manage Agents' : 'Settings'}
+              {panelTitle}
             </span>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
-                title="New Project"
-              >
-                <Plus size={15} />
-              </button>
+              {activeRailTab !== 'chat' && (
+                <button
+                  onClick={() => { setShowCreateProject(true); if (isMobile) setSidebarOpen(false); }}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
+                  title="New Project"
+                >
+                  <Plus size={15} />
+                </button>
+              )}
               {isMobile && (
                 <button onClick={() => setSidebarOpen(false)} className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:text-[hsl(var(--sidebar-panel-foreground))]">
                   <X size={15} />
@@ -257,6 +335,7 @@ const Index = () => {
             </div>
           </div>
 
+          {/* ============ HOME PANEL ============ */}
           {activeRailTab === 'home' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-4">
               {/* Pending Invites */}
@@ -363,6 +442,61 @@ const Index = () => {
                 </div>
               )}
             </nav>
+
+          ) : activeRailTab === 'chat' ? (
+            /* ============ CHAT PANEL ============ */
+            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+              {/* My Projects */}
+              {privateProjects.length > 0 && (
+                <div className="space-y-0.5">
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)] flex items-center gap-1">
+                    <Lock size={10} /> My Projects
+                  </p>
+                  {privateProjects.map(p => <ChatProjectRow key={p.id} project={p} />)}
+                </div>
+              )}
+
+              {/* Team Channels */}
+              {teamGroups.length > 0 && (
+                <div className="space-y-0.5">
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-panel-foreground)/0.4)]">
+                    Team Channels
+                  </p>
+                  {teamGroups.map(({ team, projects: teamProjects }) => (
+                    <Collapsible key={team.id} defaultOpen={teamProjects.some(p => p.id === activeChatProjectId)}>
+                      <div className="space-y-0.5">
+                        <CollapsibleTrigger className="w-full px-3 py-1.5 text-[13px] font-semibold text-[hsl(var(--sidebar-panel-foreground)/0.8)] flex items-center gap-2 group cursor-pointer hover:bg-[hsl(var(--sidebar-panel-muted))] rounded-lg transition-colors">
+                          <ChevronRight size={12} className="transition-transform group-data-[state=open]:rotate-90 text-[hsl(var(--sidebar-panel-foreground)/0.4)]" />
+                          <Users size={13} className="text-[hsl(var(--sidebar-panel-active))]" />
+                          <span className="truncate flex-1">{team.name}</span>
+                          {/* Badge showing total unread for this team */}
+                          {teamProjects.some(p => unreadCounts[p.id]) && (
+                            <span className="shrink-0 h-2 w-2 rounded-full bg-destructive" />
+                          )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="ml-4 pl-3 border-l border-[hsl(var(--sidebar-panel-border))] space-y-0.5">
+                            {teamProjects.length > 0 ? (
+                              teamProjects.map(p => <ChatProjectRow key={p.id} project={p} />)
+                            ) : (
+                              <p className="px-2 py-1.5 text-xs text-[hsl(var(--sidebar-panel-foreground)/0.35)] italic">No projects yet</p>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  ))}
+                </div>
+              )}
+
+              {projects.length === 0 && !projLoading && (
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
+                  <MessageSquare size={24} className="text-[hsl(var(--sidebar-panel-foreground)/0.2)]" />
+                  <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.4)]">No projects yet</p>
+                </div>
+              )}
+            </nav>
+
           ) : activeRailTab === 'calendar' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-4">
               <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
@@ -409,10 +543,58 @@ const Index = () => {
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 flex-col">
+      <main className="flex flex-1 flex-col min-w-0">
         {activeRailTab === 'calendar' ? (
           <CalendarView />
+
+        ) : activeRailTab === 'chat' ? (
+          /* ============ FULL-SCREEN CHAT MAIN AREA ============ */
+          activeChatProject ? (
+            <div className="flex flex-col h-full">
+              {/* Chat header */}
+              <header className="flex items-center gap-3 border-b border-border bg-card px-4 md:px-6 py-3 shrink-0">
+                {isMobile && (
+                  <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                    <Menu size={20} />
+                  </button>
+                )}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--sidebar-panel-active)/0.12)] shrink-0">
+                    <Hash size={16} className="text-[hsl(var(--sidebar-panel-active))]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold text-foreground truncate leading-tight">{activeChatProject.name}</h2>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                      {activeChatProject.type === 'team' ? <Users size={9} /> : <Lock size={9} />}
+                      {activeChatProject.type === 'team' ? 'Team Channel' : 'Private Project'}
+                    </span>
+                  </div>
+                </div>
+              </header>
+              <div className="flex-1 min-h-0">
+                <ProjectChat projectId={activeChatProject.id} onNewMessage={handleChatNewMessage} />
+              </div>
+            </div>
+          ) : (
+            /* Empty state */
+            <div className="flex flex-1 flex-col items-center justify-center gap-4">
+              {isMobile && (
+                <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
+                  <Menu size={20} />
+                </button>
+              )}
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                <MessageSquare size={32} className="text-muted-foreground" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-lg font-semibold text-foreground">Select a project to chat</p>
+                <p className="text-sm text-muted-foreground">Choose a project from the sidebar to open its chat</p>
+              </div>
+            </div>
+          )
+
         ) : activeProject ? (
+          /* ============ PROJECT TASKS VIEW ============ */
           <>
             <header className="flex items-center justify-between border-b border-border bg-card px-4 md:px-6 py-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -437,141 +619,116 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Segmented tab control */}
+              {/* Tasks-only header (Chat moved to its own rail tab) */}
               <div className="flex items-center bg-muted rounded-lg p-0.5">
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                    activeTab === 'tasks'
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
+                <div className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold bg-card text-foreground shadow-sm">
                   <ListTodo size={13} /> Tasks
-                </button>
-                <button
-                  onClick={() => { setActiveTab('chat'); setUnreadChat(false); }}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                    activeTab === 'chat'
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <MessageSquare size={13} /> Chat
-                  {unreadChat && <span className="h-2 w-2 rounded-full bg-destructive animate-pulse-dot" />}
-                </button>
+                </div>
               </div>
             </header>
 
-            {activeTab === 'chat' ? (
-              <ProjectChat projectId={activeProject.id} onNewMessage={handleChatNewMessage} />
-            ) : (
-              <>
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-5">
-                  {/* Project Note */}
-                  {(() => { const noteConf = getNoteColorConfig(noteColor); return (
-                  <div className={`rounded-xl border shadow-sm ${getNoteClasses(noteColor)} transition-card`}>
-                    <div className="flex items-center gap-1.5 px-3 pt-2.5">
-                      <StickyNote size={12} className={noteConf.value ? noteConf.text : 'text-muted-foreground'} />
-                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${noteConf.value ? noteConf.text : 'text-muted-foreground'}`}>Notes</span>
-                    </div>
-                    <textarea
-                      value={projectNote}
-                      onChange={e => saveProjectNote(e.target.value)}
-                      onFocus={() => setNoteExpanded(true)}
-                      onBlur={() => setNoteExpanded(false)}
-                      placeholder="Project notes..."
-                      className={`w-full resize-none bg-transparent px-3 py-2 text-sm ${noteConf.text} ${noteConf.placeholder} focus:outline-none transition-all duration-200 ${
-                        noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
-                      }`}
-                      rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
-                    />
-                    <div className="flex justify-end px-2 pb-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className={`rounded-md p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
-                            <Palette size={13} />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-2" align="end">
-                          <div className="flex gap-1.5">
-                            {NOTE_COLORS.map(c => (
-                              <button
-                                key={c.value}
-                                onClick={() => setNoteColor(c.value)}
-                                title={c.name}
-                                className={`h-6 w-6 rounded-full border-2 transition-all ${c.swatch} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
-                              >
-                                {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
-                              </button>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                  ); })()}
-                  {tasksLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading tasks...</p>
-                  ) : tasks.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-5 py-20">
-                      <div className="rounded-2xl bg-accent p-5">
-                        <ListTodo size={32} className="text-muted-foreground" />
-                      </div>
-                      <div className="text-center space-y-1.5">
-                        <p className="text-lg font-semibold text-foreground">No tasks yet</p>
-                        <p className="text-sm text-muted-foreground">Create your first task to get started</p>
-                      </div>
-                      <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
-                        <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 shadow-sm">
-                          <Plus size={15} className="text-muted-foreground shrink-0" />
-                          <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" autoFocus />
-                        </div>
-                        <Button type="submit" size="sm" disabled={!newTask.trim()} className="rounded-lg px-4">Add</Button>
-                      </form>
-                    </div>
-                  ) : (
-                    /* Task list — card with clean row layout matching the mockup */
-                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                      {/* Header row */}
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-                        </span>
-                        <button
-                          onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
-                          className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
-                        >
-                          + Add Task
-                        </button>
-                      </div>
-                      <div className="px-3">
-                        <TaskList
-                          tasks={tasks}
-                          onCycle={cycleStatus}
-                          onDelete={deleteTask}
-                          onReorder={reorder}
-                          onLogTime={handleLogTime}
-                          taskMinutes={taskMinutes}
-                          onRenameTask={renameTask}
-                          onUpdateDueDate={updateDueDate}
-                        />
-                      </div>
-                    </div>
-                  )}
+            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-5">
+              {/* Project Note */}
+              {(() => { const noteConf = getNoteColorConfig(noteColor); return (
+              <div className={`rounded-xl border shadow-sm ${getNoteClasses(noteColor)} transition-card`}>
+                <div className="flex items-center gap-1.5 px-3 pt-2.5">
+                  <StickyNote size={12} className={noteConf.value ? noteConf.text : 'text-muted-foreground'} />
+                  <span className={`text-[10px] font-semibold uppercase tracking-wide ${noteConf.value ? noteConf.text : 'text-muted-foreground'}`}>Notes</span>
                 </div>
-                {/* Floating task input */}
-                <form onSubmit={handleAddTask} className="bg-card border-t border-border px-4 md:px-6 py-3">
-                  <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
-                    <Plus size={15} className="text-[hsl(var(--sidebar-panel-active))] shrink-0" />
-                    <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" />
-                    <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3 text-[hsl(var(--sidebar-panel-active))]" disabled={!newTask.trim()}>
-                      Add
-                    </Button>
+                <textarea
+                  value={projectNote}
+                  onChange={e => saveProjectNote(e.target.value)}
+                  onFocus={() => setNoteExpanded(true)}
+                  onBlur={() => setNoteExpanded(false)}
+                  placeholder="Project notes..."
+                  className={`w-full resize-none bg-transparent px-3 py-2 text-sm ${noteConf.text} ${noteConf.placeholder} focus:outline-none transition-all duration-200 ${
+                    noteExpanded ? 'min-h-[120px]' : 'max-h-[5.5rem] overflow-hidden'
+                  }`}
+                  rows={noteExpanded ? Math.max(5, projectNote.split('\n').length) : 4}
+                />
+                <div className="flex justify-end px-2 pb-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className={`rounded-md p-1 ${noteConf.value ? noteConf.text + ' opacity-60 hover:opacity-100' : 'text-muted-foreground hover:text-foreground'} hover:bg-accent/50 transition-colors`} title="Note colour">
+                        <Palette size={13} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="end">
+                      <div className="flex gap-1.5">
+                        {NOTE_COLORS.map(c => (
+                          <button
+                            key={c.value}
+                            onClick={() => setNoteColor(c.value)}
+                            title={c.name}
+                            className={`h-6 w-6 rounded-full border-2 transition-all ${c.swatch} ${noteColor === c.value ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'hover:scale-110'}`}
+                          >
+                            {c.value === '' && noteColor === '' && <Ban size={12} className="mx-auto text-muted-foreground" />}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              ); })()}
+              {tasksLoading ? (
+                <p className="text-sm text-muted-foreground">Loading tasks...</p>
+              ) : tasks.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-5 py-20">
+                  <div className="rounded-2xl bg-accent p-5">
+                    <ListTodo size={32} className="text-muted-foreground" />
                   </div>
-                </form>
-              </>
-            )}
+                  <div className="text-center space-y-1.5">
+                    <p className="text-lg font-semibold text-foreground">No tasks yet</p>
+                    <p className="text-sm text-muted-foreground">Create your first task to get started</p>
+                  </div>
+                  <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
+                    <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 shadow-sm">
+                      <Plus size={15} className="text-muted-foreground shrink-0" />
+                      <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" autoFocus />
+                    </div>
+                    <Button type="submit" size="sm" disabled={!newTask.trim()} className="rounded-lg px-4">Add</Button>
+                  </form>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                    </span>
+                    <button
+                      onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
+                      className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
+                    >
+                      + Add Task
+                    </button>
+                  </div>
+                  <div className="px-3">
+                    <TaskList
+                      tasks={tasks}
+                      onCycle={cycleStatus}
+                      onDelete={deleteTask}
+                      onReorder={reorder}
+                      onLogTime={handleLogTime}
+                      taskMinutes={taskMinutes}
+                      onRenameTask={renameTask}
+                      onUpdateDueDate={updateDueDate}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Floating task input */}
+            <form onSubmit={handleAddTask} className="bg-card border-t border-border px-4 md:px-6 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
+                <Plus size={15} className="text-[hsl(var(--sidebar-panel-active))] shrink-0" />
+                <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" />
+                <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3 text-[hsl(var(--sidebar-panel-active))]" disabled={!newTask.trim()}>
+                  Add
+                </Button>
+              </div>
+            </form>
+
             <Sheet open={showDetails} onOpenChange={(open) => { setShowDetails(open); if (!open) setEditingName(false); }}>
               <SheetContent>
                 <SheetHeader>
@@ -623,6 +780,7 @@ const Index = () => {
             </Sheet>
           </>
         ) : (
+          /* ============ HOME EMPTY STATE ============ */
           <div className="flex flex-1 flex-col items-center justify-center gap-3 relative">
             {isMobile && (
               <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
