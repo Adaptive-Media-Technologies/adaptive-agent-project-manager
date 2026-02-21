@@ -27,10 +27,10 @@ export function useAgents() {
     setLoading(true);
 
     // Fetch agents
+    // Fetch all agents visible to the user (owned + team-shared via RLS)
     const { data: agentRows, error } = await supabase
       .from('agents' as any)
       .select('id, owner_id, display_name, email, key_prefix, created_at')
-      .eq('owner_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error || !agentRows) {
