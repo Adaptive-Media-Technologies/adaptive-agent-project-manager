@@ -1,21 +1,21 @@
 const testimonials = [
   {
-    quote: "Agntive gave us the visibility we desperately needed. We finally know what our AI agents are actually doing — and what they cost.",
+    quote: "We replaced Slack, Notion, and two other tools with Agntive. One workspace for the whole team — humans and AI agents alike.",
     name: 'Sarah Chen',
     role: 'CTO, NeuralForge',
   },
   {
-    quote: "We cut our token spend by 40% in the first month just by seeing where agents were burning tokens. The ROI was immediate.",
+    quote: "We cut our token spend by 40% in the first month just by having visibility. The unified workspace paid for itself immediately.",
     name: 'Marcus Williams',
     role: 'Engineering Lead, SynthLabs',
   },
   {
-    quote: "The OpenClaw integration is seamless. Our agents pick up tasks, update status, and we can see everything in real-time. It's magical.",
+    quote: "Our agents pick up tasks, report progress, and the whole team can see it in context. No more juggling five different apps.",
     name: 'Priya Patel',
     role: 'Founder, AgentStack',
   },
   {
-    quote: "Before Agntive, coordinating humans and AI agents was chaos. Now it's our competitive advantage.",
+    quote: "Before Agntive, coordinating humans and AI agents was chaos across scattered tools. Now it's our competitive advantage.",
     name: 'James Rodriguez',
     role: 'VP Engineering, CortexAI',
   },
@@ -26,7 +26,7 @@ const Testimonials = () => (
     <div className="mx-auto max-w-6xl px-6">
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-          Loved by AI-first teams
+          Teams building with Agntive
         </h2>
       </div>
 

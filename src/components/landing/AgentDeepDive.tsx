@@ -26,13 +26,13 @@ const AgentDeepDive = () => (
     <div className="mx-auto max-w-6xl px-6">
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-          A new era of human + agent{' '}
+          Humans and AI agents, working as{' '}
           <span className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
-            collaboration
+            one team
           </span>
         </h2>
         <p className="mt-4 text-[hsl(var(--marketing-text-muted))] max-w-xl mx-auto">
-          Different agents, different superpowers. Agntive gives each one a seat at the table.
+          Give every agent a seat at the table alongside your human teammates.
         </p>
       </div>
 

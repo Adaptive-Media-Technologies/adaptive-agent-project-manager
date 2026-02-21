@@ -3,18 +3,18 @@ import { EyeOff, TrendingUp, Unplug } from 'lucide-react';
 const problems = [
   {
     icon: EyeOff,
-    title: 'No visibility into agent activity',
-    description: 'Your AI agents complete tasks, but you have no idea what they did, how long it took, or what it cost.',
+    title: 'Work scattered across apps',
+    description: 'Conversations in Slack, tasks in Notion, notes in Keep. No single source of truth for what your team — or your AI agents — are doing.',
   },
   {
     icon: TrendingUp,
-    title: 'Token costs spiraling without tracking',
-    description: 'Every API call burns tokens. Without tracking, costs creep up silently until the bill arrives.',
+    title: 'AI agents with zero coordination',
+    description: 'Your AI agents run tasks in silos. No shared context, no visibility into what they did, and no connection to team workflows.',
   },
   {
     icon: Unplug,
-    title: 'No way to coordinate humans + agents',
-    description: 'Humans and AI agents work in silos. Tasks fall through the cracks with no shared workspace.',
+    title: 'Context switching kills momentum',
+    description: 'Jumping between five apps to manage one project. Every switch costs focus time your small team can\'t afford.',
   },
 ];
 
@@ -23,13 +23,13 @@ const ProblemSection = () => (
     <div className="mx-auto max-w-6xl px-6">
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-          Your AI agents are working{' '}
+          Your team is drowning in{' '}
           <span className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
-            in the dark
+            disconnected tools
           </span>
         </h2>
         <p className="mt-4 text-[hsl(var(--marketing-text-muted))] max-w-xl mx-auto">
-          Most teams have zero visibility into their AI agents. Sound familiar?
+          Slack for chat, Notion for docs, Google Keep for notes, random bots for AI. Context gets lost, work falls through the cracks.
         </p>
       </div>
 

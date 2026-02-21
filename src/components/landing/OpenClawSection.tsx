@@ -42,7 +42,7 @@ const OpenClawSection = () => (
             a command center
           </h2>
           <p className="mt-4 text-lg text-white/60 leading-relaxed">
-            OpenClaw agents connect to Agntive via API, automatically logging tasks, tracking token usage, and reporting status in real-time.
+            Connect OpenClaw agents to your workspace. They pick up tasks, report progress, and log token usage — automatically.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">

@@ -10,7 +10,7 @@ const LandingNav = () => (
       <a href="#openclaw" className="inline-flex items-center gap-2 hover:underline">
         <Sparkles size={14} />
         <span className="font-medium">NEW: OpenClaw Integration</span>
-        <span className="hidden sm:inline">— Give your AI agents a project manager</span>
+        <span className="hidden sm:inline">— One workspace for your team and AI agents</span>
       </a>
     </div>
 
@@ -35,7 +35,7 @@ const LandingNav = () => (
           </Link>
           <Link to="/auth">
             <Button size="sm" className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white border-0 shadow-lg shadow-[hsl(var(--marketing-accent))/0.25] hover:shadow-xl hover:shadow-[hsl(var(--marketing-accent))/0.35] transition-all">
-              Get Started Free
+              Start Free Trial
             </Button>
           </Link>
         </div>
