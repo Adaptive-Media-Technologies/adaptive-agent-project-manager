@@ -124,6 +124,30 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --sidebar-panel-background: 222 30% 11%;
+    --sidebar-panel-foreground: 210 40% 90%;
+    --sidebar-panel-border: 222 20% 18%;
+    --sidebar-panel-muted: 222 25% 15%;
+    --sidebar-panel-active: 270 60% 65%;
+    --sidebar-panel-active-bg: 270 40% 18%;
+
+    --chat-own-bg: 270 30% 18%;
+    --chat-own-border: 270 25% 28%;
+    --chat-other-bg: 210 30% 16%;
+    --chat-other-border: 210 25% 26%;
+    --chat-mention-bg: 270 40% 22%;
+    --chat-mention-text: 270 60% 75%;
+
+    --marketing-gradient-start: 262 83% 58%;
+    --marketing-gradient-mid: 292 84% 61%;
+    --marketing-gradient-end: 330 81% 60%;
+    --marketing-accent: 262 83% 65%;
+    --marketing-accent-foreground: 0 0% 100%;
+    --marketing-surface: 222 47% 7%;
+    --marketing-surface-alt: 222 30% 11%;
+    --marketing-text: 210 40% 92%;
+    --marketing-text-muted: 220 15% 60%;
   }
 }
 
