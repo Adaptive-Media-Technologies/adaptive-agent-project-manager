@@ -81,7 +81,7 @@ serve(async (req) => {
   const apiKey = req.headers.get('x-api-key')
 
   let userId: string | null = null
-  let scopedProjectId: string | null = null  // null = no restriction (user-level keys)
+  let scopedProjectIds: string[] | null = null  // null = no restriction (user-level keys)
 
   if (apiKey) {
     const hashHex = await hashKey(apiKey)
@@ -89,13 +89,18 @@ serve(async (req) => {
     // 1. Check agents table first (project-scoped keys)
     const { data: agentRow } = await supabase
       .from('agents')
-      .select('owner_id, project_id')
+      .select('id, owner_id')
       .eq('key_hash', hashHex)
       .single()
 
     if (agentRow) {
       userId = agentRow.owner_id
-      scopedProjectId = agentRow.project_id
+      // Look up assigned projects from junction table
+      const { data: assignments } = await supabase
+        .from('agent_projects')
+        .select('project_id')
+        .eq('agent_id', agentRow.id)
+      scopedProjectIds = (assignments || []).map((r: any) => r.project_id)
     } else {
       // 2. Fall back to user-level api_keys table
       const { data: keyRow } = await supabase
@@ -144,8 +149,8 @@ serve(async (req) => {
 
   // Helper: enforce scope restriction for agent keys
   function checkScope(projectId: string): Response | null {
-    if (scopedProjectId && projectId !== scopedProjectId) {
-      return json({ error: 'Agent is scoped to a different project' }, 403)
+    if (scopedProjectIds && scopedProjectIds.length > 0 && !scopedProjectIds.includes(projectId)) {
+      return json({ error: 'Agent is not assigned to this project' }, 403)
     }
     return null
   }
@@ -156,7 +161,7 @@ serve(async (req) => {
     // ===================
 
     if (path === '/keys' && method === 'GET') {
-      if (scopedProjectId) return json({ error: 'Agent keys cannot manage API keys' }, 403)
+      if (scopedProjectIds) return json({ error: 'Agent keys cannot manage API keys' }, 403)
       const { data, error } = await supabase
         .from('api_keys')
         .select('id, label, created_at, key_prefix')
@@ -167,7 +172,7 @@ serve(async (req) => {
     }
 
     if (path === '/keys' && method === 'POST') {
-      if (scopedProjectId) return json({ error: 'Agent keys cannot manage API keys' }, 403)
+      if (scopedProjectIds) return json({ error: 'Agent keys cannot manage API keys' }, 403)
       const body = await req.json().catch(() => ({}))
       const label = body.label || 'default'
       const rawKey = generateApiKey()
@@ -186,7 +191,7 @@ serve(async (req) => {
 
     const keyMatch = path.match(/^\/keys\/([a-f0-9-]+)$/)
     if (keyMatch && method === 'DELETE') {
-      if (scopedProjectId) return json({ error: 'Agent keys cannot manage API keys' }, 403)
+      if (scopedProjectIds) return json({ error: 'Agent keys cannot manage API keys' }, 403)
       const id = keyMatch[1]
       const { error } = await supabase
         .from('api_keys')
@@ -219,14 +224,13 @@ serve(async (req) => {
 
     if (path === '/projects' && method === 'GET') {
       // Scoped agents can only see their assigned project
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data, error } = await supabase
           .from('projects')
           .select('*')
-          .eq('id', scopedProjectId)
-          .single()
+          .in('id', scopedProjectIds)
         if (error) throw error
-        return json(data ? [data] : [])
+        return json(data || [])
       }
 
       const teamIds = await getUserTeamIds()
@@ -242,7 +246,7 @@ serve(async (req) => {
     }
 
     if (path === '/projects' && method === 'POST') {
-      if (scopedProjectId) return json({ error: 'Agent keys cannot create projects' }, 403)
+      if (scopedProjectIds) return json({ error: 'Agent keys cannot create projects' }, 403)
       const body = await req.json()
       const { name, team_id } = body
       if (!name) return json({ error: 'name required' }, 400)
@@ -297,9 +301,9 @@ serve(async (req) => {
       if (updates.due_date !== undefined) allowed.due_date = updates.due_date
 
       // If scoped, verify the task belongs to the scoped project
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', id).single()
-        if (!task || task.project_id !== scopedProjectId) return json({ error: 'Access denied' }, 403)
+        if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
       }
 
       const { data, error } = await supabase.from('tasks').update(allowed).eq('id', id).select().single()
@@ -309,9 +313,9 @@ serve(async (req) => {
 
     if (taskMatch && method === 'DELETE') {
       const id = taskMatch[1]
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', id).single()
-        if (!task || task.project_id !== scopedProjectId) return json({ error: 'Access denied' }, 403)
+        if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
       }
       const { error } = await supabase.from('tasks').delete().eq('id', id)
       if (error) throw error
@@ -338,9 +342,9 @@ serve(async (req) => {
       const taskId = url.searchParams.get('task_id')
       if (!taskId) return json({ error: 'task_id required' }, 400)
       // If scoped, verify task belongs to scoped project
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', taskId).single()
-        if (!task || task.project_id !== scopedProjectId) return json({ error: 'Access denied' }, 403)
+        if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
       }
       const { data, error } = await supabase.from('notes').select('*').eq('task_id', taskId).order('created_at', { ascending: false })
       if (error) throw error
@@ -350,9 +354,9 @@ serve(async (req) => {
     if (path === '/notes' && method === 'POST') {
       const { task_id, content } = await req.json()
       if (!task_id || !content) return json({ error: 'task_id and content required' }, 400)
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', task_id).single()
-        if (!task || task.project_id !== scopedProjectId) return json({ error: 'Access denied' }, 403)
+        if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
       }
       const { data, error } = await supabase.from('notes').insert({ task_id, user_id: userId, content }).select().single()
       if (error) throw error
@@ -446,9 +450,9 @@ serve(async (req) => {
     if (path === '/time' && method === 'POST') {
       const { task_id, minutes } = await req.json()
       if (!task_id || !minutes) return json({ error: 'task_id and minutes required' }, 400)
-      if (scopedProjectId) {
+      if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', task_id).single()
-        if (!task || task.project_id !== scopedProjectId) return json({ error: 'Access denied' }, 403)
+        if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
       }
       const { data, error } = await supabase.from('time_entries').insert({ task_id, user_id: userId, minutes }).select().single()
       if (error) throw error

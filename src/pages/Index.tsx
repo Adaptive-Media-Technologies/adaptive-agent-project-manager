@@ -67,7 +67,7 @@ const Index = () => {
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
-  const { agents, loading: agentsLoading, createAgent, deleteAgent } = useAgents();
+  const { agents, loading: agentsLoading, createAgent, deleteAgent, updateAgentProjects } = useAgents();
   const [newTask, setNewTask] = useState('');
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -82,7 +82,7 @@ const Index = () => {
   const [showAddAgent, setShowAddAgent] = useState(false);
   const [agentName, setAgentName] = useState('');
   const [agentEmail, setAgentEmail] = useState('');
-  const [agentProjectId, setAgentProjectId] = useState('');
+  const [agentProjectIds, setAgentProjectIds] = useState<string[]>([]);
   const [agentCreating, setAgentCreating] = useState(false);
   const [newKeyModal, setNewKeyModal] = useState<{ agent: Agent; rawKey: string } | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -334,7 +334,7 @@ const Index = () => {
               )}
               {activeRailTab === 'agents' && (
                 <button
-                  onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectId(''); }}
+                  onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectIds([]); }}
                   className="flex h-6 w-6 items-center justify-center rounded-md text-[hsl(var(--sidebar-panel-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-panel-muted))] hover:text-[hsl(var(--sidebar-panel-foreground))] transition-colors"
                   title="Add Agent"
                 >
@@ -523,7 +523,7 @@ const Index = () => {
               ) : (
                 <div className="space-y-0.5">
                   {agents.map(agent => {
-                    const agentProject = projects.find(p => p.id === agent.project_id);
+                    const assignedCount = agent.project_ids.length;
                     const isSelected = selectedAgent?.id === agent.id;
                     return (
                       <button
@@ -538,9 +538,9 @@ const Index = () => {
                         <Bot size={14} className="shrink-0 opacity-60" />
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-[13px] font-medium leading-tight">{agent.display_name}</p>
-                          {agentProject && (
-                            <p className="text-[10px] opacity-50 truncate">{agentProject.name}</p>
-                          )}
+                          <p className="text-[10px] opacity-50 truncate">
+                            {assignedCount === 0 ? 'No projects' : `${assignedCount} project${assignedCount !== 1 ? 's' : ''}`}
+                          </p>
                         </div>
                       </button>
                     );
@@ -616,20 +616,21 @@ const Index = () => {
         ) : activeRailTab === 'agents' ? (
           /* ============ AGENTS MAIN AREA ============ */
           selectedAgent ? (() => {
-            const agentProject = projects.find(p => p.id === selectedAgent.project_id);
+            const assignedProjects = projects.filter(p => selectedAgent.project_ids.includes(p.id));
             const supabaseProjectUrl = `https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api`;
-            const snippet = `curl -X GET "${supabaseProjectUrl}/tasks?project_id=${selectedAgent.project_id}" \\
+            const exampleProjectId = selectedAgent.project_ids[0] || '<project-id>';
+            const snippet = `curl -X GET "${supabaseProjectUrl}/tasks?project_id=${exampleProjectId}" \\
   -H "x-api-key: ${selectedAgent.key_prefix}..."
 
 curl -X POST "${supabaseProjectUrl}/tasks" \\
   -H "x-api-key: ${selectedAgent.key_prefix}..." \\
   -H "Content-Type: application/json" \\
-  -d '{"project_id":"${selectedAgent.project_id}","title":"New task"}'
+  -d '{"project_id":"${exampleProjectId}","title":"New task"}'
 
 curl -X POST "${supabaseProjectUrl}/chat" \\
   -H "x-api-key: ${selectedAgent.key_prefix}..." \\
   -H "Content-Type: application/json" \\
-  -d '{"project_id":"${selectedAgent.project_id}","content":"Hello from agent"}'`;
+  -d '{"project_id":"${exampleProjectId}","content":"Hello from agent"}'`;
             return (
               <div className="flex-1 overflow-y-auto px-6 py-8 max-w-2xl mx-auto w-full space-y-6">
                 <div className="flex items-start justify-between">
@@ -661,9 +662,20 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-xl border border-border bg-card p-4 space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned Project</p>
-                    <p className="text-sm font-medium text-foreground">{agentProject?.name ?? '—'}</p>
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned Projects</p>
+                    {assignedProjects.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {assignedProjects.map(p => (
+                          <span key={p.id} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
+                            {p.type === 'team' ? <Users size={10} /> : <Lock size={10} />}
+                            {p.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No projects assigned</p>
+                    )}
                   </div>
                   <div className="rounded-xl border border-border bg-card p-4 space-y-1">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</p>
@@ -708,7 +720,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectId(''); }}
+                onClick={() => { setShowAddAgent(true); setAgentName(''); setAgentEmail(''); setAgentProjectIds([]); }}
                 className="gap-1.5"
               >
                 <Plus size={14} /> Add Agent
@@ -949,32 +961,39 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Assign to Project <span className="text-destructive">*</span></Label>
-              <Select value={agentProjectId} onValueChange={setAgentProjectId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      <span className="flex items-center gap-2">
-                        {p.type === 'team' ? <Users size={12} /> : <Lock size={12} />}
-                        {p.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Assign to Projects <span className="text-destructive">*</span></Label>
+              <div className="rounded-md border border-input bg-background p-3 max-h-48 overflow-y-auto space-y-2">
+                {projects.map(p => (
+                  <label key={p.id} className="flex items-center gap-2.5 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={agentProjectIds.includes(p.id)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setAgentProjectIds(prev => [...prev, p.id]);
+                        } else {
+                          setAgentProjectIds(prev => prev.filter(id => id !== p.id));
+                        }
+                      }}
+                      className="rounded border-input h-4 w-4 accent-primary"
+                    />
+                    <span className="flex items-center gap-1.5">
+                      {p.type === 'team' ? <Users size={12} /> : <Lock size={12} />}
+                      {p.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddAgent(false)}>Cancel</Button>
             <Button
-              disabled={!agentName.trim() || !agentProjectId || agentCreating}
+              disabled={!agentName.trim() || agentProjectIds.length === 0 || agentCreating}
               onClick={async () => {
                 setAgentCreating(true);
                 try {
-                  const result = await createAgent(agentName.trim(), agentProjectId, agentEmail.trim() || undefined);
+                  const result = await createAgent(agentName.trim(), agentProjectIds, agentEmail.trim() || undefined);
                   setShowAddAgent(false);
                   setNewKeyModal(result);
                 } catch (err: any) {
@@ -1018,7 +1037,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
               <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 flex gap-2">
                 <span className="shrink-0">⚠️</span>
                 <p className="text-[12px] text-destructive">
-                  This key grants access to <strong>{projects.find(p => p.id === newKeyModal.agent.project_id)?.name}</strong> only. Treat it like a password — it won't be shown again.
+                  This key grants access to <strong>{newKeyModal.agent.project_ids.length} project{newKeyModal.agent.project_ids.length !== 1 ? 's' : ''}</strong>. Treat it like a password — it won't be shown again.
                 </p>
               </div>
             </div>
