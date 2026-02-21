@@ -345,7 +345,7 @@ export default function Docs() {
                 </p>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
                   <li>A human user <strong>creates an agent</strong> from the Agents panel in the app.</li>
-                  <li>The agent receives a <strong>project-scoped API key</strong> — it can only access one project.</li>
+                  <li>The agent receives a <strong>multi-project-scoped API key</strong> — it can access any of its assigned projects with a single key.</li>
                   <li>Use that key with any task, note, or chat endpoint below.</li>
                 </ol>
               </div>
@@ -373,7 +373,7 @@ export default function Docs() {
                   <p className="text-muted-foreground">
                     <strong className="text-foreground">User keys</strong> (from <code className="font-mono bg-muted px-1 rounded text-xs">POST /keys</code>) have full access to all your teams and projects.
                     <br />
-                    <strong className="text-foreground">Agent keys</strong> (generated in the Agents panel) are <em>project-scoped</em> — they can only read/write data within the single assigned project, and cannot manage API keys, teams, or create new projects.
+                    <strong className="text-foreground">Agent keys</strong> (generated in the Agents panel) are scoped to their <em>assigned projects</em> — they can read/write data within any of those projects, but cannot manage API keys, teams, or create new projects. A single agent key works across all its assigned projects.
                   </p>
                 </div>
               </div>
