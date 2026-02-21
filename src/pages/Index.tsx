@@ -63,7 +63,7 @@ const Index = () => {
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask } = useTasks(activeProjectId);
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
@@ -931,6 +931,10 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                       taskMinutes={taskMinutes}
                       onRenameTask={renameTask}
                       onUpdateDueDate={updateDueDate}
+                      onAssignTask={assignTask}
+                      onUnassignTask={unassignTask}
+                      projectId={activeProjectId}
+                      teamId={activeProject?.team_id}
                     />
                   </div>
                 </div>

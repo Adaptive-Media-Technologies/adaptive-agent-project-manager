@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Image, Download, Loader2, Clock, StickyNote, File, CalendarDays } from 'lucide-react';
+import { Circle, PlayCircle, Check, Plus, Trash2, Pencil, X, Paperclip, FileText, Download, Loader2, Clock, StickyNote, File, CalendarDays, Bot, UserPlus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { parseISO } from 'date-fns';
@@ -23,6 +23,7 @@ const statusConfig = {
 };
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
+type Assignee = { id: string; name: string; avatar_url?: string | null; type: 'user' | 'agent' };
 
 type Props = {
   task: Task;
@@ -31,9 +32,13 @@ type Props = {
   totalMinutes: number;
   onRename?: (id: string, newTitle: string) => Promise<void>;
   onUpdateDueDate?: (id: string, dueDate: string | null) => Promise<void>;
+  onAssign?: (id: string, assigneeId: string, type: 'user' | 'agent') => Promise<void>;
+  onUnassign?: (id: string) => Promise<void>;
+  projectId?: string | null;
+  teamId?: string | null;
 };
 
-const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, onUpdateDueDate }: Props) => {
+const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, onUpdateDueDate, onAssign, onUnassign, projectId, teamId }: Props) => {
   const { notes, loading, addNote, deleteNote } = useNotes(open ? task.id : null);
   const { attachments, loading: attachLoading, uploading, uploadFiles, deleteAttachment, getPublicUrl } = useTaskAttachments(open ? task.id : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,8 +46,73 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, on
   const [editingTitle, setEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
 
+  // Assignee state
+  const [assigneeSearch, setAssigneeSearch] = useState('');
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const [candidates, setCandidates] = useState<Assignee[]>([]);
+  const [assigneeName, setAssigneeName] = useState<string | null>(null);
+  const [assigneeAvatarUrl, setAssigneeAvatarUrl] = useState<string | null>(null);
+
   useEffect(() => { setDraftTitle(task.title); setEditingTitle(false); }, [task.title, open]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+
+  // Fetch assignee candidates (team members + agents)
+  useEffect(() => {
+    if (!open || !projectId) return;
+    const fetchCandidates = async () => {
+      const results: Assignee[] = [];
+      if (teamId) {
+        const { data: members } = await supabase.from('team_members')
+          .select('user_id, profiles:team_members_user_id_profiles_fkey(id, display_name, avatar_url)')
+          .eq('team_id', teamId);
+        if (members) {
+          members.forEach((m: any) => {
+            const p = m.profiles;
+            if (p) results.push({ id: p.id, name: p.display_name || 'Unknown', avatar_url: p.avatar_url, type: 'user' });
+          });
+        }
+      } else {
+        const { data: proj } = await supabase.from('projects').select('owner_id').eq('id', projectId).single();
+        if (proj) {
+          const { data: ownerProfile } = await supabase.from('profiles').select('id, display_name, avatar_url').eq('id', proj.owner_id).single();
+          if (ownerProfile) results.push({ id: ownerProfile.id, name: ownerProfile.display_name || 'Unknown', avatar_url: ownerProfile.avatar_url, type: 'user' });
+        }
+      }
+      const { data: agentRows } = await supabase.from('agent_projects')
+        .select('agent_id, agents(id, display_name)')
+        .eq('project_id', projectId);
+      if (agentRows) {
+        agentRows.forEach((r: any) => {
+          const a = r.agents;
+          if (a) results.push({ id: a.id, name: a.display_name, type: 'agent' });
+        });
+      }
+      setCandidates(results);
+    };
+    fetchCandidates();
+  }, [open, projectId, teamId]);
+
+  // Resolve current assignee name
+  useEffect(() => {
+    if (!task.assigned_to || !task.assigned_type) {
+      setAssigneeName(null);
+      setAssigneeAvatarUrl(null);
+      return;
+    }
+    const found = candidates.find(c => c.id === task.assigned_to);
+    if (found) {
+      setAssigneeName(found.name);
+      setAssigneeAvatarUrl(found.avatar_url || null);
+      return;
+    }
+    if (task.assigned_type === 'user') {
+      supabase.from('profiles').select('display_name, avatar_url').eq('id', task.assigned_to).single()
+        .then(({ data }) => { if (data) { setAssigneeName(data.display_name); setAssigneeAvatarUrl(data.avatar_url); } });
+    } else {
+      supabase.from('agents').select('display_name').eq('id', task.assigned_to).single()
+        .then(({ data }) => { if (data) { setAssigneeName(data.display_name); setAssigneeAvatarUrl(null); } });
+    }
+  }, [task.assigned_to, task.assigned_type, candidates]);
 
   useEffect(() => {
     if (!notes.length) return;
@@ -83,6 +153,28 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, on
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  // Filter candidates based on search (strip leading @)
+  const searchTerm = assigneeSearch.replace(/^@/, '').toLowerCase();
+  const filteredCandidates = candidates.filter(c => c.name.toLowerCase().includes(searchTerm));
+
+  const handleSelectAssignee = async (candidate: Assignee) => {
+    setAssigneeDropdownOpen(false);
+    setAssigneeSearch('');
+    try {
+      await onAssign?.(task.id, candidate.id, candidate.type);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleUnassign = async () => {
+    try {
+      await onUnassign?.(task.id);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
@@ -112,6 +204,73 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, on
               {config.label}
             </span>
             <span className="text-muted-foreground">Time: <span className="font-bold text-foreground">{timeDisplay}</span></span>
+          </div>
+
+          {/* Assignee */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <UserPlus size={12} /> Assignee
+            </span>
+            {task.assigned_to && assigneeName ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-xs font-medium">
+                {task.assigned_type === 'agent' ? (
+                  <Bot size={12} className="text-[hsl(var(--sidebar-panel-active))]" />
+                ) : (
+                  <Avatar className="h-4 w-4">
+                    {assigneeAvatarUrl && <AvatarImage src={assigneeAvatarUrl} />}
+                    <AvatarFallback className="text-[8px]">{getInitials(assigneeName)}</AvatarFallback>
+                  </Avatar>
+                )}
+                <span>{assigneeName}</span>
+                {onUnassign && (
+                  <button onClick={handleUnassign} className="text-muted-foreground hover:text-destructive ml-0.5">
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <Popover open={assigneeDropdownOpen} onOpenChange={setAssigneeDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs rounded-lg">
+                    <Plus size={12} />
+                    Assign
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="start">
+                  <Input
+                    placeholder="Type @ to search..."
+                    value={assigneeSearch}
+                    onChange={e => setAssigneeSearch(e.target.value)}
+                    autoFocus
+                    className="h-8 text-xs mb-2"
+                  />
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    {filteredCandidates.length === 0 ? (
+                      <p className="text-xs text-muted-foreground px-2 py-1.5">No matches</p>
+                    ) : (
+                      filteredCandidates.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => handleSelectAssignee(c)}
+                          className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs hover:bg-accent transition-colors text-left"
+                        >
+                          {c.type === 'agent' ? (
+                            <Bot size={14} className="text-[hsl(var(--sidebar-panel-active))] shrink-0" />
+                          ) : (
+                            <Avatar className="h-5 w-5 shrink-0">
+                              {c.avatar_url && <AvatarImage src={c.avatar_url} />}
+                              <AvatarFallback className="text-[8px]">{getInitials(c.name)}</AvatarFallback>
+                            </Avatar>
+                          )}
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{c.type === 'agent' ? 'Agent' : 'Member'}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
 
           {/* Dates */}
