@@ -51,7 +51,7 @@ const OpenClawSection = () => (
               </Button>
             </a>
             <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg" className="h-12 px-8 border-white/20 text-white hover:bg-white/10">
+              <Button size="lg" className="h-12 px-8 border border-white/20 bg-transparent text-white hover:bg-white/10">
                 View Docs
               </Button>
             </a>
