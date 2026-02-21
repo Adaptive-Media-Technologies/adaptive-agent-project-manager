@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
@@ -11,6 +11,7 @@ import { useUnreadCounts } from '@/hooks/useUnreadCounts';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import FormattingToolbar from '@/components/FormattingToolbar';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
@@ -69,6 +70,7 @@ const Index = () => {
   const { profile } = useProfile();
   const { agents, loading: agentsLoading, createAgent, deleteAgent, updateAgentProjects } = useAgents();
   const [newTask, setNewTask] = useState('');
+  const taskInputRef = useRef<HTMLTextAreaElement>(null);
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -900,12 +902,30 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                     <p className="text-lg font-semibold text-foreground">No tasks yet</p>
                     <p className="text-sm text-muted-foreground">Create your first task to get started</p>
                   </div>
-                  <form onSubmit={handleAddTask} className="flex gap-2 w-full max-w-sm">
-                    <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 shadow-sm">
-                      <Plus size={15} className="text-muted-foreground shrink-0" />
-                      <Input placeholder="Enter a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" autoFocus />
+                  <form onSubmit={handleAddTask} className="w-full max-w-sm">
+                    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                      <div className="flex items-center gap-0.5 px-2 pt-1.5 pb-0.5 border-b border-border/50">
+                        <Plus size={14} className="text-muted-foreground shrink-0 mr-1" />
+                        <FormattingToolbar textareaRef={taskInputRef} value={newTask} onChange={setNewTask} compact />
+                        <div className="flex-1" />
+                        <Button type="submit" size="sm" disabled={!newTask.trim()} className="rounded-lg px-4 h-7 text-xs">Add</Button>
+                      </div>
+                      <textarea
+                        ref={taskInputRef}
+                        placeholder="Enter a task..."
+                        value={newTask}
+                        onChange={e => setNewTask(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (newTask.trim()) handleAddTask(e);
+                          }
+                        }}
+                        rows={4}
+                        className="w-full text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none px-3 py-2 text-foreground placeholder:text-muted-foreground resize-none min-h-[96px] max-h-[200px]"
+                        autoFocus
+                      />
                     </div>
-                    <Button type="submit" size="sm" disabled={!newTask.trim()} className="rounded-lg px-4">Add</Button>
                   </form>
                 </div>
               ) : (
@@ -942,12 +962,29 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
             </div>
             {/* Floating task input */}
             <form onSubmit={handleAddTask} className="bg-card border-t border-border px-4 md:px-6 py-3">
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 shadow-sm">
-                <Plus size={15} className="text-[hsl(var(--sidebar-panel-active))] shrink-0" />
-                <Input placeholder="Add a task..." value={newTask} onChange={e => setNewTask(e.target.value)} className="text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent px-0" />
-                <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-8 px-3 text-[hsl(var(--sidebar-panel-active))]" disabled={!newTask.trim()}>
-                  Add
-                </Button>
+              <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+                <div className="flex items-center gap-0.5 px-2 pt-1.5 pb-0.5 border-b border-border/50">
+                  <Plus size={14} className="text-[hsl(var(--sidebar-panel-active))] shrink-0 mr-1" />
+                  <FormattingToolbar textareaRef={taskInputRef} value={newTask} onChange={setNewTask} compact />
+                  <div className="flex-1" />
+                  <Button type="submit" size="sm" variant="ghost" className="shrink-0 rounded-lg h-7 px-3 text-[hsl(var(--sidebar-panel-active))] text-xs" disabled={!newTask.trim()}>
+                    Add
+                  </Button>
+                </div>
+                <textarea
+                  ref={taskInputRef}
+                  placeholder="Add a task..."
+                  value={newTask}
+                  onChange={e => setNewTask(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (newTask.trim()) handleAddTask(e);
+                    }
+                  }}
+                  rows={4}
+                  className="w-full text-sm border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none px-3 py-2 text-foreground placeholder:text-muted-foreground resize-none min-h-[96px] max-h-[200px]"
+                />
               </div>
             </form>
 
