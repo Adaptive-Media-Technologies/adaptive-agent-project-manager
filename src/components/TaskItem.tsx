@@ -1,5 +1,5 @@
 import { Task } from '@/hooks/useTasks';
-import { Trash2, GripVertical, Timer, MoreHorizontal, CalendarDays, Bot } from 'lucide-react';
+import { Trash2, GripVertical, Timer, MoreHorizontal, CalendarDays, Bot, User } from 'lucide-react';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -101,11 +101,13 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
 
       {/* Right-side metadata */}
       <div className="flex items-center gap-2.5 shrink-0">
-        {/* Agent badge — only when assigned to agent */}
-        {assigneeType === 'agent' && (
-          <span className="hidden group-hover:inline-flex md:inline-flex items-center gap-1 text-[11px] font-medium text-[hsl(var(--sidebar-panel-active))] opacity-70">
-            <Bot size={11} />
-            Agent
+        {/* Assignee label — always show */}
+        {assigneeName && (
+          <span className={`hidden group-hover:inline-flex md:inline-flex items-center gap-1 text-[11px] font-medium opacity-70 ${
+            assigneeType === 'agent' ? 'text-[hsl(var(--sidebar-panel-active))]' : 'text-muted-foreground'
+          }`}>
+            {assigneeType === 'agent' ? <Bot size={11} /> : <User size={11} />}
+            {assigneeName}
           </span>
         )}
 
