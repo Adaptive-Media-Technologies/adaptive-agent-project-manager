@@ -1,102 +1,71 @@
 
 
-# Simple Task Assignment with @mention Picker
+# Rich Text Input for Chat and Task Input
 
 ## Summary
-Add a lightweight assignee field to the task detail drawer. Users type `@` to search and select a team member or AI agent by name. The assigned person/agent shows as an avatar chip on both the detail drawer and the task row.
+Upgrade both the **project chat input** and the **task input bar** from single-line `<input>` elements to multi-line `<textarea>` elements (minimum 4 lines), and add a formatting toolbar with bold, italic, strikethrough, and other options -- similar to the Slack-style toolbar in your screenshot.
 
 ---
 
-## Database Changes
+## What Changes
 
-**Migration**: Add two columns to `tasks`:
+### 1. Chat Input (ProjectChat.tsx)
+- Replace the single-line `<input>` with a `<textarea>` (min 4 rows, auto-grows)
+- Add a formatting toolbar row above the textarea with buttons for:
+  - **Bold** (wraps selection in `**text**`)
+  - *Italic* (`*text*`)
+  - ~~Strikethrough~~ (`~~text~~`)
+  - Bulleted list
+  - Code inline (`` `code` ``)
+- Keep existing emoji picker, file attach, and @mention functionality
+- Send with button click; Shift+Enter for newlines, Enter alone still sends
+- Render markdown formatting in message bubbles (parse `**bold**`, `*italic*`, etc.)
 
-```text
-assigned_to    uuid   nullable   -- references a profile ID or agent ID
-assigned_type  text   nullable   -- 'user' or 'agent'
-```
+### 2. Task Input (Index.tsx -- floating task bar)
+- Replace the single-line `<Input>` with a `<textarea>` (min 4 rows, auto-grows)
+- Add a smaller formatting toolbar: Bold, Italic, Bulleted list
+- Submit with button or Ctrl/Cmd+Enter
 
-No foreign keys (polymorphic reference). No new tables.
-
----
-
-## Hook Changes (`src/hooks/useTasks.ts`)
-
-- Extend the `Task` type with `assigned_to` and `assigned_type`
-- Add `assignTask(taskId, assigneeId, type)` -- updates both columns
-- Add `unassignTask(taskId)` -- sets both to null
-
----
-
-## UI Changes
-
-### Task Detail Drawer (`TaskDetailDialog.tsx`)
-
-Add an **Assignee** row between the Status/Time section and the Dates section:
-
-- Shows current assignee as an avatar + name chip (with an "x" to unassign)
-- If unassigned, shows an input field with placeholder "Type @ to assign..."
-- Typing `@` triggers a dropdown list filtered by keystroke:
-  - **Team members**: fetched from `team_members` + `profiles` for the project's team
-  - **AI agents**: fetched from `agent_projects` + `agents` for this project
-  - Each entry shows avatar/Bot icon + display name
-- Selecting an entry calls `assignTask()` with optimistic update
-- For private projects: shows just the owner + any assigned agents
-
-### Task Row (`TaskItem.tsx`)
-
-- When assigned, show a small avatar (user) or Bot icon (agent) next to the task title
-- Remove the always-visible "Agent" badge; instead show it only when `assigned_type === 'agent'`
-- Unassigned tasks show no avatar
+### 3. Message Rendering (ProjectChat.tsx -- renderMessageContent)
+- Update to parse and render basic markdown: bold, italic, strikethrough, inline code, and bullet lists
+- Keep the existing @mention highlighting
 
 ---
 
 ## Technical Details
 
-### Migration SQL
+### Formatting Toolbar Component
+Create a new reusable component `src/components/FormattingToolbar.tsx`:
+- Accepts a ref to the textarea
+- Buttons for Bold, Italic, Strikethrough, Bulleted List, Inline Code
+- Each button wraps the current selection in the textarea with the appropriate markdown syntax (e.g., `**` for bold)
+- Uses lucide icons: `Bold`, `Italic`, `Strikethrough`, `List`, `Code`
 
-```text
-ALTER TABLE public.tasks
-  ADD COLUMN assigned_to uuid,
-  ADD COLUMN assigned_type text;
-```
+### Chat Input Changes (`src/components/ProjectChat.tsx`)
+- Replace `<input ref={inputRef}>` with `<textarea ref={inputRef}>` (min-height ~4 lines, max-height capped so it doesn't grow forever)
+- Update `inputRef` type from `HTMLInputElement` to `HTMLTextAreaElement`
+- Update `handleTextChange` and `handleKeyDown` for textarea behavior
+- Add `<FormattingToolbar>` row between the toolbar icons (emoji, attach) and the textarea
+- Adjust the input bar layout from a single horizontal row to a vertical stack: toolbar on top, textarea below, action buttons alongside
 
-### Assignee lookup queries
+### Task Input Changes (`src/pages/Index.tsx`)
+- Replace `<Input>` with `<textarea>` in the floating task form
+- Add `<FormattingToolbar>` above or inline
+- Adjust form submission: Enter with no shift adds task, Shift+Enter for newline
 
-**Team members** (for team projects):
-```text
-supabase.from('team_members')
-  .select('user_id, profiles!team_members_user_id_profiles_fkey(id, display_name, avatar_url)')
-  .eq('team_id', project.team_id)
-```
-
-**Agents** (for any project):
-```text
-supabase.from('agent_projects')
-  .select('agent_id, agents(id, display_name)')
-  .eq('project_id', projectId)
-```
-
-### Assignee input behavior
-
-1. User clicks the assignee area or starts typing
-2. Typing `@` (or any character) filters the combined list of members + agents
-3. Arrow keys + Enter or click to select
-4. Selection calls `assignTask(taskId, id, 'user' | 'agent')`
-5. Chip appears with name + avatar; clicking "x" calls `unassignTask()`
-
-### Props changes
-
-- `TaskDetailDialog` receives `projectId` (to query assignees) and the project's `team_id`
-- `TaskItem` receives `assigneeName` and `assigneeType` (resolved by parent) to display inline
+### Message Rendering (`src/components/ProjectChat.tsx`)
+- Update `renderMessageContent()` to parse markdown patterns:
+  - `**text**` renders as `<strong>`
+  - `*text*` renders as `<em>`
+  - `` ~~text~~ `` renders as `<s>`
+  - `` `code` `` renders as `<code>` with a subtle background
+  - Lines starting with `- ` or `* ` render as list items
 
 ### Files to modify
 
 | File | Change |
 |---|---|
-| New migration | Add 2 columns to `tasks` |
-| `src/hooks/useTasks.ts` | Extend Task type, add assign/unassign functions |
-| `src/components/TaskDetailDialog.tsx` | Add assignee row with @mention input + dropdown |
-| `src/components/TaskItem.tsx` | Show assignee avatar/icon inline, conditional Agent badge |
-| `src/components/TaskList.tsx` | Pass project context + assignee display data to children |
+| `src/components/FormattingToolbar.tsx` | New reusable toolbar component |
+| `src/components/ProjectChat.tsx` | Swap input to textarea, add toolbar, update renderer |
+| `src/pages/Index.tsx` | Swap task input to textarea, add toolbar |
 
