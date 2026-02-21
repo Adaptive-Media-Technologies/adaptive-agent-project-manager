@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import EmojiPicker from '@/components/EmojiPicker';
 import { Send, Paperclip, X, Download, Trash2, FileText } from 'lucide-react';
+import FormattingToolbar from '@/components/FormattingToolbar';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 // GifPicker removed — GIPHY public key was rate-limited
@@ -30,7 +31,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // @mention state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -79,7 +80,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
     setMentionIndex(0);
   }, [mentionQuery, members, user?.id]);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setText(val);
 
@@ -255,60 +256,122 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
           </div>
         )}
 
-        <div className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-2 shadow-sm">
-          <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
-          
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title="Attach files"
-          >
-            <Paperclip size={16} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
-          />
-          <input
-            ref={inputRef}
-            placeholder="Type a message... Use @ to mention"
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2.5 text-foreground placeholder:text-muted-foreground"
-            disabled={sending}
-          />
-          <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0" onClick={handleSend} disabled={sending || (!text.trim() && files.length === 0)}>
-            <Send size={15} />
-          </Button>
+        <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+          {/* Toolbar row */}
+          <div className="flex items-center gap-0.5 px-2 pt-1.5 pb-0.5 border-b border-border/50">
+            <FormattingToolbar textareaRef={inputRef} value={text} onChange={setText} />
+            <div className="h-4 w-px bg-border mx-1" />
+            <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title="Attach files"
+            >
+              <Paperclip size={14} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
+            />
+          </div>
+          {/* Textarea + send */}
+          <div className="flex items-end px-2 pb-1.5">
+            <textarea
+              ref={inputRef}
+              placeholder="Type a message... Use @ to mention"
+              value={text}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              rows={4}
+              className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2 text-foreground placeholder:text-muted-foreground resize-none min-h-[96px] max-h-[200px]"
+              disabled={sending}
+            />
+            <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0 mb-1" onClick={handleSend} disabled={sending || (!text.trim() && files.length === 0)}>
+              <Send size={15} />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Render message content with highlighted @mentions
+// Parse inline markdown and @mentions
 const renderMessageContent = (content: string) => {
   if (!content) return null;
-  const parts = content.split(/(@[a-z0-9_]+)/gi);
+
+  // Split into lines for list support
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  lines.forEach((line, lineIdx) => {
+    if (lineIdx > 0) elements.push(<br key={`br-${lineIdx}`} />);
+
+    // Check for bullet list
+    const listMatch = line.match(/^[-*]\s(.+)/);
+    const lineContent = listMatch ? listMatch[1] : line;
+
+    const inlineParsed = parseInlineMarkdown(lineContent);
+
+    if (listMatch) {
+      elements.push(
+        <span key={`li-${lineIdx}`} className="flex items-start gap-1.5">
+          <span className="text-muted-foreground select-none mt-px">•</span>
+          <span>{inlineParsed}</span>
+        </span>
+      );
+    } else {
+      elements.push(<span key={`l-${lineIdx}`}>{inlineParsed}</span>);
+    }
+  });
+
   return (
     <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">
-      {parts.map((part, i) => {
-        if (/^@[a-z0-9_]+$/i.test(part)) {
-          return (
-            <span key={i} className="rounded px-1 py-0.5 bg-[hsl(var(--sidebar-panel-active)/0.15)] text-[hsl(var(--sidebar-panel-active))] font-semibold">
-              {part}
-            </span>
-          );
-        }
-        return part;
-      })}
+      {elements}
     </p>
   );
+};
+
+// Parse bold, italic, strikethrough, code, and @mentions
+const parseInlineMarkdown = (text: string): React.ReactNode[] => {
+  // Order matters: bold before italic
+  const pattern = /(\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~|`(.+?)`|@[a-z0-9_]+)/gi;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    const full = match[0];
+    if (match[2]) {
+      parts.push(<strong key={match.index} className="font-bold">{match[2]}</strong>);
+    } else if (match[3]) {
+      parts.push(<em key={match.index}>{match[3]}</em>);
+    } else if (match[4]) {
+      parts.push(<s key={match.index} className="text-muted-foreground">{match[4]}</s>);
+    } else if (match[5]) {
+      parts.push(<code key={match.index} className="rounded bg-muted px-1 py-0.5 text-[13px] font-mono">{match[5]}</code>);
+    } else if (/^@[a-z0-9_]+$/i.test(full)) {
+      parts.push(
+        <span key={match.index} className="rounded px-1 py-0.5 bg-[hsl(var(--sidebar-panel-active)/0.15)] text-[hsl(var(--sidebar-panel-active))] font-semibold">
+          {full}
+        </span>
+      );
+    }
+    lastIndex = match.index + full.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts;
 };
 
 const MessageBubble = ({
