@@ -643,44 +643,127 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                       {selectedAgent.email && <p className="text-sm text-muted-foreground">{selectedAgent.email}</p>}
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        await deleteAgent(selectedAgent.id);
-                        setSelectedAgent(null);
-                        toast.success('Agent revoked');
-                      } catch (err: any) {
-                        toast.error(err.message);
-                      }
-                    }}
-                    className="gap-1.5"
-                  >
-                    <Trash2 size={13} /> Revoke
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Link to="/docs">
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Info size={13} /> API Docs
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await deleteAgent(selectedAgent.id);
+                          setSelectedAgent(null);
+                          toast.success('Agent revoked');
+                        } catch (err: any) {
+                          toast.error(err.message);
+                        }
+                      }}
+                      className="gap-1.5"
+                    >
+                      <Trash2 size={13} /> Revoke
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-xl border border-border bg-card p-4 space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned Projects</p>
-                    {assignedProjects.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {assignedProjects.map(p => (
-                          <span key={p.id} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
-                            {p.type === 'team' ? <Users size={10} /> : <Lock size={10} />}
-                            {p.name}
-                          </span>
+                {/* Assigned Teams & Projects */}
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Teams & Projects</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
+                          <Plus size={12} /> Add to Projects
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-3 space-y-2" align="end">
+                        <p className="text-xs font-semibold text-foreground">Assign to projects</p>
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {projects.map(p => {
+                            const isAssigned = selectedAgent.project_ids.includes(p.id);
+                            const teamName = p.type === 'team' && p.team_id ? teams.find(t => t.id === p.team_id)?.name : null;
+                            return (
+                              <label key={p.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted cursor-pointer text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={isAssigned}
+                                  onChange={async () => {
+                                    const newIds = isAssigned
+                                      ? selectedAgent.project_ids.filter(id => id !== p.id)
+                                      : [...selectedAgent.project_ids, p.id];
+                                    try {
+                                      await updateAgentProjects(selectedAgent.id, newIds);
+                                      setSelectedAgent({ ...selectedAgent, project_ids: newIds });
+                                      toast.success('Updated');
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                    }
+                                  }}
+                                  className="rounded border-border"
+                                />
+                                <span className="flex items-center gap-1 truncate">
+                                  {p.type === 'team' ? <Users size={10} className="shrink-0 opacity-50" /> : <Lock size={10} className="shrink-0 opacity-50" />}
+                                  <span className="truncate">{p.name}</span>
+                                  {teamName && <span className="text-[10px] text-muted-foreground ml-1">({teamName})</span>}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {assignedProjects.length > 0 ? (() => {
+                    // Group assigned projects by team
+                    const teamProjectGroups: { teamName: string | null; projects: typeof assignedProjects }[] = [];
+                    const privateAssigned = assignedProjects.filter(p => p.type === 'private');
+                    const teamAssigned = assignedProjects.filter(p => p.type === 'team');
+
+                    if (privateAssigned.length > 0) {
+                      teamProjectGroups.push({ teamName: null, projects: privateAssigned });
+                    }
+
+                    const teamMap = new Map<string, typeof assignedProjects>();
+                    for (const p of teamAssigned) {
+                      const tid = p.team_id || 'unknown';
+                      if (!teamMap.has(tid)) teamMap.set(tid, []);
+                      teamMap.get(tid)!.push(p);
+                    }
+                    for (const [tid, tProjects] of teamMap) {
+                      const teamName = teams.find(t => t.id === tid)?.name || 'Unknown Team';
+                      teamProjectGroups.push({ teamName, projects: tProjects });
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        {teamProjectGroups.map((group, i) => (
+                          <div key={i} className="space-y-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              {group.teamName ? <><Users size={9} /> {group.teamName}</> : <><Lock size={9} /> Private Projects</>}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.projects.map(p => (
+                                <span key={p.id} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
+                                  <FolderOpen size={10} className="opacity-50" />
+                                  {p.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No projects assigned</p>
-                    )}
-                  </div>
-                  <div className="rounded-xl border border-border bg-card p-4 space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</p>
-                    <p className="text-sm font-medium text-foreground">{format(new Date(selectedAgent.created_at), 'PP')}</p>
-                  </div>
+                    );
+                  })() : (
+                    <p className="text-sm text-muted-foreground">No projects assigned. Click "Add to Projects" to get started.</p>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</p>
+                  <p className="text-sm font-medium text-foreground">{format(new Date(selectedAgent.created_at), 'PP')}</p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card p-4 space-y-2">
