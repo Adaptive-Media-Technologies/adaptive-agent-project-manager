@@ -63,12 +63,12 @@ All colors MUST be HSL.
     --sidebar-panel-active: 240 65% 55%;
     --sidebar-panel-active-bg: 240 60% 96%;
 
-    --chat-own-bg: 270 60% 96%;
-    --chat-own-border: 270 40% 88%;
-    --chat-other-bg: 210 60% 96%;
-    --chat-other-border: 210 40% 88%;
-    --chat-mention-bg: 270 60% 92%;
-    --chat-mention-text: 270 60% 42%;
+    --chat-own-bg: 210 60% 95%;
+    --chat-own-border: 210 45% 85%;
+    --chat-other-bg: 220 50% 96%;
+    --chat-other-border: 220 35% 88%;
+    --chat-mention-bg: 210 60% 90%;
+    --chat-mention-text: 210 70% 40%;
 
     --marketing-gradient-start: 240 70% 55%;
     --marketing-gradient-mid: 262 72% 56%;
@@ -134,12 +134,12 @@ All colors MUST be HSL.
     --sidebar-panel-active: 240 65% 70%;
     --sidebar-panel-active-bg: 240 40% 18%;
 
-    --chat-own-bg: 270 30% 18%;
-    --chat-own-border: 270 25% 28%;
-    --chat-other-bg: 210 30% 16%;
-    --chat-other-border: 210 25% 26%;
-    --chat-mention-bg: 270 40% 22%;
-    --chat-mention-text: 270 60% 75%;
+    --chat-own-bg: 210 30% 18%;
+    --chat-own-border: 210 25% 28%;
+    --chat-other-bg: 220 25% 15%;
+    --chat-other-border: 220 20% 24%;
+    --chat-mention-bg: 210 40% 22%;
+    --chat-mention-text: 210 60% 75%;
 
     --marketing-gradient-start: 240 70% 55%;
     --marketing-gradient-mid: 262 72% 56%;
