@@ -32,6 +32,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   // @mention state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -80,13 +81,50 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
     setMentionIndex(0);
   }, [mentionQuery, members, user?.id]);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setText(val);
+  // Helper to get plain text from contentEditable
+  const getEditorText = () => {
+    const el = editorRef.current;
+    if (!el) return '';
+    return el.innerText || '';
+  };
 
-    const cursorPos = e.target.selectionStart || val.length;
-    // Find @ before cursor
-    const beforeCursor = val.slice(0, cursorPos);
+  // Convert HTML to markdown-ish text for storage
+  const htmlToMarkdown = (html: string): string => {
+    let md = html;
+    md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+    md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+    md = md.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+    md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+    md = md.replace(/<s>(.*?)<\/s>/gi, '~~$1~~');
+    md = md.replace(/<strike>(.*?)<\/strike>/gi, '~~$1~~');
+    md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
+    md = md.replace(/<li>(.*?)<\/li>/gi, '- $1');
+    md = md.replace(/<\/?[uo]l>/gi, '');
+    md = md.replace(/<br\s*\/?>/gi, '\n');
+    md = md.replace(/<div>/gi, '\n');
+    md = md.replace(/<\/div>/gi, '');
+    md = md.replace(/<pre>(.*?)<\/pre>/gi, '`$1`');
+    md = md.replace(/<[^>]+>/g, '');
+    md = md.replace(/&nbsp;/g, ' ');
+    md = md.replace(/&lt;/g, '<');
+    md = md.replace(/&gt;/g, '>');
+    md = md.replace(/&amp;/g, '&');
+    return md.trim();
+  };
+
+  const handleEditorInput = () => {
+    const plainText = getEditorText();
+    setText(plainText);
+
+    // @mention detection
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    if (textNode.nodeType !== Node.TEXT_NODE) return;
+    const textContent = textNode.textContent || '';
+    const cursorPos = range.startOffset;
+    const beforeCursor = textContent.slice(0, cursorPos);
     const atIdx = beforeCursor.lastIndexOf('@');
     
     if (atIdx >= 0 && (atIdx === 0 || beforeCursor[atIdx - 1] === ' ')) {
@@ -103,20 +141,43 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
 
   const insertMention = (member: MemberSuggestion) => {
     const handle = member.username || member.display_name || 'user';
-    const before = text.slice(0, mentionStart);
-    const after = text.slice((inputRef.current?.selectionStart || text.length));
-    setText(`${before}@${handle} ${after}`);
+    const el = editorRef.current;
+    if (!el) return;
+    
+    // For contentEditable, we need to manipulate the DOM
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const textNode = range.startContainer;
+      if (textNode.nodeType === Node.TEXT_NODE) {
+        const textContent = textNode.textContent || '';
+        const cursorPos = range.startOffset;
+        const before = textContent.slice(0, mentionStart);
+        const after = textContent.slice(cursorPos);
+        textNode.textContent = `${before}@${handle} ${after}`;
+        // Set cursor after mention
+        const newPos = before.length + handle.length + 2;
+        range.setStart(textNode, newPos);
+        range.setEnd(textNode, newPos);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+    
+    setText(getEditorText());
     setMentionQuery(null);
     setMentionStart(-1);
-    inputRef.current?.focus();
+    el.focus();
   };
 
   const handleSend = async () => {
-    if (!text.trim() && files.length === 0) return;
+    const el = editorRef.current;
+    const htmlContent = el?.innerHTML || '';
+    const content = htmlToMarkdown(htmlContent);
+    if (!content.trim() && files.length === 0) return;
     setSending(true);
     try {
-      const content = text.trim();
-      await sendMessage(content, undefined, files.length > 0 ? files : undefined);
+      await sendMessage(content.trim(), undefined, files.length > 0 ? files : undefined);
 
       // Create notifications for @mentions
       if (content && user) {
@@ -142,6 +203,7 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
       }
 
       setText('');
+      if (el) el.innerHTML = '';
       setFiles([]);
     } catch (err: any) {
       toast.error(err.message || 'Failed to send');
@@ -259,9 +321,16 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
         <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
           {/* Toolbar row */}
           <div className="flex items-center gap-0.5 px-2 pt-1.5 pb-0.5 border-b border-border/50">
-            <FormattingToolbar textareaRef={inputRef} value={text} onChange={setText} />
+            <FormattingToolbar editorRef={editorRef} />
             <div className="h-4 w-px bg-border mx-1" />
-            <EmojiPicker onSelect={emoji => { setText(prev => prev + emoji); inputRef.current?.focus(); }} />
+            <EmojiPicker onSelect={emoji => {
+              const el = editorRef.current;
+              if (el) {
+                el.focus();
+                document.execCommand('insertText', false, emoji);
+                setText(getEditorText());
+              }
+            }} />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -278,17 +347,15 @@ const ProjectChat = ({ projectId, onNewMessage }: ProjectChatProps) => {
               onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
             />
           </div>
-          {/* Textarea + send */}
+          {/* ContentEditable + send */}
           <div className="flex items-end px-2 pb-1.5">
-            <textarea
-              ref={inputRef}
-              placeholder="Type a message... Use @ to mention"
-              value={text}
-              onChange={handleTextChange}
+            <div
+              ref={editorRef}
+              contentEditable={!sending}
+              onInput={handleEditorInput}
               onKeyDown={handleKeyDown}
-              rows={4}
-              className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2 text-foreground placeholder:text-muted-foreground resize-none min-h-[96px] max-h-[200px]"
-              disabled={sending}
+              data-placeholder="Type a message... Use @ to mention"
+              className="text-sm flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent outline-none py-2 text-foreground resize-none min-h-[96px] max-h-[200px] overflow-y-auto empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
             />
             <Button size="icon" variant="ghost" className="rounded-lg h-8 w-8 shrink-0 mb-1" onClick={handleSend} disabled={sending || (!text.trim() && files.length === 0)}>
               <Send size={15} />
@@ -359,7 +426,7 @@ const parseInlineMarkdown = (text: string): React.ReactNode[] => {
       parts.push(<code key={match.index} className="rounded bg-muted px-1 py-0.5 text-[13px] font-mono">{match[5]}</code>);
     } else if (/^@[a-z0-9_]+$/i.test(full)) {
       parts.push(
-        <span key={match.index} className="rounded px-1 py-0.5 bg-[hsl(var(--sidebar-panel-active)/0.15)] text-[hsl(var(--sidebar-panel-active))] font-semibold">
+        <span key={match.index} className="rounded px-1 py-0.5 bg-[hsl(var(--chat-mention-bg))] text-[hsl(var(--chat-mention-text))] font-semibold">
           {full}
         </span>
       );
@@ -394,7 +461,7 @@ const MessageBubble = ({
         {msg.profile?.avatar_url && <AvatarImage src={msg.profile.avatar_url} />}
         <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
       </Avatar>
-      <div className={`flex-1 min-w-0 rounded-xl px-3 py-2 ${isOwn ? 'bg-primary/5' : 'bg-muted/50'}`}>
+      <div className={`flex-1 min-w-0 rounded-xl px-3 py-2 border ${isOwn ? 'bg-[hsl(var(--chat-own-bg))] border-[hsl(var(--chat-own-border))]' : 'bg-[hsl(var(--chat-other-bg))] border-[hsl(var(--chat-other-border))]'}`}>
         <div className="flex items-baseline gap-2">
           <span className="text-[13px] font-semibold text-foreground">{msg.profile?.username || msg.profile?.display_name || 'User'}</span>
           <span className="text-[10px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
