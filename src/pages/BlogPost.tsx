@@ -8,18 +8,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
-
-const getGradient = (slug: string) => {
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) hash = slug.charCodeAt(i) + ((hash << 5) - hash);
-  const h1 = Math.abs(hash % 360);
-  const h2 = (h1 + 40 + Math.abs((hash >> 8) % 40)) % 360;
-  return `linear-gradient(135deg, hsl(${h1}, 70%, 55%), hsl(${h2}, 65%, 45%))`;
-};
+import { getCoverImage } from '@/components/blog/coverImages';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
+  const coverSrc = slug ? getCoverImage(slug) : undefined;
 
   useEffect(() => {
     if (!post) return;
@@ -89,14 +83,13 @@ const BlogPost = () => {
         </Link>
 
         {/* Cover */}
-        <div
-          className="w-full h-64 md:h-80 rounded-xl mb-8 flex items-center justify-center"
-          style={{ background: post.cover_image_url || getGradient(post.slug) }}
-        >
-          {post.cover_image_url?.startsWith('http') ? (
-            <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-cover rounded-xl" />
+        <div className="w-full h-64 md:h-80 rounded-xl mb-8 overflow-hidden">
+          {coverSrc ? (
+            <img src={coverSrc} alt={post.title} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-white/60 text-6xl font-bold select-none">{post.title.charAt(0)}</span>
+            <div className="w-full h-full bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] flex items-center justify-center">
+              <span className="text-white/60 text-6xl font-bold select-none">{post.title.charAt(0)}</span>
+            </div>
           )}
         </div>
 
