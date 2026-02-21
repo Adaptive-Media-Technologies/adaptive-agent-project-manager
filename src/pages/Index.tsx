@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
@@ -20,7 +21,7 @@ import CreateProjectDialog from '@/components/CreateProjectDialog';
 import {
   Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban,
   Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot,
-  CalendarDays, GripVertical, Hash, Trash2, Copy, Key,
+  CalendarDays, GripVertical, Hash, Trash2, Copy, Key, Sun, Moon,
 } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -59,6 +60,7 @@ import type { Project } from '@/hooks/useTasks';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
+  const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
   const { projects, loading: projLoading, create: createProject, rename: renameProject, reorderProjects, refresh: refreshProjects } = useProjects();
   const { teams, refresh: teamsRefresh } = useTeams();
@@ -292,6 +294,15 @@ const Index = () => {
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Dark/Light mode toggle */}
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title="Toggle theme"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)] transition-all"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
           {/* Settings at bottom */}
           <button

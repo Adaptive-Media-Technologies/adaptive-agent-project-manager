@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 
-const LandingNav = () => (
+const LandingNav = () => {
+  const { theme, setTheme } = useTheme();
+  return (
   <>
     {/* Announcement Bar */}
     <div className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white text-center text-sm py-2 px-4">
@@ -30,6 +33,13 @@ const LandingNav = () => (
           <a href="#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
         </nav>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] hover:bg-[hsl(var(--marketing-surface-alt))] transition-colors"
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <Link to="/auth">
             <Button variant="ghost" size="sm">Log in</Button>
           </Link>
@@ -42,6 +52,6 @@ const LandingNav = () => (
       </div>
     </header>
   </>
-);
-
+  );
+};
 export default LandingNav;
