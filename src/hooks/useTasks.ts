@@ -10,6 +10,7 @@ export type Task = {
   position: number;
   completed_at: string | null;
   created_at: string;
+  created_by: string;
   due_date: string | null;
   assigned_to: string | null;
   assigned_type: 'user' | 'agent' | null;

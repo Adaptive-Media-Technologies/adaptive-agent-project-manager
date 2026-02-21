@@ -46,18 +46,21 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Resolve assignee display info for all assigned tasks
+  // Resolve assignee display info for all tasks (default to creator)
   useEffect(() => {
-    const assigned = tasks.filter(t => t.assigned_to && t.assigned_type);
-    if (!assigned.length) { setAssigneeMap({}); return; }
-
-    const userIds = assigned.filter(t => t.assigned_type === 'user').map(t => t.assigned_to!);
-    const agentIds = assigned.filter(t => t.assigned_type === 'agent').map(t => t.assigned_to!);
+    if (!tasks.length) { setAssigneeMap({}); return; }
 
     const fetchAll = async () => {
       const map: Record<string, AssigneeInfo> = {};
-      if (userIds.length) {
-        const { data } = await supabase.from('profiles').select('id, display_name, avatar_url').in('id', userIds);
+
+      // Collect all user IDs we need to resolve: explicit assignees + creators as fallback
+      const explicitUserIds = tasks.filter(t => t.assigned_to && t.assigned_type === 'user').map(t => t.assigned_to!);
+      const creatorIds = tasks.filter(t => !t.assigned_to).map(t => (t as any).created_by).filter(Boolean);
+      const allUserIds = [...new Set([...explicitUserIds, ...creatorIds])];
+      const agentIds = [...new Set(tasks.filter(t => t.assigned_to && t.assigned_type === 'agent').map(t => t.assigned_to!))];
+
+      if (allUserIds.length) {
+        const { data } = await supabase.from('profiles').select('id, display_name, avatar_url').in('id', allUserIds);
         data?.forEach(p => { map[p.id] = { name: p.display_name || 'Unknown', avatar_url: p.avatar_url, type: 'user' }; });
       }
       if (agentIds.length) {
@@ -96,7 +99,10 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {tasks.map(t => {
-              const info = t.assigned_to ? assigneeMap[t.assigned_to] : undefined;
+              // Use explicit assignee, or fall back to task creator
+              const assigneeId = t.assigned_to || (t as any).created_by;
+              const info = assigneeId ? assigneeMap[assigneeId] : undefined;
+              const effectiveType = t.assigned_to ? info?.type : 'user'; // creator is always a user
               return (
                 <TaskItem
                   key={t.id}
@@ -108,7 +114,7 @@ const TaskList = ({ tasks, onCycle, onDelete, onReorder, onLogTime, taskMinutes 
                   totalMinutes={taskMinutes[t.id] || 0}
                   onOpenDetail={() => setDetailTaskId(t.id)}
                   assigneeName={info?.name}
-                  assigneeType={info?.type}
+                  assigneeType={effectiveType}
                   assigneeAvatarUrl={info?.avatar_url}
                 />
               );
