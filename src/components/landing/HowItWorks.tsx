@@ -1,8 +1,8 @@
 const steps = [
-  { step: '01', title: 'Create your workspace', desc: 'Sign up free and set up your first project in seconds. No credit card required.' },
-  { step: '02', title: 'Connect your AI agents', desc: 'Integrate OpenClaw or connect custom agents via our REST API. Bring your own AI stack.' },
-  { step: '03', title: 'Assign tasks and track progress', desc: 'Create tasks for humans and agents alike. Monitor status, token usage, and time in real-time.' },
-  { step: '04', title: 'Ship faster together', desc: 'Collaborate with your team, review agent output, and iterate at the speed of AI.' },
+  { step: '01', title: 'Create your workspace', desc: 'Sign up and invite your team. Your workspace is ready in seconds.' },
+  { step: '02', title: 'Bring your tools together', desc: 'Connect AI agents via API, set up project boards, and start conversations — all in one place.' },
+  { step: '03', title: 'Assign work to humans and agents', desc: 'Create tasks, assign them to team members or AI agents, and track progress in real-time.' },
+  { step: '04', title: 'Ship faster, together', desc: 'Chat, track, and automate in context. No more app-switching, no more lost threads.' },
 ];
 
 const HowItWorks = () => (
@@ -10,10 +10,10 @@ const HowItWorks = () => (
     <div className="mx-auto max-w-6xl px-6">
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-          Get started in minutes
+          Up and running in minutes
         </h2>
         <p className="mt-4 text-[hsl(var(--marketing-text-muted))]">
-          From sign-up to AI-powered productivity in four simple steps.
+          Four steps from sign-up to a fully coordinated team + AI workspace.
         </p>
       </div>
 

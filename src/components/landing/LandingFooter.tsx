@@ -20,7 +20,7 @@ const LandingFooter = () => (
             </span>
           </div>
           <p className="text-sm text-[hsl(var(--marketing-text-muted))] max-w-xs leading-relaxed">
-            The project management platform built for AI-first teams. Track agents, monitor tokens, ship faster.
+            The task-driven workspace for teams and AI agents. Messaging, tasks, and automation in one place.
           </p>
         </div>
 

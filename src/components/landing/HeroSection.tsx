@@ -53,20 +53,20 @@ const HeroSection = () => (
     <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-8 md:pt-24 md:pb-12">
       <div className="text-center max-w-3xl mx-auto">
         <h1 className="text-4xl font-extrabold tracking-tight text-[hsl(var(--marketing-text))] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.08]">
-          The project manager your AI agents{' '}
+          One workspace for your team and{' '}
           <span className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
-            actually need
+            AI agents
           </span>
         </h1>
 
         <p className="mt-6 text-lg md:text-xl text-[hsl(var(--marketing-text-muted))] leading-relaxed max-w-2xl mx-auto">
-          Full visibility into what your AI agents are doing. Track tasks, monitor token usage, and coordinate humans + agents — all in one workspace.
+          Agntive unifies messaging, task tracking, and autonomous AI automation into a single smart workspace — so small teams stop juggling Slack, Notion, and generic bots.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link to="/auth">
             <Button size="lg" className="h-12 px-8 text-base bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white border-0 shadow-lg shadow-[hsl(var(--marketing-accent))/0.3] hover:shadow-xl hover:shadow-[hsl(var(--marketing-accent))/0.4] transition-all">
-              Get Started Free <ArrowRight size={18} />
+              Start 14-Day Free Trial <ArrowRight size={18} />
             </Button>
           </Link>
           <Button variant="outline" size="lg" className="h-12 px-8 text-base gap-2">
@@ -75,7 +75,7 @@ const HeroSection = () => (
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
-          {['Free forever', 'No credit card required', 'Set up in 2 minutes'].map(item => (
+          {['14-day free trial', 'No credit card required', 'Set up in 2 minutes'].map(item => (
             <span key={item} className="flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-[hsl(var(--marketing-accent))]" />
               {item}

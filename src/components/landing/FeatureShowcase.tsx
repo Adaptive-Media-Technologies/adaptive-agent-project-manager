@@ -6,8 +6,8 @@ const tabs = [
     id: 'tasks',
     icon: CheckSquare,
     label: 'Task Management',
-    headline: 'Tasks built for AI-first workflows',
-    description: 'Create, assign, and track tasks for both humans and AI agents. Drag-and-drop boards, status tracking, due dates, and file attachments — all designed for hybrid teams.',
+    headline: 'Tasks designed for humans and AI agents',
+    description: 'Assign work to team members or autonomous agents from the same board. Track status, due dates, and file attachments — no separate tools needed.',
     mockContent: (
       <div className="space-y-3">
         {['Design landing page', 'Write unit tests', 'Deploy to staging', 'Research competitor APIs'].map((t, i) => (
@@ -24,8 +24,8 @@ const tabs = [
     id: 'agents',
     icon: Bot,
     label: 'Agent Tracking',
-    headline: 'See your agents working in real-time',
-    description: 'Monitor which agents are active, what tasks they\'re working on, and their completion rates. Get notified when agents complete or fail tasks.',
+    headline: 'Monitor your AI agents in real-time',
+    description: 'See which agents are active, what they\'re working on, and their completion rates. Full visibility replaces guesswork.',
     mockContent: (
       <div className="space-y-3">
         {[
@@ -54,8 +54,8 @@ const tabs = [
     id: 'tokens',
     icon: Clock,
     label: 'Time & Token Logs',
-    headline: 'Track every token, every second',
-    description: 'Automatic logging of token usage per agent and time tracking for human team members. Know exactly what your AI costs and where human effort goes.',
+    headline: 'Track every hour and every token',
+    description: 'Automatic token logging per agent and time tracking for humans. Know exactly what your AI costs and where team effort goes.',
     mockContent: (
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
@@ -86,8 +86,8 @@ const tabs = [
     id: 'chat',
     icon: MessageSquare,
     label: 'Team Chat',
-    headline: 'Chat within every project',
-    description: 'Built-in project chat so your team can discuss tasks, share files, and coordinate with AI agents — all without leaving the workspace.',
+    headline: 'Conversations that live with your work',
+    description: 'In-context project chat replaces Slack threads. Discuss tasks, share files, and coordinate with AI agents — without switching apps.',
     mockContent: (
       <div className="space-y-3">
         {[
@@ -112,7 +112,7 @@ const tabs = [
     id: 'calendar',
     icon: CalendarDays,
     label: 'Calendar',
-    headline: 'All deadlines, one view',
+    headline: 'Every deadline, one unified view',
     description: 'See tasks from every project on a unified calendar. Filter by assignee, status, or project. Never miss a deadline again.',
     mockContent: (
       <div className="grid grid-cols-7 gap-1">
@@ -138,8 +138,8 @@ const tabs = [
     id: 'api',
     icon: Plug,
     label: 'API & Automations',
-    headline: 'Connect anything via API',
-    description: 'REST API for integrating custom agents, webhooks for real-time events, and pre-built connectors for popular AI platforms.',
+    headline: 'Connect any AI agent via API',
+    description: 'REST API and webhooks for integrating custom agents. Bring your own AI stack and connect it in minutes.',
     mockContent: (
       <div className="rounded-xl bg-[hsl(222,30%,14%)] p-4 font-mono text-xs text-green-400 space-y-1">
         <p className="text-[hsl(var(--marketing-text-muted))]">// Create a task via API</p>
@@ -164,10 +164,10 @@ const FeatureShowcase = () => {
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-            Everything you need to manage AI agents
+            Everything your team needs in one workspace
           </h2>
           <p className="mt-4 text-[hsl(var(--marketing-text-muted))] max-w-2xl mx-auto">
-            Purpose-built for teams running AI agents. Track costs, manage tasks, and collaborate — all in one place.
+            Messaging, tasks, AI automation, and project context — unified so nothing falls through the cracks.
           </p>
         </div>
 

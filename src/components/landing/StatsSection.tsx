@@ -1,7 +1,7 @@
 const stats = [
-  { value: '10x', label: 'faster task completion with AI agents' },
-  { value: 'Zero', label: 'token waste with usage tracking' },
-  { value: '100%', label: 'visibility across human + AI work' },
+  { value: '1', label: 'workspace instead of five apps' },
+  { value: '10x', label: 'faster coordination between humans and AI' },
+  { value: '100%', label: 'visibility across all team and agent activity' },
 ];
 
 const StatsSection = () => (
