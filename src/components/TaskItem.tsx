@@ -3,6 +3,7 @@ import { Trash2, GripVertical, Timer, MoreHorizontal, CalendarDays, Bot } from '
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const statusConfig = {
   open: {
@@ -30,9 +31,12 @@ type Props = {
   isTimerActive?: boolean;
   totalMinutes?: number;
   onOpenDetail?: () => void;
+  assigneeName?: string | null;
+  assigneeType?: 'user' | 'agent' | null;
+  assigneeAvatarUrl?: string | null;
 };
 
-const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalMinutes = 0, onOpenDetail }: Props) => {
+const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalMinutes = 0, onOpenDetail, assigneeName, assigneeType, assigneeAvatarUrl }: Props) => {
   const config = statusConfig[task.status];
 
   const {
@@ -79,6 +83,17 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
         <span className={`h-3 w-3 rounded-full transition-transform hover:scale-125 ${config.dot} ${isTimerActive ? 'ring-2 ring-[hsl(var(--timer-active))] ring-offset-1 ring-offset-background' : ''}`} />
       </button>
 
+      {/* Assignee avatar */}
+      {assigneeName && assigneeType === 'agent' && (
+        <Bot size={14} className="shrink-0 text-[hsl(var(--sidebar-panel-active))]" />
+      )}
+      {assigneeName && assigneeType === 'user' && (
+        <Avatar className="h-5 w-5 shrink-0">
+          {assigneeAvatarUrl && <AvatarImage src={assigneeAvatarUrl} />}
+          <AvatarFallback className="text-[7px]">{assigneeName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}</AvatarFallback>
+        </Avatar>
+      )}
+
       {/* Task title */}
       <span className={`flex-1 text-sm font-medium truncate ${task.status === 'complete' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
         {task.title}
@@ -86,11 +101,13 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
 
       {/* Right-side metadata */}
       <div className="flex items-center gap-2.5 shrink-0">
-        {/* Agent badge — purple, matching mockup */}
-        <span className="hidden group-hover:inline-flex md:inline-flex items-center gap-1 text-[11px] font-medium text-[hsl(var(--sidebar-panel-active))] opacity-70">
-          <Bot size={11} />
-          Agent
-        </span>
+        {/* Agent badge — only when assigned to agent */}
+        {assigneeType === 'agent' && (
+          <span className="hidden group-hover:inline-flex md:inline-flex items-center gap-1 text-[11px] font-medium text-[hsl(var(--sidebar-panel-active))] opacity-70">
+            <Bot size={11} />
+            Agent
+          </span>
+        )}
 
         {/* Time logged */}
         {totalMinutes > 0 && (

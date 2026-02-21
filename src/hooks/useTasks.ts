@@ -11,6 +11,8 @@ export type Task = {
   completed_at: string | null;
   created_at: string;
   due_date: string | null;
+  assigned_to: string | null;
+  assigned_type: 'user' | 'agent' | null;
 };
 
 export type Project = {
@@ -131,5 +133,17 @@ export const useTasks = (projectId: string | null) => {
     setTasks(t => t.map(tt => tt.id === id ? { ...tt, due_date: dueDate } : tt));
   };
 
-  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, refresh: fetch };
+  const assignTask = async (id: string, assigneeId: string, assigneeType: 'user' | 'agent') => {
+    setTasks(t => t.map(tt => tt.id === id ? { ...tt, assigned_to: assigneeId, assigned_type: assigneeType } : tt));
+    const { error } = await supabase.from('tasks').update({ assigned_to: assigneeId, assigned_type: assigneeType } as any).eq('id', id);
+    if (error) fetch();
+  };
+
+  const unassignTask = async (id: string) => {
+    setTasks(t => t.map(tt => tt.id === id ? { ...tt, assigned_to: null, assigned_type: null } : tt));
+    const { error } = await supabase.from('tasks').update({ assigned_to: null, assigned_type: null } as any).eq('id', id);
+    if (error) fetch();
+  };
+
+  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, refresh: fetch };
 };
