@@ -1,17 +1,26 @@
 import { Bold, Italic, Strikethrough, List, Code } from 'lucide-react';
 import { RefObject } from 'react';
 
+// Overloaded: supports both textarea (markdown) and contentEditable (WYSIWYG) modes
 interface FormattingToolbarProps {
-  textareaRef: RefObject<HTMLTextAreaElement>;
-  value: string;
-  onChange: (value: string) => void;
+  textareaRef?: RefObject<HTMLTextAreaElement>;
+  editorRef?: RefObject<HTMLDivElement>;
+  value?: string;
+  onChange?: (value: string) => void;
   compact?: boolean;
 }
 
-const FormattingToolbar = ({ textareaRef, value, onChange, compact = false }: FormattingToolbarProps) => {
+const FormattingToolbar = ({ textareaRef, editorRef, value, onChange, compact = false }: FormattingToolbarProps) => {
+  // WYSIWYG mode (contentEditable)
+  const execFormat = (command: string, val?: string) => {
+    editorRef?.current?.focus();
+    document.execCommand(command, false, val);
+  };
+
+  // Markdown mode (textarea)
   const wrapSelection = (syntax: string) => {
-    const el = textareaRef.current;
-    if (!el) return;
+    const el = textareaRef?.current;
+    if (!el || value === undefined || !onChange) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
     const selected = value.substring(start, end);
@@ -37,8 +46,12 @@ const FormattingToolbar = ({ textareaRef, value, onChange, compact = false }: Fo
   };
 
   const insertList = () => {
-    const el = textareaRef.current;
-    if (!el) return;
+    if (editorRef) {
+      execFormat('insertUnorderedList');
+      return;
+    }
+    const el = textareaRef?.current;
+    if (!el || value === undefined || !onChange) return;
     const start = el.selectionStart;
     const before = value.substring(0, start);
     const after = value.substring(start);
@@ -52,12 +65,14 @@ const FormattingToolbar = ({ textareaRef, value, onChange, compact = false }: Fo
     });
   };
 
+  const isWysiwyg = !!editorRef;
+
   const buttons = [
-    { icon: Bold, action: () => wrapSelection('**'), title: 'Bold' },
-    { icon: Italic, action: () => wrapSelection('*'), title: 'Italic' },
-    { icon: Strikethrough, action: () => wrapSelection('~~'), title: 'Strikethrough' },
+    { icon: Bold, action: () => isWysiwyg ? execFormat('bold') : wrapSelection('**'), title: 'Bold' },
+    { icon: Italic, action: () => isWysiwyg ? execFormat('italic') : wrapSelection('*'), title: 'Italic' },
+    { icon: Strikethrough, action: () => isWysiwyg ? execFormat('strikeThrough') : wrapSelection('~~'), title: 'Strikethrough' },
     { icon: List, action: () => insertList(), title: 'Bulleted list' },
-    { icon: Code, action: () => wrapSelection('`'), title: 'Inline code' },
+    { icon: Code, action: () => isWysiwyg ? execFormat('formatBlock', 'pre') : wrapSelection('`'), title: 'Inline code' },
   ];
 
   const visibleButtons = compact ? buttons.slice(0, 3) : buttons;
@@ -68,7 +83,7 @@ const FormattingToolbar = ({ textareaRef, value, onChange, compact = false }: Fo
         <button
           key={title}
           type="button"
-          onClick={action}
+          onMouseDown={e => { e.preventDefault(); action(); }}
           title={title}
           className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
