@@ -8,6 +8,7 @@ import HowItWorks from '@/components/landing/HowItWorks';
 import AgentDeepDive from '@/components/landing/AgentDeepDive';
 import StatsSection from '@/components/landing/StatsSection';
 import Testimonials from '@/components/landing/Testimonials';
+import FAQSection from '@/components/landing/FAQSection';
 import FinalCTA from '@/components/landing/FinalCTA';
 import LandingFooter from '@/components/landing/LandingFooter';
 
@@ -24,6 +25,7 @@ const LandingPage = () => {
       <AgentDeepDive />
       <StatsSection />
       <Testimonials />
+      <FAQSection />
       <FinalCTA />
       <LandingFooter />
     </div>

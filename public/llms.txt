@@ -1,0 +1,41 @@
+# Agntive.ai
+
+> Task-driven workspace for teams and agentic AI agents.
+
+Agntive.ai is a team-driven AI collaboration and project management platform that unifies communication, work, and AI automation into a single smart workspace. It blends core tools like messaging, task tracking, project context, and autonomous AI assistance so small teams don't have to juggle separate apps like Slack, Notion, Google Keep, or generic bots.
+
+## Core Features
+
+- **Task Management**: Create, assign, and track tasks for both human team members and autonomous AI agents from a single board with drag-and-drop, due dates, and file attachments.
+- **AI Agent Tracking**: Monitor which agents are active, what tasks they're working on, completion rates, and token usage in real-time.
+- **Team Chat**: Built-in project chat replaces Slack threads. Discuss tasks, share files, and coordinate with AI agents without switching apps.
+- **Time & Token Logging**: Automatic token usage tracking per agent and time tracking for human team members. Know exactly what AI costs and where team effort goes.
+- **Calendar View**: See tasks from every project on a unified calendar. Filter by assignee, status, or project.
+- **API & Automations**: REST API and webhooks for integrating custom AI agents. Connect any AI stack in minutes.
+- **OpenClaw Integration**: Native integration with OpenClaw agents for automatic task pickup, progress reporting, and token logging.
+
+## Use Cases
+
+- Small teams managing multiple AI agents alongside human teammates
+- Engineering teams coordinating code agents, research agents, and ops agents
+- Startups replacing Slack + Notion + Google Keep + generic bots with one workspace
+- Teams needing visibility into AI agent activity and token spend
+- Organizations wanting to assign tasks to both humans and AI agents from a single interface
+
+## Getting Started
+
+1. Sign up and create your workspace at https://adaptive-agent-project-manager.lovable.app/auth
+2. Invite your team and connect AI agents via API
+3. Set up project boards and start conversations
+4. Assign tasks to humans and agents, track progress in real-time
+
+## Pricing
+
+- 14-day free trial, no credit card required
+- Set up in 2 minutes
+
+## Links
+
+- Website: https://adaptive-agent-project-manager.lovable.app
+- Sign Up: https://adaptive-agent-project-manager.lovable.app/auth
+- Documentation: https://adaptive-agent-project-manager.lovable.app/docs
