@@ -27,7 +27,7 @@ const footerLinks = {
     { label: 'API Reference', href: '/docs' },
     { label: 'Getting Started Guide', href: '#how-it-works' },
     { label: 'OpenClaw Integration', href: '#openclaw' },
-    { label: 'Blog', href: '#' },
+    { label: 'Blog', href: '/blog' },
     { label: 'Community', href: '#' },
     { label: 'FAQ', href: '#faq' },
     { label: 'Status Page', href: '#' },
