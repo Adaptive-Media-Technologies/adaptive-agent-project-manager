@@ -112,6 +112,77 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author: string
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          id: string
+          meta_description: string
+          published: boolean
+          published_at: string
+          slug: string
+          title: string
+          tldr: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          meta_description?: string
+          published?: boolean
+          published_at?: string
+          slug: string
+          title: string
+          tldr?: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          meta_description?: string
+          published?: boolean
+          published_at?: string
+          slug?: string
+          title?: string
+          tldr?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_tags: {
+        Row: {
+          id: string
+          post_id: string
+          tag: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          tag: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_attachments: {
         Row: {
           content_type: string | null

@@ -31,6 +31,7 @@ const LandingNav = () => {
           <a href="#openclaw" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Integrations</a>
           <a href="#how-it-works" className="hover:text-[hsl(var(--marketing-text))] transition-colors">How it works</a>
           <a href="#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
+          <Link to="/blog" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Blog</Link>
         </nav>
         <div className="flex items-center gap-3">
           <button
