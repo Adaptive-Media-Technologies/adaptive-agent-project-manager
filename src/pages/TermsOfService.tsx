@@ -39,7 +39,7 @@ const TermsOfService = () => (
     <p>We may update these terms with 30 days' notice. Continued use after changes constitutes acceptance.</p>
 
     <h2>10. Contact</h2>
-    <p>Questions about these terms? Contact <a href="mailto:legal@agntive.ai">legal@agntive.ai</a>.</p>
+    <p>Questions about these terms? Contact <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.</p>
   </StaticPageLayout>
 );
 

@@ -3,33 +3,33 @@ import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const footerLinks = {
   Product: [
-    { label: 'Features', href: '#features' },
-    { label: 'AI Agent Tracking', href: '#features' },
-    { label: 'Task Management', href: '#features' },
-    { label: 'Team Chat', href: '#features' },
-    { label: 'Calendar View', href: '#features' },
-    { label: 'API & Automations', href: '#features' },
-    { label: 'Integrations', href: '#openclaw' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: 'Features', href: '/#features' },
+    { label: 'AI Agent Tracking', href: '/#features' },
+    { label: 'Task Management', href: '/#features' },
+    { label: 'Team Chat', href: '/#features' },
+    { label: 'Calendar View', href: '/#features' },
+    { label: 'API & Automations', href: '/#features' },
+    { label: 'Integrations', href: '/#openclaw' },
+    { label: 'Pricing', href: '/#pricing' },
     { label: 'Changelog', href: '/changelog' },
   ],
   'Use Cases': [
-    { label: 'AI Agent Management', href: '#features' },
-    { label: 'Team Collaboration', href: '#features' },
-    { label: 'Token Usage Tracking', href: '#features' },
-    { label: 'Project Management', href: '#features' },
-    { label: 'Agentic AI Workflows', href: '#features' },
+    { label: 'AI Agent Management', href: '/#features' },
+    { label: 'Team Collaboration', href: '/#features' },
+    { label: 'Token Usage Tracking', href: '/#features' },
+    { label: 'Project Management', href: '/#features' },
+    { label: 'Agentic AI Workflows', href: '/#features' },
     { label: 'Replace Slack + Notion', href: '/replace-slack-notion' },
     { label: 'Small Team Workspace', href: '/small-team-workspace' },
   ],
   Resources: [
     { label: 'Documentation', href: '/docs' },
     { label: 'API Reference', href: '/docs' },
-    { label: 'Getting Started Guide', href: '#how-it-works' },
-    { label: 'OpenClaw Integration', href: '#openclaw' },
+    { label: 'Getting Started Guide', href: '/#how-it-works' },
+    { label: 'OpenClaw Integration', href: '/#openclaw' },
     { label: 'Blog', href: '/blog' },
     { label: 'Community', href: '/community' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'FAQ', href: '/#faq' },
     { label: 'Status Page', href: '/status' },
   ],
   Company: [
@@ -91,15 +91,9 @@ const LandingFooter = () => (
             <ul className="space-y-2.5">
               {links.map(link => (
                 <li key={link.label}>
-                  {link.href.startsWith('/') ? (
-                    <Link to={link.href} className="text-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] transition-colors">
-                      {link.label}
-                    </Link>
-                  ) : (
-                    <a href={link.href} className="text-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] transition-colors">
-                      {link.label}
-                    </a>
-                  )}
+                  <Link to={link.href} className="text-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -112,13 +106,9 @@ const LandingFooter = () => (
         <p className="text-xs text-[hsl(var(--marketing-text-muted))]">
           © {new Date().getFullYear()} Agntive. All rights reserved.
         </p>
-        <div className="flex flex-wrap gap-4 text-xs text-[hsl(var(--marketing-text-muted))]">
-          <a href="#" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Twitter / X</a>
-          <a href="#" className="hover:text-[hsl(var(--marketing-text))] transition-colors">GitHub</a>
-          <a href="#" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Discord</a>
-          <a href="#" className="hover:text-[hsl(var(--marketing-text))] transition-colors">LinkedIn</a>
-          <a href="#" className="hover:text-[hsl(var(--marketing-text))] transition-colors">YouTube</a>
-        </div>
+        <p className="text-xs text-[hsl(var(--marketing-text-muted))]">
+          <a href="mailto:hello@agntive.ai" className="hover:text-[hsl(var(--marketing-text))] transition-colors">hello@agntive.ai</a>
+        </p>
       </div>
     </div>
   </footer>

@@ -33,7 +33,7 @@ const GDPR = () => (
     <p>Data may be transferred to and processed in the United States. We use Standard Contractual Clauses (SCCs) approved by the European Commission to ensure adequate protection.</p>
 
     <h2>Data Protection Officer</h2>
-    <p>For GDPR-related inquiries or to exercise your rights, contact our Data Protection Officer at <a href="mailto:dpo@agntive.ai">dpo@agntive.ai</a>.</p>
+    <p>For GDPR-related inquiries or to exercise your rights, contact our Data Protection Officer at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.</p>
 
     <h2>Supervisory Authority</h2>
     <p>You have the right to lodge a complaint with your local data protection authority if you believe your rights have been violated.</p>

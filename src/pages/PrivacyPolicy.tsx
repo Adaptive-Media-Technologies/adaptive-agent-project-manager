@@ -26,7 +26,7 @@ const PrivacyPolicy = () => (
     <p>We use industry-standard encryption, access controls, and monitoring to protect your data. All data is encrypted in transit (TLS) and at rest.</p>
 
     <h2>6. Your Rights</h2>
-    <p>You have the right to access, correct, delete, or export your personal data at any time. Contact us at <a href="mailto:privacy@agntive.ai">privacy@agntive.ai</a> to exercise these rights.</p>
+    <p>You have the right to access, correct, delete, or export your personal data at any time. Contact us at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a> to exercise these rights.</p>
 
     <h2>7. Cookies</h2>
     <p>We use essential cookies to maintain your session and preferences. See our <a href="/cookie-policy">Cookie Policy</a> for details.</p>
@@ -35,7 +35,7 @@ const PrivacyPolicy = () => (
     <p>We may update this policy from time to time. We'll notify you of significant changes via email or in-app notification.</p>
 
     <h2>9. Contact</h2>
-    <p>For privacy-related questions, contact <a href="mailto:privacy@agntive.ai">privacy@agntive.ai</a>.</p>
+    <p>For privacy-related questions, contact <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.</p>
   </StaticPageLayout>
 );
 

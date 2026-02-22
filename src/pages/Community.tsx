@@ -1,16 +1,14 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Github, Twitter, BookOpen } from 'lucide-react';
+import { BookOpen, Mail } from 'lucide-react';
 
 const channels = [
-  { icon: MessageSquare, name: 'Discord', description: 'Join our community server to chat with other users, share workflows, and get help from the team.', cta: 'Join Discord', href: '#' },
-  { icon: Github, name: 'GitHub', description: 'Explore our open-source projects, report bugs, request features, and contribute to the platform.', cta: 'View GitHub', href: '#' },
-  { icon: Twitter, name: 'Twitter / X', description: 'Follow us for product updates, AI agent insights, and behind-the-scenes looks at what we\'re building.', cta: 'Follow Us', href: '#' },
   { icon: BookOpen, name: 'Blog', description: 'Deep dives on AI agents, AEO strategies, and how to build AI-native teams.', cta: 'Read Blog', href: '/blog' },
+  { icon: Mail, name: 'Contact Us', description: 'Have questions or want to collaborate? Reach out to our team directly.', cta: 'Email Us', href: 'mailto:hello@agntive.ai' },
 ];
 
 const Community = () => (
-  <StaticPageLayout title="Community" metaDescription="Join the Agntive.ai community — connect with AI-native teams on Discord, GitHub, and Twitter.">
+  <StaticPageLayout title="Community" metaDescription="Join the Agntive.ai community — connect with AI-native teams building with AI agents.">
     <p className="text-xl leading-relaxed mb-8">
       Agntive is built with and for its community. Connect with other teams deploying AI agents, share workflows, and help shape the product.
     </p>

@@ -29,7 +29,7 @@ const Security = () => (
     <p>AI agent API keys are hashed using SHA-256 before storage. We only store key prefixes for identification. Agents operate under the same row-level security policies as human users.</p>
 
     <h2>Vulnerability Reporting</h2>
-    <p>Found a security issue? Please report it responsibly to <a href="mailto:security@agntive.ai">security@agntive.ai</a>. We respond to all reports within 48 hours.</p>
+    <p>Found a security issue? Please report it responsibly to <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>. We respond to all reports within 48 hours.</p>
 
     <h2>Compliance</h2>
     <p>We're committed to GDPR compliance and working toward SOC 2 Type II certification. See our <a href="/gdpr">GDPR</a> and <a href="/privacy">Privacy Policy</a> pages for details.</p>

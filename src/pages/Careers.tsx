@@ -42,7 +42,7 @@ const Careers = () => (
 
     <h2>Don't See Your Role?</h2>
     <p>
-      We're always looking for exceptional people. Send us your resume and a note about what you'd love to build at <a href="mailto:careers@agntive.ai">careers@agntive.ai</a>.
+      We're always looking for exceptional people. Send us your resume and a note about what you'd love to build at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.
     </p>
   </StaticPageLayout>
 );
