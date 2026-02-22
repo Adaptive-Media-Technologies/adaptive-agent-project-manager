@@ -110,7 +110,7 @@ export const useTasks = (projectId: string | null) => {
   const archiveTask = async (id: string) => {
     const prev = [...tasks];
     setTasks(t => t.filter(tt => tt.id !== id));
-    const { error } = await supabase.from('tasks').update({ status: 'archived' as any }).eq('id', id);
+    const { error } = await supabase.from('tasks').update({ status: 'archived' }).eq('id', id);
     if (error) {
       console.error('Archive failed:', error);
       setTasks(prev);
