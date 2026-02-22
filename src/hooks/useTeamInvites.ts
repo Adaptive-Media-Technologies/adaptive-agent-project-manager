@@ -19,7 +19,10 @@ export const useTeamInvites = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchInvites = useCallback(async () => {
-    if (!user?.email) { setLoading(false); return; }
+    if (!user?.email) { setLoading(false); setPendingInvites([]); return; }
+    // Verify we have a valid session before querying
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setLoading(false); setPendingInvites([]); return; }
     const { data } = await supabase
       .from('team_invites')
       .select('*, team:teams(name)')
