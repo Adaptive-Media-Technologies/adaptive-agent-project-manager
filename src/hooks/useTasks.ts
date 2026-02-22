@@ -6,7 +6,7 @@ export type Task = {
   id: string;
   project_id: string;
   title: string;
-  status: 'open' | 'in_progress' | 'complete';
+  status: 'open' | 'in_progress' | 'complete' | 'archived';
   position: number;
   completed_at: string | null;
   created_at: string;
@@ -107,6 +107,12 @@ export const useTasks = (projectId: string | null) => {
     if (error) fetch();
   };
 
+  const archiveTask = async (id: string) => {
+    setTasks(t => t.filter(tt => tt.id !== id));
+    const { error } = await supabase.from('tasks').update({ status: 'archived' }).eq('id', id);
+    if (error) fetch();
+  };
+
   const reorder = async (fromIndex: number, toIndex: number) => {
     const updated = [...tasks];
     const [moved] = updated.splice(fromIndex, 1);
@@ -146,5 +152,39 @@ export const useTasks = (projectId: string | null) => {
     if (error) fetch();
   };
 
-  return { tasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, refresh: fetch };
+  // Filter out archived tasks from normal view
+  const activeTasks = tasks.filter(t => t.status !== 'archived');
+
+  return { tasks: activeTasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, archiveTask, refresh: fetch };
+};
+
+export const useArchivedTasks = () => {
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetch = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('tasks')
+      .select('*, projects(name)')
+      .eq('status', 'archived')
+      .order('updated_at', { ascending: false });
+    setTasks((data as any[])?.map(t => ({ ...t, project_name: t.projects?.name })) || []);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const restoreTask = async (id: string) => {
+    setTasks(t => t.filter(tt => tt.id !== id));
+    await supabase.from('tasks').update({ status: 'open' }).eq('id', id);
+  };
+
+  const hardDelete = async (id: string) => {
+    setTasks(t => t.filter(tt => tt.id !== id));
+    await supabase.from('tasks').delete().eq('id', id);
+  };
+
+  return { tasks, loading, restoreTask, hardDelete, refresh: fetch };
 };
