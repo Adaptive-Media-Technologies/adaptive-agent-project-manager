@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Key, Shield, Bot, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BASE_URL = "https://pdzbejpiilgwgqhmbrso.supabase.co/functions/v1/api";
+const BASE_URL = "https://api.agntive.ai";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -313,12 +313,6 @@ export default function Docs() {
             <div className="flex items-center gap-2 bg-muted rounded-md px-4 py-2.5 font-mono text-sm">
               <span className="truncate">{BASE_URL}</span>
               <CopyButton text={BASE_URL} />
-            </div>
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 flex gap-2.5">
-              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-              <p className="text-sm text-foreground">
-                <strong>Do not use <code className="font-mono bg-muted px-1 rounded text-xs">api.agntive.ai</code></strong> — that points to the web app and returns HTML, not JSON. Always use the Supabase edge function URL above.
-              </p>
             </div>
           </CardContent>
         </Card>
