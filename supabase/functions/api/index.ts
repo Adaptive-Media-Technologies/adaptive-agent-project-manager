@@ -82,6 +82,7 @@ serve(async (req) => {
 
   let userId: string | null = null
   let scopedProjectIds: string[] | null = null  // null = no restriction (user-level keys)
+  let agentId: string | null = null  // set when authenticated as an agent
 
   if (apiKey) {
     const hashHex = await hashKey(apiKey)
@@ -95,6 +96,7 @@ serve(async (req) => {
 
     if (agentRow) {
       userId = agentRow.owner_id
+      agentId = agentRow.id
       // Look up assigned projects from junction table
       const { data: assignments } = await supabase
         .from('agent_projects')
@@ -531,9 +533,11 @@ serve(async (req) => {
       const scopeError = checkScope(project_id)
       if (scopeError) return scopeError
       if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
+      const insertData: Record<string, unknown> = { project_id, user_id: userId, content }
+      if (agentId) insertData.sent_by_agent = agentId
       const { data, error } = await supabase
         .from('project_messages')
-        .insert({ project_id, user_id: userId, content })
+        .insert(insertData)
         .select()
         .single()
       if (error) throw error
