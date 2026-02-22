@@ -519,12 +519,44 @@ serve(async (req) => {
       if (!(await canAccessProject(projectId))) return json({ error: 'Access denied' }, 403)
       const { data, error } = await supabase
         .from('project_messages')
-        .select('id, project_id, user_id, content, created_at')
+        .select('id, project_id, user_id, content, sent_by_agent, created_at')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
-      return json(data)
+
+      // Enrich with sender metadata
+      const msgs = data || []
+      const userIds = [...new Set(msgs.map((m: any) => m.user_id))]
+      const agentMsgIds = [...new Set(msgs.filter((m: any) => m.sent_by_agent).map((m: any) => m.sent_by_agent))]
+
+      let profileMap: Record<string, any> = {}
+      let agentMap: Record<string, any> = {}
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', userIds)
+        for (const p of (profiles || [])) profileMap[p.id] = p
+      }
+      if (agentMsgIds.length > 0) {
+        const { data: agents } = await supabase.from('agents').select('id, display_name, email').in('id', agentMsgIds)
+        for (const a of (agents || [])) agentMap[a.id] = a
+      }
+
+      const enriched = msgs.map((m: any) => ({
+        ...m,
+        sender_type: m.sent_by_agent ? 'agent' : 'user',
+        sender_display_name: m.sent_by_agent
+          ? agentMap[m.sent_by_agent]?.display_name || null
+          : profileMap[m.user_id]?.display_name || null,
+        sender_username: m.sent_by_agent
+          ? null
+          : profileMap[m.user_id]?.username || null,
+        sender_avatar_url: m.sent_by_agent
+          ? null
+          : profileMap[m.user_id]?.avatar_url || null,
+      }))
+
+      return json(enriched)
     }
 
     if (path === '/chat' && method === 'POST') {
