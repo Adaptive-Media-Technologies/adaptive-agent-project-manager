@@ -247,7 +247,6 @@ const Index = () => {
     { key: 'home' as const, icon: Home, label: 'Home' },
     { key: 'chat' as const, icon: MessageSquare, label: 'Chat' },
     { key: 'calendar' as const, icon: CalendarDays, label: 'Calendar' },
-    { key: 'archive' as const, icon: Archive, label: 'Archive' },
     { key: 'teams' as const, icon: Users, label: 'Manage Teams' },
     { key: 'agents' as const, icon: Bot, label: 'Manage Agents' },
   ];
@@ -302,6 +301,19 @@ const Index = () => {
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Archive at bottom, above settings */}
+          <button
+            onClick={() => setActiveRailTab('archive')}
+            title="Archive"
+            className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+              activeRailTab === 'archive'
+                ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]'
+                : 'text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)]'
+            }`}
+          >
+            <Archive size={18} />
+          </button>
 
           {/* Dark/Light mode toggle */}
           <button
