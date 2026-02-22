@@ -9,9 +9,9 @@ const Contact = () => (
     <div className="not-prose grid gap-6 sm:grid-cols-2 my-8">
       {[
         { label: 'General Inquiries', email: 'hello@agntive.ai', description: 'Questions about Agntive, features, or getting started.' },
-        { label: 'Sales & Enterprise', email: 'sales@agntive.ai', description: 'Custom plans, volume licensing, and enterprise features.' },
-        { label: 'Support', email: 'support@agntive.ai', description: 'Technical help, bug reports, and account issues.' },
-        { label: 'Press & Media', email: 'press@agntive.ai', description: 'Media inquiries, interviews, and press resources.' },
+        { label: 'Sales & Enterprise', email: 'hello@agntive.ai', description: 'Custom plans, volume licensing, and enterprise features.' },
+        { label: 'Support', email: 'hello@agntive.ai', description: 'Technical help, bug reports, and account issues.' },
+        { label: 'Press & Media', email: 'hello@agntive.ai', description: 'Media inquiries, interviews, and press resources.' },
       ].map((item) => (
         <div key={item.label} className="rounded-xl border border-border/40 p-6 bg-[hsl(var(--marketing-surface-alt))]">
           <h3 className="text-lg font-semibold text-[hsl(var(--marketing-text))] mb-2">{item.label}</h3>
@@ -30,11 +30,6 @@ const Contact = () => (
       548 Market Street, Suite 36879<br />
       San Francisco, CA 94104<br />
       United States
-    </p>
-
-    <h2>Social</h2>
-    <p>
-      Follow us on <a href="#">Twitter / X</a>, <a href="#">LinkedIn</a>, <a href="#">GitHub</a>, and <a href="#">Discord</a> for the latest updates and community discussions.
     </p>
   </StaticPageLayout>
 );

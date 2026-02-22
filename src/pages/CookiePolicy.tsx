@@ -31,7 +31,7 @@ const CookiePolicy = () => (
     </ul>
 
     <h2>Contact</h2>
-    <p>Questions about our cookie practices? Contact <a href="mailto:privacy@agntive.ai">privacy@agntive.ai</a>.</p>
+    <p>Questions about our cookie practices? Contact <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.</p>
   </StaticPageLayout>
 );
 

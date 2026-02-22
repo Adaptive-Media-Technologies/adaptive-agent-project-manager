@@ -34,7 +34,7 @@ const Partners = () => (
 
     <h2>Become a Partner</h2>
     <p>
-      Interested? Reach out at <a href="mailto:partners@agntive.ai">partners@agntive.ai</a> and tell us about your organization and how you'd like to collaborate.
+      Interested? Reach out at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a> and tell us about your organization and how you'd like to collaborate.
     </p>
   </StaticPageLayout>
 );
