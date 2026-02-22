@@ -110,6 +110,14 @@ const LandingFooter = () => (
           <a href="mailto:hello@agntive.ai" className="hover:text-[hsl(var(--marketing-text))] transition-colors">hello@agntive.ai</a>
         </p>
       </div>
+
+      {/* Made with love */}
+      <p className="mt-6 text-center text-xs text-[hsl(var(--marketing-text-muted))]">
+        Made with ❤️ by{' '}
+        <a href="https://adaptivemedia.com.au" target="_blank" rel="noopener noreferrer" className="hover:text-[hsl(var(--marketing-text))] transition-colors underline">
+          Adaptive Media
+        </a>
+      </p>
     </div>
   </footer>
 );
