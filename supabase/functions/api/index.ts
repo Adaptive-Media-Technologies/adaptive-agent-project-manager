@@ -267,6 +267,70 @@ serve(async (req) => {
     // TASKS
     // ===================
 
+    // Helper: enrich tasks with assignee info
+    async function enrichTasksWithAssignee(tasks: any[]) {
+      if (!tasks || tasks.length === 0) return tasks
+      const userIds = [...new Set(tasks.filter(t => t.assigned_to && t.assigned_type === 'user').map(t => t.assigned_to))]
+      const agentIds = [...new Set(tasks.filter(t => t.assigned_to && t.assigned_type === 'agent').map(t => t.assigned_to))]
+      
+      let profileMap: Record<string, any> = {}
+      let agentMap: Record<string, any> = {}
+      
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id, username, display_name').in('id', userIds)
+        for (const p of (profiles || [])) profileMap[p.id] = p
+      }
+      if (agentIds.length > 0) {
+        const { data: agents } = await supabase.from('agents').select('id, display_name, email').in('id', agentIds)
+        for (const a of (agents || [])) agentMap[a.id] = a
+      }
+      
+      return tasks.map(t => {
+        const assignee: Record<string, unknown> = { assigned_to: t.assigned_to, assigned_type: t.assigned_type }
+        if (t.assigned_to && t.assigned_type === 'user' && profileMap[t.assigned_to]) {
+          assignee.assignee_username = profileMap[t.assigned_to].username
+          assignee.assignee_display_name = profileMap[t.assigned_to].display_name
+        } else if (t.assigned_to && t.assigned_type === 'agent' && agentMap[t.assigned_to]) {
+          assignee.assignee_display_name = agentMap[t.assigned_to].display_name
+          assignee.assignee_username = null
+        }
+        return { ...t, ...assignee }
+      })
+    }
+
+    // Helper: resolve assign_to username to user/agent id
+    async function resolveAssignee(username: string, projectId: string): Promise<{ assigned_to: string, assigned_type: string } | null> {
+      // Check agents first (by display_name, case-insensitive)
+      const { data: agentMatches } = await supabase
+        .from('agents')
+        .select('id, display_name')
+      
+      if (agentMatches) {
+        // Filter to agents assigned to this project
+        const { data: assignments } = await supabase
+          .from('agent_projects')
+          .select('agent_id')
+          .eq('project_id', projectId)
+        const assignedAgentIds = new Set((assignments || []).map((a: any) => a.agent_id))
+        
+        const match = agentMatches.find(a => 
+          assignedAgentIds.has(a.id) && a.display_name.toLowerCase() === username.toLowerCase()
+        )
+        if (match) return { assigned_to: match.id, assigned_type: 'agent' }
+      }
+      
+      // Check profiles by username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .ilike('username', username)
+        .single()
+      
+      if (profile) return { assigned_to: profile.id, assigned_type: 'user' }
+      
+      return null
+    }
+
     if (path === '/tasks' && method === 'GET') {
       const projectId = url.searchParams.get('project_id')
       if (!projectId) return json({ error: 'project_id required' }, 400)
@@ -275,20 +339,31 @@ serve(async (req) => {
       if (!(await canAccessProject(projectId))) return json({ error: 'Access denied' }, 403)
       const { data, error } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('position')
       if (error) throw error
-      return json(data)
+      return json(await enrichTasksWithAssignee(data || []))
     }
 
     if (path === '/tasks' && method === 'POST') {
-      const { project_id, title } = await req.json()
+      const body = await req.json()
+      const { project_id, title, assign_to } = body
       if (!project_id || !title) return json({ error: 'project_id and title required' }, 400)
       const scopeError = checkScope(project_id)
       if (scopeError) return scopeError
       if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
       const { data: existing } = await supabase.from('tasks').select('position').eq('project_id', project_id).order('position', { ascending: false }).limit(1)
       const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
-      const { data, error } = await supabase.from('tasks').insert({ project_id, title, created_by: userId, position }).select().single()
+      
+      const insert: Record<string, unknown> = { project_id, title, created_by: userId, position }
+      if (assign_to) {
+        const resolved = await resolveAssignee(assign_to, project_id)
+        if (!resolved) return json({ error: `Could not find user or agent with name "${assign_to}"` }, 400)
+        insert.assigned_to = resolved.assigned_to
+        insert.assigned_type = resolved.assigned_type
+      }
+      
+      const { data, error } = await supabase.from('tasks').insert(insert).select().single()
       if (error) throw error
-      return json(data, 201)
+      const enriched = await enrichTasksWithAssignee([data])
+      return json(enriched[0], 201)
     }
 
     const taskMatch = path.match(/^\/tasks\/([a-f0-9-]+)$/)
@@ -301,14 +376,36 @@ serve(async (req) => {
       if (updates.due_date !== undefined) allowed.due_date = updates.due_date
 
       // If scoped, verify the task belongs to the scoped project
+      let taskProjectId: string | null = null
       if (scopedProjectIds && scopedProjectIds.length > 0) {
         const { data: task } = await supabase.from('tasks').select('project_id').eq('id', id).single()
         if (!task || !scopedProjectIds.includes(task.project_id)) return json({ error: 'Access denied' }, 403)
+        taskProjectId = task.project_id
+      }
+
+      // Handle assign_to by username
+      if (updates.assign_to !== undefined) {
+        if (updates.assign_to === null || updates.assign_to === '') {
+          allowed.assigned_to = null
+          allowed.assigned_type = null
+        } else {
+          // Need project_id to resolve agent assignments
+          if (!taskProjectId) {
+            const { data: task } = await supabase.from('tasks').select('project_id').eq('id', id).single()
+            taskProjectId = task?.project_id || null
+          }
+          if (!taskProjectId) return json({ error: 'Task not found' }, 404)
+          const resolved = await resolveAssignee(updates.assign_to, taskProjectId)
+          if (!resolved) return json({ error: `Could not find user or agent with name "${updates.assign_to}"` }, 400)
+          allowed.assigned_to = resolved.assigned_to
+          allowed.assigned_type = resolved.assigned_type
+        }
       }
 
       const { data, error } = await supabase.from('tasks').update(allowed).eq('id', id).select().single()
       if (error) throw error
-      return json(data)
+      const enriched = await enrichTasksWithAssignee([data])
+      return json(enriched[0])
     }
 
     if (taskMatch && method === 'DELETE') {

@@ -124,26 +124,46 @@ const endpointGroups: { title: string; agentRestricted?: boolean; endpoints: End
       {
         method: "GET",
         path: "/tasks",
-        description: "List tasks for a project, ordered by position.",
+        description: "List tasks for a project, with assignee details.",
         queryParams: "project_id (required)",
         curl: `curl -H "x-api-key: ak_xxx" \\\n  "${BASE_URL}/tasks?project_id=<project-id>"`,
-        response: `[{ "id": "uuid", "title": "Fix login bug", "status": "todo", "position": 0, ... }]`,
+        response: `[{
+  "id": "uuid",
+  "title": "Fix login bug",
+  "status": "todo",
+  "position": 0,
+  "assigned_to": "uuid",
+  "assigned_type": "user",
+  "assignee_username": "alice",
+  "assignee_display_name": "Alice Smith"
+}]`,
       },
       {
         method: "POST",
         path: "/tasks",
-        description: "Create a new task in a project.",
-        body: `{ "project_id": "uuid", "title": "Implement auth" }`,
-        curl: `curl -X POST -H "x-api-key: ak_xxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{"project_id":"uuid","title":"Implement auth"}' \\\n  ${BASE_URL}/tasks`,
-        response: `{ "id": "uuid", "title": "Implement auth", "status": "todo", "position": 3, ... }`,
+        description: "Create a task. Use assign_to (username or agent name) to assign.",
+        body: `{ "project_id": "uuid", "title": "Implement auth", "assign_to": "alice" }`,
+        curl: `curl -X POST -H "x-api-key: ak_xxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{"project_id":"uuid","title":"Implement auth","assign_to":"alice"}' \\\n  ${BASE_URL}/tasks`,
+        response: `{
+  "id": "uuid",
+  "title": "Implement auth",
+  "assigned_type": "user",
+  "assignee_username": "alice",
+  "assignee_display_name": "Alice Smith"
+}`,
       },
       {
         method: "PATCH",
         path: "/tasks/:id",
-        description: "Update a task's title or status.",
-        body: `{ "title": "Updated title", "status": "done" }`,
-        curl: `curl -X PATCH -H "x-api-key: ak_xxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{"status":"done"}' \\\n  ${BASE_URL}/tasks/<task-id>`,
-        response: `{ "id": "uuid", "title": "Updated title", "status": "done", ... }`,
+        description: "Update a task. Use assign_to to reassign by username/agent name, or null to unassign.",
+        body: `{ "title": "Updated title", "status": "done", "assign_to": "my-bot" }`,
+        curl: `curl -X PATCH -H "x-api-key: ak_xxx" \\\n  -H "Content-Type: application/json" \\\n  -d '{"assign_to":"my-bot"}' \\\n  ${BASE_URL}/tasks/<task-id>`,
+        response: `{
+  "id": "uuid",
+  "assigned_type": "agent",
+  "assignee_display_name": "my-bot",
+  "assignee_username": null
+}`,
       },
       {
         method: "DELETE",
