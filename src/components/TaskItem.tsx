@@ -1,5 +1,5 @@
 import { Task } from '@/hooks/useTasks';
-import { Trash2, GripVertical, Timer, MoreHorizontal, CalendarDays, Bot, User } from 'lucide-react';
+import { Archive, GripVertical, Timer, MoreHorizontal, CalendarDays, Bot, User } from 'lucide-react';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -161,12 +161,13 @@ const TaskItem = ({ task, onCycle, onDelete, onStartTimer, isTimerActive, totalM
           <MoreHorizontal size={14} />
         </button>
 
-        {/* Delete */}
+        {/* Archive */}
         <button
           onClick={onDelete}
-          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-[hsl(var(--status-progress))]"
+          title="Archive"
         >
-          <Trash2 size={14} />
+          <Archive size={14} />
         </button>
       </div>
     </div>

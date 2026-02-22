@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
-import { useProjects, useTasks } from '@/hooks/useTasks';
+import { useProjects, useTasks, useArchivedTasks } from '@/hooks/useTasks';
 import { useTimeEntries } from '@/hooks/useTimeEntries';
 import { useProfile } from '@/hooks/useProfile';
 import { useProjectNotes, NOTE_COLORS, getNoteClasses, getNoteColorConfig } from '@/hooks/useProjectNotes';
@@ -21,7 +21,7 @@ import CreateProjectDialog from '@/components/CreateProjectDialog';
 import {
   Plus, Info, Users, Lock, Check, X, Mail, ChevronRight, Pencil, Palette, Ban,
   Menu, MessageSquare, ListTodo, StickyNote, Home, Settings, FolderOpen, Bot,
-  CalendarDays, GripVertical, Hash, Trash2, Copy, Key, Sun, Moon,
+  CalendarDays, GripVertical, Hash, Trash2, Copy, Key, Sun, Moon, Archive, RotateCcw,
 } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -66,7 +66,8 @@ const Index = () => {
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, archiveTask } = useTasks(activeProjectId);
+  const { tasks: archivedTasks, loading: archivedLoading, restoreTask, hardDelete, refresh: refreshArchived } = useArchivedTasks();
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
   const { profile } = useProfile();
@@ -80,7 +81,7 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeRailTab, setActiveRailTab] = useState<'home' | 'chat' | 'teams' | 'agents' | 'calendar' | 'settings'>('home');
+  const [activeRailTab, setActiveRailTab] = useState<'home' | 'chat' | 'teams' | 'agents' | 'calendar' | 'archive' | 'settings'>('home');
 
   // Agent dialog state
   const [showAddAgent, setShowAddAgent] = useState(false);
@@ -104,6 +105,11 @@ const Index = () => {
       markRead(firstId);
     }
   }, [activeRailTab, activeChatProjectId, projects, markRead]);
+
+  // Refresh archived tasks when switching to archive tab
+  useEffect(() => {
+    if (activeRailTab === 'archive') refreshArchived();
+  }, [activeRailTab, refreshArchived]);
 
   const selectChatProject = useCallback((projectId: string) => {
     setActiveChatProjectId(projectId);
@@ -241,6 +247,7 @@ const Index = () => {
     { key: 'home' as const, icon: Home, label: 'Home' },
     { key: 'chat' as const, icon: MessageSquare, label: 'Chat' },
     { key: 'calendar' as const, icon: CalendarDays, label: 'Calendar' },
+    { key: 'archive' as const, icon: Archive, label: 'Archive' },
     { key: 'teams' as const, icon: Users, label: 'Manage Teams' },
     { key: 'agents' as const, icon: Bot, label: 'Manage Agents' },
   ];
@@ -250,6 +257,7 @@ const Index = () => {
     activeRailTab === 'home' ? 'Home'
     : activeRailTab === 'chat' ? 'Messages'
     : activeRailTab === 'calendar' ? 'Calendar'
+    : activeRailTab === 'archive' ? 'Archive'
     : activeRailTab === 'teams' ? 'Manage Teams'
     : activeRailTab === 'agents' ? 'Manage Agents'
     : 'Settings';
@@ -510,6 +518,15 @@ const Index = () => {
                 <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)]">View your task schedule in the main panel</p>
               </div>
             </nav>
+          ) : activeRailTab === 'archive' ? (
+            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
+                <Archive size={20} className="text-[hsl(var(--sidebar-panel-active))]" />
+                <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)]">
+                  {archivedTasks.length} archived task{archivedTasks.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </nav>
           ) : activeRailTab === 'teams' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
               <Link to="/teams">
@@ -579,6 +596,63 @@ const Index = () => {
       <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
         {activeRailTab === 'calendar' ? (
           <CalendarView />
+
+        ) : activeRailTab === 'archive' ? (
+          /* ============ ARCHIVE MAIN AREA ============ */
+          <div className="flex flex-col h-full overflow-hidden">
+            <header className="flex items-center gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-6 py-3 shadow-sm">
+              {isMobile && (
+                <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                  <Menu size={20} />
+                </button>
+              )}
+              <Archive size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-foreground">Archived Tasks</h2>
+              <span className="text-xs text-muted-foreground ml-auto">{archivedTasks.length} task{archivedTasks.length !== 1 ? 's' : ''}</span>
+            </header>
+            <div className="flex-1 overflow-y-auto p-6">
+              {archivedLoading ? (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : archivedTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="rounded-2xl bg-accent p-5">
+                    <Archive size={32} className="text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No archived tasks</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {archivedTasks.map((task: any) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-card hover:shadow-sm group"
+                    >
+                      <span className="flex-1 text-sm font-medium text-muted-foreground line-through">{task.title}</span>
+                      {task.project_name && (
+                        <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {task.project_name}
+                        </span>
+                      )}
+                      <button
+                        onClick={async () => { await restoreTask(task.id); toast.success('Task restored'); }}
+                        className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary transition-all"
+                        title="Restore task"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                      <button
+                        onClick={async () => { await hardDelete(task.id); toast.success('Task permanently deleted'); }}
+                        className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
+                        title="Delete permanently"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
         ) : activeRailTab === 'chat' ? (
           /* ============ FULL-SCREEN CHAT MAIN AREA ============ */
@@ -956,7 +1030,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                     <TaskList
                       tasks={tasks}
                       onCycle={cycleStatus}
-                      onDelete={deleteTask}
+                      onDelete={archiveTask}
                       onReorder={reorder}
                       onLogTime={handleLogTime}
                       taskMinutes={taskMinutes}
