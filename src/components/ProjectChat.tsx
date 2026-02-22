@@ -451,9 +451,15 @@ const MessageBubble = ({
   isImage: (type: string | null) => boolean | undefined;
   formatSize: (bytes: number | null) => string;
 }) => {
-  const initials = msg.profile?.display_name
-    ? msg.profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
+  const isAgent = !!msg.agent;
+  const displayName = isAgent
+    ? msg.agent!.display_name
+    : (msg.profile?.username || msg.profile?.display_name || 'User');
+  const initials = isAgent
+    ? msg.agent!.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : msg.profile?.display_name
+      ? msg.profile.display_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+      : '?';
 
   return (
     <div className="group flex gap-3 animate-fade-in-up">
@@ -463,7 +469,8 @@ const MessageBubble = ({
       </Avatar>
       <div className={`flex-1 min-w-0 rounded-xl px-3 py-2 border ${isOwn ? 'bg-[hsl(var(--chat-own-bg))] border-[hsl(var(--chat-own-border))]' : 'bg-[hsl(var(--chat-other-bg))] border-[hsl(var(--chat-other-border))]'}`}>
         <div className="flex items-baseline gap-2">
-          <span className="text-[13px] font-semibold text-foreground">{msg.profile?.username || msg.profile?.display_name || 'User'}</span>
+          <span className="text-[13px] font-semibold text-foreground">{displayName}</span>
+          {isAgent && <span className="text-[10px] font-medium text-purple-400">bot</span>}
           <span className="text-[10px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
           {isOwn && (
             <button

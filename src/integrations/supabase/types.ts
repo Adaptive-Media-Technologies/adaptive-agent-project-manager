@@ -370,6 +370,7 @@ export type Database = {
           gif_url: string | null
           id: string
           project_id: string
+          sent_by_agent: string | null
           user_id: string
         }
         Insert: {
@@ -378,6 +379,7 @@ export type Database = {
           gif_url?: string | null
           id?: string
           project_id: string
+          sent_by_agent?: string | null
           user_id: string
         }
         Update: {
@@ -386,6 +388,7 @@ export type Database = {
           gif_url?: string | null
           id?: string
           project_id?: string
+          sent_by_agent?: string | null
           user_id?: string
         }
         Relationships: [
@@ -394,6 +397,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_messages_sent_by_agent_fkey"
+            columns: ["sent_by_agent"]
+            isOneToOne: false
+            referencedRelation: "agents"
             referencedColumns: ["id"]
           },
         ]

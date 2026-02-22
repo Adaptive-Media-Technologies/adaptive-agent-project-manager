@@ -19,8 +19,10 @@ export type ChatMessage = {
   user_id: string;
   content: string;
   gif_url: string | null;
+  sent_by_agent: string | null;
   created_at: string;
   profile?: { display_name: string | null; avatar_url: string | null; username: string | null };
+  agent?: { display_name: string; email: string | null } | null;
   attachments?: ChatAttachment[];
 };
 
@@ -60,6 +62,16 @@ export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: Ch
         : Promise.resolve({ data: [] }),
     ]);
 
+    // Fetch agent info for agent-sent messages
+    const agentIds: string[] = Array.from(new Set((msgs || []).filter((m: any) => m.sent_by_agent).map((m: any) => String(m.sent_by_agent))));
+    let agentMap = new Map<string, { display_name: string; email: string | null }>();
+    if (agentIds.length > 0) {
+      const { data: agentRows } = await (supabase.from('agents' as any).select('id, display_name, email').in('id', agentIds) as any);
+      for (const a of (agentRows || []) as any[]) {
+        agentMap.set(a.id, { display_name: a.display_name, email: a.email });
+      }
+    }
+
     const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.id, p]));
     const attachMap = new Map<string, ChatAttachment[]>();
     for (const a of (attachRes.data || []) as ChatAttachment[]) {
@@ -71,6 +83,7 @@ export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: Ch
     const enriched: ChatMessage[] = (msgs || []).map((m: any) => ({
       ...m,
       profile: profileMap.get(m.user_id) || null,
+      agent: m.sent_by_agent ? agentMap.get(m.sent_by_agent) || null : null,
       attachments: attachMap.get(m.id) || [],
     }));
 
@@ -97,7 +110,13 @@ export const useProjectChat = (projectId: string | null, onNewMessage?: (msg: Ch
         const { data: prof } = await supabase.from('profiles').select('id, display_name, avatar_url, username').eq('id', msg.user_id).single();
         // Fetch attachments
         const { data: atts } = await (supabase.from('message_attachments' as any).select('*').eq('message_id', msg.id) as any);
-        const enriched: ChatMessage = { ...msg, profile: prof, attachments: atts || [] };
+        // Fetch agent info if sent by agent
+        let agent = null;
+        if (msg.sent_by_agent) {
+          const { data: agentRow } = await (supabase.from('agents' as any).select('id, display_name, email').eq('id', msg.sent_by_agent).single() as any);
+          if (agentRow) agent = { display_name: agentRow.display_name, email: agentRow.email };
+        }
+        const enriched: ChatMessage = { ...msg, profile: prof, agent, attachments: atts || [] };
         setMessages(prev => {
           if (prev.some(m => m.id === enriched.id)) return prev;
           return [...prev, enriched];
