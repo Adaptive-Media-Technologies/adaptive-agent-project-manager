@@ -39,6 +39,7 @@ import { format } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
+import DashboardHome from '@/components/DashboardHome';
 import {
   DndContext,
   closestCenter,
@@ -1136,17 +1137,24 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
             </Sheet>
           </>
         ) : (
-          /* ============ HOME EMPTY STATE ============ */
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 relative">
+          /* ============ HOME DASHBOARD ============ */
+          <>
             {isMobile && (
-              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
+              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 z-10 text-muted-foreground hover:text-foreground">
                 <Menu size={20} />
               </button>
             )}
-            <img src={agntfindLogo} alt="Agntive" className="h-20 w-20 mb-1 rounded-2xl shadow-sm" />
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Agntive</h1>
-            <p className="text-sm text-muted-foreground">{projLoading ? 'Loading...' : 'Select or create a project to get started'}</p>
-          </div>
+            <DashboardHome
+              profile={profile}
+              projects={projects}
+              agents={agents}
+              totalUnread={totalUnread}
+              onNewProject={() => setShowCreateProject(true)}
+              onSelectProject={(id) => setActiveProjectId(id)}
+              onNavigate={(tab) => setActiveRailTab(tab)}
+            />
+          </>
+        
         )}
       </main>
 
