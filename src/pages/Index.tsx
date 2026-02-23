@@ -273,10 +273,14 @@ const Index = () => {
       <aside className={`${isMobile ? 'fixed inset-y-0 left-0 z-50 transition-transform duration-200' : 'shrink-0'} flex ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}`}>
         {/* Level 1: Icon Rail */}
         <div className="flex w-[52px] flex-col items-center bg-[hsl(var(--sidebar-background))] py-3 gap-1 border-r border-[hsl(var(--sidebar-border))]">
-          {/* Logo */}
-          <div className="mb-3">
+          {/* Logo – click to go Home */}
+          <button
+            onClick={() => { setActiveRailTab('home'); setActiveProjectId(null); }}
+            className="mb-3 cursor-pointer"
+            title="Home"
+          >
             <img src={agntfindLogo} alt="Agntive" className="h-8 w-8 rounded-xl" />
-          </div>
+          </button>
 
           {/* Rail nav icons */}
           {railItems.map(item => (
