@@ -89,13 +89,13 @@ const ProfileSheet = ({ open, onOpenChange }: Props) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle>Profile</SheetTitle>
           <SheetDescription>Update your profile information</SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 pb-8">
           {/* Avatar */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
