@@ -11,8 +11,8 @@ const tabs = [
     mockContent: (
       <div className="space-y-3">
         {['Design landing page', 'Write unit tests', 'Deploy to staging', 'Research competitor APIs'].map((t, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-white/80 border border-border/40 p-3">
-            <div className={`h-4 w-4 rounded border-2 ${i === 1 ? 'bg-[hsl(142,60%,40%)] border-[hsl(142,60%,40%)]' : 'border-border'}`} />
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-[hsl(var(--marketing-surface))]/10 border border-white/10 backdrop-blur-sm p-3">
+            <div className={`h-4 w-4 rounded border-2 ${i === 1 ? 'bg-[hsl(142,60%,40%)] border-[hsl(142,60%,40%)]' : 'border-white/30'}`} />
             <span className="text-sm font-medium text-[hsl(var(--marketing-text))] flex-1">{t}</span>
             <span className="text-xs text-[hsl(var(--marketing-text-muted))]">{i < 2 ? 'Today' : 'Tomorrow'}</span>
           </div>
@@ -33,7 +33,7 @@ const tabs = [
           { name: 'ResearchAI', status: 'Idle', task: '—', tokens: '8.1k' },
           { name: 'OpsAgent', status: 'Active', task: 'Monitoring deploys', tokens: '3.2k' },
         ].map((a, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-white/80 border border-border/40 p-3">
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-[hsl(var(--marketing-surface))]/10 border border-white/10 backdrop-blur-sm p-3">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
@@ -64,7 +64,7 @@ const tabs = [
             { label: 'Human Hours', value: '6.5h' },
             { label: 'Est. Cost', value: '$2.40' },
           ].map((s, i) => (
-            <div key={i} className="rounded-xl bg-white/80 border border-border/40 p-3 text-center">
+            <div key={i} className="rounded-xl bg-[hsl(var(--marketing-surface))]/10 border border-white/10 backdrop-blur-sm p-3 text-center">
               <p className="text-xs text-[hsl(var(--marketing-text-muted))]">{s.label}</p>
               <p className="text-lg font-bold text-[hsl(var(--marketing-text))]">{s.value}</p>
             </div>
@@ -95,7 +95,7 @@ const tabs = [
           { name: 'CodeBot', msg: 'PR #142 ready for review. 847 tokens used.', time: '3m ago', agent: true },
           { name: 'Mike', msg: 'Reviewing now, looks clean!', time: '1m ago' },
         ].map((m, i) => (
-          <div key={i} className="flex gap-3 rounded-xl bg-white/80 border border-border/40 p-3">
+          <div key={i} className="flex gap-3 rounded-xl bg-[hsl(var(--marketing-surface))]/10 border border-white/10 backdrop-blur-sm p-3">
             <div className={`h-7 w-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white ${m.agent ? 'bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))]' : 'bg-[hsl(var(--marketing-text-muted))]'}`}>
               {m.agent ? <Bot size={12} /> : m.name[0]}
             </div>
@@ -198,7 +198,7 @@ const FeatureShowcase = () => {
               Learn more <span>→</span>
             </a>
           </div>
-          <div className="rounded-2xl border border-border/60 bg-[hsl(var(--marketing-surface-alt))] p-6">
+          <div className="rounded-2xl border border-white/10 bg-[hsl(var(--marketing-surface-alt))]/80 p-6">
             {active.mockContent}
           </div>
         </div>
