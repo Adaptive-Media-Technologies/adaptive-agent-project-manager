@@ -119,7 +119,7 @@ const Index = () => {
   }, [isMobile, markRead]);
 
   const dndSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: isMobile ? 15 : 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -619,7 +619,7 @@ const Index = () => {
           <div className="flex flex-col h-full overflow-hidden">
             <header className="flex items-center gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-6 py-3 shadow-sm">
               {isMobile && (
-                <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
                   <Menu size={20} />
                 </button>
               )}
@@ -678,7 +678,7 @@ const Index = () => {
               {/* Chat header */}
               <header className="flex items-center gap-3 border-b border-border bg-card px-4 md:px-6 py-3 shrink-0">
                 {isMobile && (
-                  <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                  <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
                     <Menu size={20} />
                   </button>
                 )}
@@ -703,7 +703,7 @@ const Index = () => {
             /* Empty state */
             <div className="flex flex-1 flex-col items-center justify-center gap-4">
               {isMobile && (
-                <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
+                <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
                   <Menu size={20} />
                 </button>
               )}
@@ -921,7 +921,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
             <header className="flex items-center justify-between border-b border-border bg-card px-4 md:px-6 py-3">
               <div className="flex items-center gap-3 min-w-0">
                 {isMobile && (
-                  <button onClick={() => setSidebarOpen(true)} className="mr-1 text-muted-foreground hover:text-foreground">
+                  <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
                     <Menu size={20} />
                   </button>
                 )}
@@ -1144,7 +1144,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
           /* ============ HOME DASHBOARD ============ */
           <>
             {isMobile && (
-              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 z-10 text-muted-foreground hover:text-foreground">
+              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
                 <Menu size={20} />
               </button>
             )}
