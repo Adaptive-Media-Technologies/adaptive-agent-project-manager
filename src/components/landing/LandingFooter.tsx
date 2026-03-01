@@ -53,34 +53,16 @@ const LandingFooter = () => (
   <footer className="border-t border-border/40 pt-16 pb-10 bg-[hsl(var(--marketing-surface))]">
     <div className="mx-auto max-w-6xl px-6">
       {/* Top section: brand + newsletter */}
-      <div className="grid gap-10 md:grid-cols-2 mb-12 pb-10 border-b border-border/40">
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <img src={agntfindLogo} alt="Agntive" className="h-8 w-8 rounded-lg" />
-            <span className="text-lg font-bold text-[hsl(var(--marketing-text))]">
-              Agntive<span className="text-[hsl(var(--marketing-accent))]">.ai</span>
-            </span>
-          </div>
-          <p className="text-sm text-[hsl(var(--marketing-text-muted))] max-w-md leading-relaxed">
-            The task-driven workspace for teams and AI agents. Unify messaging, task tracking, project context, and autonomous AI automation — so small teams stop juggling Slack, Notion, and generic bots.
-          </p>
+      <div className="mb-12 pb-10 border-b border-border/40">
+        <div className="flex items-center gap-2 mb-4">
+          <img src={agntfindLogo} alt="Agntive" className="h-8 w-8 rounded-lg" />
+          <span className="text-lg font-bold text-[hsl(var(--marketing-text))]">
+            Agntive<span className="text-[hsl(var(--marketing-accent))]">.ai</span>
+          </span>
         </div>
-        <div className="flex flex-col justify-center md:items-end">
-          <h4 className="text-sm font-semibold text-[hsl(var(--marketing-text))] mb-3">Stay in the loop</h4>
-          <p className="text-sm text-[hsl(var(--marketing-text-muted))] mb-4 md:text-right max-w-xs">
-            Get updates on new features, AI agent integrations, and product tips.
-          </p>
-          <div className="flex gap-2 w-full max-w-sm">
-            <input
-              type="email"
-              placeholder="you@company.com"
-              className="flex-1 rounded-lg border border-border/60 bg-[hsl(var(--marketing-surface))] px-4 py-2 text-sm text-[hsl(var(--marketing-text))] placeholder:text-[hsl(var(--marketing-text-muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--marketing-accent))/0.3]"
-            />
-            <button className="rounded-lg bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] px-5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity">
-              Subscribe
-            </button>
-          </div>
-        </div>
+        <p className="text-sm text-[hsl(var(--marketing-text-muted))] max-w-md leading-relaxed">
+          The task-driven workspace for teams and AI agents. Unify messaging, task tracking, project context, and autonomous AI automation — so small teams stop juggling Slack, Notion, and generic bots.
+        </p>
       </div>
 
       {/* Link columns */}
