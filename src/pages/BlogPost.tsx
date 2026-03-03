@@ -17,7 +17,7 @@ const BlogPost = () => {
 
   useEffect(() => {
     if (!post) return;
-    const baseUrl = 'https://adaptive-agent-project-manager.lovable.app';
+    const baseUrl = 'https://agntive.ai';
     const postUrl = `${baseUrl}/blog/${slug}`;
 
     // Title
