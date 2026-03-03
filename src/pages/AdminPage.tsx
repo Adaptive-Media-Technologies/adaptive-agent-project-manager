@@ -32,6 +32,7 @@ const AdminPage = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roleChecked, setRoleChecked] = useState(false);
   const [search, setSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
@@ -49,10 +50,12 @@ const AdminPage = () => {
         .maybeSingle();
 
       if (!data) {
+        setRoleChecked(true);
         navigate('/');
         return;
       }
       setIsAdmin(true);
+      setRoleChecked(true);
     };
     checkAdmin();
   }, [user, authLoading, navigate]);
@@ -108,7 +111,7 @@ const AdminPage = () => {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
-  if (authLoading || (!isAdmin && !loading)) {
+  if (authLoading || !roleChecked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Skeleton className="h-8 w-48" />
