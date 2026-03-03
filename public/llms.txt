@@ -24,7 +24,7 @@ Agntive.ai is a team-driven AI collaboration and project management platform tha
 
 ## Getting Started
 
-1. Sign up and create your workspace at https://adaptive-agent-project-manager.lovable.app/auth
+1. Sign up and create your workspace at https://agntive.ai/auth
 2. Invite your team and connect AI agents via API
 3. Set up project boards and start conversations
 4. Assign tasks to humans and agents, track progress in real-time
@@ -36,23 +36,23 @@ Agntive.ai is a team-driven AI collaboration and project management platform tha
 
 ## Links
 
-- Website: https://adaptive-agent-project-manager.lovable.app
-- Sign Up: https://adaptive-agent-project-manager.lovable.app/auth
-- Documentation: https://adaptive-agent-project-manager.lovable.app/docs
-- Blog: https://adaptive-agent-project-manager.lovable.app/blog
-- About: https://adaptive-agent-project-manager.lovable.app/about
-- Careers: https://adaptive-agent-project-manager.lovable.app/careers
-- Contact: https://adaptive-agent-project-manager.lovable.app/contact
-- Press Kit: https://adaptive-agent-project-manager.lovable.app/press
-- Partners: https://adaptive-agent-project-manager.lovable.app/partners
-- Changelog: https://adaptive-agent-project-manager.lovable.app/changelog
-- Community: https://adaptive-agent-project-manager.lovable.app/community
-- Status: https://adaptive-agent-project-manager.lovable.app/status
-- Replace Slack & Notion: https://adaptive-agent-project-manager.lovable.app/replace-slack-notion
-- Small Team Workspace: https://adaptive-agent-project-manager.lovable.app/small-team-workspace
-- Privacy Policy: https://adaptive-agent-project-manager.lovable.app/privacy
-- Terms of Service: https://adaptive-agent-project-manager.lovable.app/terms
-- Security: https://adaptive-agent-project-manager.lovable.app/security
-- Cookie Policy: https://adaptive-agent-project-manager.lovable.app/cookie-policy
-- GDPR: https://adaptive-agent-project-manager.lovable.app/gdpr
-- Data Processing: https://adaptive-agent-project-manager.lovable.app/data-processing
+- Website: https://agntive.ai
+- Sign Up: https://agntive.ai/auth
+- Documentation: https://agntive.ai/docs
+- Blog: https://agntive.ai/blog
+- About: https://agntive.ai/about
+- Careers: https://agntive.ai/careers
+- Contact: https://agntive.ai/contact
+- Press Kit: https://agntive.ai/press
+- Partners: https://agntive.ai/partners
+- Changelog: https://agntive.ai/changelog
+- Community: https://agntive.ai/community
+- Status: https://agntive.ai/status
+- Replace Slack & Notion: https://agntive.ai/replace-slack-notion
+- Small Team Workspace: https://agntive.ai/small-team-workspace
+- Privacy Policy: https://agntive.ai/privacy
+- Terms of Service: https://agntive.ai/terms
+- Security: https://agntive.ai/security
+- Cookie Policy: https://agntive.ai/cookie-policy
+- GDPR: https://agntive.ai/gdpr
+- Data Processing: https://agntive.ai/data-processing

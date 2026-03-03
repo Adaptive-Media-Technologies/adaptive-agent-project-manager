@@ -12,7 +12,7 @@ const Blog = () => {
   const { data: tags } = useBlogTags();
 
   useEffect(() => {
-    const baseUrl = 'https://adaptive-agent-project-manager.lovable.app';
+    const baseUrl = 'https://agntive.ai';
     document.title = 'Blog | Agntive.ai — AI Agents, Project Management & Automation';
     
     const setMeta = (name: string, content: string, property = false) => {

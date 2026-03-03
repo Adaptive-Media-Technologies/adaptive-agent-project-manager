@@ -33,4 +33,4 @@ Allow: /
 Disallow: /dashboard
 Disallow: /teams
 
-Sitemap: https://adaptive-agent-project-manager.lovable.app/sitemap.xml
+Sitemap: https://agntive.ai/sitemap.xml
