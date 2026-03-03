@@ -17,16 +17,48 @@ const BlogPost = () => {
 
   useEffect(() => {
     if (!post) return;
-    document.title = `${post.title} | Agntive Blog`;
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', post.meta_description);
+    const baseUrl = 'https://adaptive-agent-project-manager.lovable.app';
+    const postUrl = `${baseUrl}/blog/${slug}`;
 
-    // JSON-LD
+    // Title
+    document.title = `${post.title} | Agntive Blog`;
+
+    // Meta description
+    const setMeta = (name: string, content: string, property = false) => {
+      const attr = property ? 'property' : 'name';
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    setMeta('description', post.meta_description);
+    setMeta('author', post.author);
+
+    // Open Graph
+    setMeta('og:title', post.title, true);
+    setMeta('og:description', post.meta_description, true);
+    setMeta('og:type', 'article', true);
+    setMeta('og:url', postUrl, true);
+
+    // Twitter
+    setMeta('twitter:title', post.title);
+    setMeta('twitter:description', post.meta_description);
+    setMeta('twitter:card', 'summary_large_image');
+
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.href = postUrl;
+
+    // JSON-LD BlogPosting
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.textContent = JSON.stringify({
@@ -34,14 +66,25 @@ const BlogPost = () => {
       '@type': 'BlogPosting',
       headline: post.title,
       description: post.meta_description,
-      author: { '@type': 'Organization', name: post.author },
+      author: { '@type': 'Organization', name: post.author, url: baseUrl },
       datePublished: post.published_at,
       dateModified: post.updated_at,
-      publisher: { '@type': 'Organization', name: 'Agntive.ai' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Agntive.ai',
+        url: baseUrl,
+        logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.ico` },
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+      keywords: post.tags?.join(', '),
     });
     document.head.appendChild(script);
-    return () => { script.remove(); };
-  }, [post]);
+
+    return () => {
+      script.remove();
+      canonical?.remove();
+    };
+  }, [post, slug]);
 
   if (isLoading) {
     return (
