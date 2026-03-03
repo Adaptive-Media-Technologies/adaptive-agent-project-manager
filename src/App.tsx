@@ -29,6 +29,7 @@ import Security from "./pages/Security";
 import CookiePolicy from "./pages/CookiePolicy";
 import GDPR from "./pages/GDPR";
 import DataProcessing from "./pages/DataProcessing";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/cookie-policy" element={<CookiePolicy />} />
               <Route path="/gdpr" element={<GDPR />} />
               <Route path="/data-processing" element={<DataProcessing />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
