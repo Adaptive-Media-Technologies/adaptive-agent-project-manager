@@ -18,6 +18,11 @@ import cover17 from '@/assets/blog/cover-17-security.jpg';
 import cover18 from '@/assets/blog/cover-18-playbook.jpg';
 import cover19 from '@/assets/blog/cover-19-discoverable.jpg';
 import cover20 from '@/assets/blog/cover-20-future.jpg';
+import cover21 from '@/assets/blog/cover-21-orchestration-patterns.jpg';
+import cover22 from '@/assets/blog/cover-22-onboarding-agents.jpg';
+import cover23 from '@/assets/blog/cover-23-monitoring.jpg';
+import cover24 from '@/assets/blog/cover-24-handoffs.jpg';
+import cover25 from '@/assets/blog/cover-25-cost-optimization.jpg';
 
 const coverImages: Record<string, string> = {
   'why-ai-agent-teams-need-purpose-built-workspace': cover1,
@@ -40,6 +45,11 @@ const coverImages: Record<string, string> = {
   'project-management-ai-native-teams-2026-playbook': cover18,
   'make-saas-discoverable-chatgpt-claude-perplexity': cover19,
   'future-of-work-ai-agents-as-team-members': cover20,
+  'multi-agent-orchestration-patterns-2026': cover21,
+  'onboarding-ai-agents-into-your-team': cover22,
+  'monitoring-ai-agents-production-dashboard': cover23,
+  'human-ai-task-handoffs-best-practices': cover24,
+  'ai-agent-cost-optimization-strategies': cover25,
 };
 
 export const getCoverImage = (slug: string): string | undefined => coverImages[slug];
