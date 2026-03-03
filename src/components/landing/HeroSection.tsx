@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, CheckCircle2, Bot, Clock, MessageSquare } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Bot, Clock, MessageSquare } from 'lucide-react';
 
 const DashboardMockup = () => (
   <div className="animate-float rounded-2xl border border-border/60 bg-[hsl(var(--marketing-surface))] shadow-2xl shadow-[hsl(var(--marketing-accent))/0.1] overflow-hidden max-w-4xl mx-auto">
@@ -69,9 +69,6 @@ const HeroSection = () => (
               Start 14-Day Free Trial <ArrowRight size={18} />
             </Button>
           </Link>
-          <Button variant="outline" size="lg" className="h-12 px-8 text-base gap-2">
-            <Play size={16} /> Watch Demo
-          </Button>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
