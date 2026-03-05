@@ -6,6 +6,7 @@ import FeatureShowcase from '@/components/landing/FeatureShowcase';
 import OpenClawSection from '@/components/landing/OpenClawSection';
 import HowItWorks from '@/components/landing/HowItWorks';
 import AgentDeepDive from '@/components/landing/AgentDeepDive';
+import PricingSection from '@/components/landing/PricingSection';
 import StatsSection from '@/components/landing/StatsSection';
 import Testimonials from '@/components/landing/Testimonials';
 import FAQSection from '@/components/landing/FAQSection';
@@ -23,6 +24,7 @@ const LandingPage = () => {
       <OpenClawSection />
       <HowItWorks />
       <AgentDeepDive />
+      <PricingSection />
       <StatsSection />
       <Testimonials />
       <FAQSection />
