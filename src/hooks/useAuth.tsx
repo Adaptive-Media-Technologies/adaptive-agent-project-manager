@@ -19,12 +19,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth] event:', event);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // If token refresh failed, try to recover once
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.warn('[Auth] Token refresh returned no session, clearing state');
+      }
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('[Auth] getSession error:', error.message);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -32,14 +41,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // On iOS Safari, aggressively refresh session when app returns from background
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        supabase.auth.getSession();
+        try {
+          const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('[Auth] visibility refresh error:', error.message);
+            // Session is stale/expired, try to refresh explicitly
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('[Auth] refresh failed:', refreshError.message);
+            }
+          } else if (currentSession) {
+            // Check if token is close to expiring (within 5 min) and proactively refresh
+            const expiresAt = currentSession.expires_at;
+            if (expiresAt && expiresAt * 1000 - Date.now() < 5 * 60 * 1000) {
+              console.log('[Auth] Token near expiry, proactively refreshing');
+              await supabase.auth.refreshSession();
+            }
+          }
+        } catch (err) {
+          console.error('[Auth] visibility change handler error:', err);
+        }
       }
     };
+
+    // Also refresh on focus (some iOS browsers fire focus but not visibilitychange)
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        handleVisibilityChange();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName: string) => {
