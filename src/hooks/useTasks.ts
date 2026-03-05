@@ -24,6 +24,7 @@ export type Project = {
   team_id: string | null;
   created_at: string;
   position: number;
+  archived: boolean;
 };
 
 export const useProjects = () => {
@@ -72,7 +73,32 @@ export const useProjects = () => {
     await Promise.all(reordered.map(p => supabase.from('projects').update({ position: p.position }).eq('id', p.id)));
   };
 
-  return { projects, loading, create, rename, reorderProjects, refresh: fetch };
+  const archiveProject = async (id: string) => {
+    // Archive the project
+    const { error } = await supabase.from('projects').update({ archived: true } as any).eq('id', id);
+    if (error) throw error;
+    // Archive all non-archived tasks in this project
+    await supabase.from('tasks').update({ status: 'archived' } as any).eq('project_id', id).neq('status', 'archived');
+    setProjects(p => p.map(pp => pp.id === id ? { ...pp, archived: true } : pp));
+  };
+
+  const restoreProject = async (id: string) => {
+    const { error } = await supabase.from('projects').update({ archived: false } as any).eq('id', id);
+    if (error) throw error;
+    // Restore all archived tasks in this project back to open
+    await supabase.from('tasks').update({ status: 'open' }).eq('project_id', id).eq('status', 'archived');
+    setProjects(p => p.map(pp => pp.id === id ? { ...pp, archived: false } : pp));
+  };
+
+  const deleteProject = async (id: string) => {
+    // Delete all tasks first, then the project
+    await supabase.from('tasks').delete().eq('project_id', id);
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+    if (error) throw error;
+    setProjects(p => p.filter(pp => pp.id !== id));
+  };
+
+  return { projects, loading, create, rename, reorderProjects, archiveProject, restoreProject, deleteProject, refresh: fetch };
 };
 
 export const useTasks = (projectId: string | null) => {

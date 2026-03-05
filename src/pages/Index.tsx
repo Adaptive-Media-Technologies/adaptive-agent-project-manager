@@ -63,7 +63,9 @@ const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
-  const { projects, loading: projLoading, create: createProject, rename: renameProject, reorderProjects, refresh: refreshProjects } = useProjects();
+  const { projects: allProjects, loading: projLoading, create: createProject, rename: renameProject, reorderProjects, archiveProject, restoreProject, deleteProject, refresh: refreshProjects } = useProjects();
+  const projects = allProjects.filter(p => !p.archived);
+  const archivedProjects = allProjects.filter(p => p.archived);
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -540,7 +542,7 @@ const Index = () => {
               <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
                 <Archive size={20} className="text-[hsl(var(--sidebar-panel-active))]" />
                 <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)]">
-                  {archivedTasks.length} archived task{archivedTasks.length !== 1 ? 's' : ''}
+                  {archivedProjects.length} project{archivedProjects.length !== 1 ? 's' : ''}, {archivedTasks.length} task{archivedTasks.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </nav>
@@ -624,48 +626,96 @@ const Index = () => {
                 </button>
               )}
               <Archive size={20} className="text-primary" />
-              <h2 className="text-lg font-bold text-foreground">Archived Tasks</h2>
-              <span className="text-xs text-muted-foreground ml-auto">{archivedTasks.length} task{archivedTasks.length !== 1 ? 's' : ''}</span>
+              <h2 className="text-lg font-bold text-foreground">Archive</h2>
             </header>
-            <div className="flex-1 overflow-y-auto p-6">
-              {archivedLoading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              ) : archivedTasks.length === 0 ? (
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Archived Projects */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <FolderOpen size={14} /> Archived Projects ({archivedProjects.length})
+                </h3>
+                {archivedProjects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground/60 pl-1">No archived projects</p>
+                ) : (
+                  <div className="space-y-2">
+                    {archivedProjects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-card hover:shadow-sm group"
+                      >
+                        <FolderOpen size={16} className="text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-muted-foreground">{project.name}</span>
+                          <span className="ml-2 text-[11px] text-muted-foreground/60 capitalize">{project.type}</span>
+                        </div>
+                        <button
+                          onClick={async () => { await restoreProject(project.id); toast.success('Project restored with all tasks'); }}
+                          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary transition-all"
+                          title="Restore project"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                        <button
+                          onClick={async () => { await deleteProject(project.id); toast.success('Project permanently deleted'); }}
+                          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
+                          title="Delete permanently"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Archived Tasks */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <ListTodo size={14} /> Archived Tasks ({archivedTasks.length})
+                </h3>
+                {archivedLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                ) : archivedTasks.length === 0 ? (
+                  <p className="text-sm text-muted-foreground/60 pl-1">No archived tasks</p>
+                ) : (
+                  <div className="space-y-2">
+                    {archivedTasks.map((task: any) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-card hover:shadow-sm group"
+                      >
+                        <span className="flex-1 text-sm font-medium text-muted-foreground line-through">{task.title}</span>
+                        {task.project_name && (
+                          <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                            {task.project_name}
+                          </span>
+                        )}
+                        <button
+                          onClick={async () => { await restoreTask(task.id); toast.success('Task restored'); }}
+                          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary transition-all"
+                          title="Restore task"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                        <button
+                          onClick={async () => { await hardDelete(task.id); toast.success('Task permanently deleted'); }}
+                          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
+                          title="Delete permanently"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {archivedProjects.length === 0 && archivedTasks.length === 0 && !archivedLoading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <div className="rounded-2xl bg-accent p-5">
                     <Archive size={32} className="text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-muted-foreground">No archived tasks</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {archivedTasks.map((task: any) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-card hover:shadow-sm group"
-                    >
-                      <span className="flex-1 text-sm font-medium text-muted-foreground line-through">{task.title}</span>
-                      {task.project_name && (
-                        <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {task.project_name}
-                        </span>
-                      )}
-                      <button
-                        onClick={async () => { await restoreTask(task.id); toast.success('Task restored'); }}
-                        className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-primary transition-all"
-                        title="Restore task"
-                      >
-                        <RotateCcw size={14} />
-                      </button>
-                      <button
-                        onClick={async () => { await hardDelete(task.id); toast.success('Task permanently deleted'); }}
-                        className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
-                        title="Delete permanently"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  <p className="text-sm text-muted-foreground">Nothing archived yet</p>
                 </div>
               )}
             </div>
@@ -1135,6 +1185,23 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                       <span className="text-primary">Doing: {doingCount}</span>
                       <span className="text-accent-foreground">Done: {doneCount}</span>
                     </div>
+                  </div>
+                  <div className="pt-4 border-t border-border space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2 text-muted-foreground hover:text-foreground"
+                      onClick={async () => {
+                        try {
+                          await archiveProject(activeProject.id);
+                          setShowDetails(false);
+                          setActiveProjectId(null);
+                          toast.success('Project archived with all tasks');
+                        } catch (err: any) { toast.error(err.message); }
+                      }}
+                    >
+                      <Archive size={14} /> Archive Project
+                    </Button>
                   </div>
                 </div>
               </SheetContent>
