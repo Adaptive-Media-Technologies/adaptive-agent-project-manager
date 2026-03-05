@@ -119,7 +119,7 @@ export const useTasks = (projectId: string | null) => {
     if (!user || !projectId) return;
     const position = tasks.length;
     const { data, error } = await supabase.from('tasks')
-      .insert({ title, project_id: projectId, created_by: user.id, position })
+      .insert({ title, project_id: projectId, created_by: user.id, position, assigned_to: user.id, assigned_type: 'user' } as any)
       .select().single();
     if (error) throw error;
     setTasks(t => [...t, data as Task]);
