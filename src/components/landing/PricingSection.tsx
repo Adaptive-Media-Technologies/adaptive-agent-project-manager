@@ -1,6 +1,23 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, User, Users, Bot, ArrowRight } from 'lucide-react';
+import { Check, User, Users, Bot, ArrowRight, X, FolderKanban, MessageSquare, StickyNote, ListChecks, Timer, CalendarDays, BarChart3, Paperclip, Archive, Key } from 'lucide-react';
+
+const allFeatures = [
+  { name: 'Create & manage projects', icon: FolderKanban, free: true, team: true, agent: true },
+  { name: 'Task boards with drag & drop', icon: ListChecks, free: true, team: true, agent: true },
+  { name: 'Assign tasks to users', icon: User, free: true, team: true, agent: true },
+  { name: 'Project notes (Google Keep style)', icon: StickyNote, free: true, team: true, agent: true },
+  { name: 'Calendar view & due dates', icon: CalendarDays, free: true, team: true, agent: true },
+  { name: 'Task progress & completion tracking', icon: BarChart3, free: true, team: true, agent: true },
+  { name: 'File attachments on tasks', icon: Paperclip, free: true, team: true, agent: true },
+  { name: 'Archive & restore projects', icon: Archive, free: true, team: true, agent: true },
+  { name: 'Time tracking & stopwatch', icon: Timer, free: true, team: true, agent: true },
+  { name: 'Team collaboration & invites', icon: Users, free: false, team: true, agent: true },
+  { name: 'Real-time project chat', icon: MessageSquare, free: false, team: true, agent: true },
+  { name: 'Assign tasks to AI Agents', icon: Bot, free: false, team: false, agent: true },
+  { name: 'Agent service keys & API access', icon: Key, free: false, team: false, agent: true },
+  { name: 'Agent activity & cost monitoring', icon: BarChart3, free: false, team: false, agent: true },
+];
 
 const plans = [
   {
@@ -8,51 +25,30 @@ const plans = [
     price: '$0',
     period: '',
     description: 'Perfect for solo founders and personal projects.',
-    features: [
-      '1 user included',
-      'Unlimited projects',
-      'Task management',
-      'Project notes',
-      'Calendar view',
-    ],
-    excluded: ['AI Agent slots', 'Team collaboration'],
     cta: 'Get Started Free',
     icon: User,
     highlighted: false,
+    columnKey: 'free' as const,
   },
   {
     name: 'Team',
     price: '$5',
     period: '/ user / month',
     description: 'Add teammates and collaborate in real time.',
-    features: [
-      'Everything in Free',
-      'Unlimited team members',
-      'Real-time project chat',
-      'File sharing & attachments',
-      'Time tracking',
-    ],
-    excluded: [],
     cta: 'Start 14-Day Free Trial',
     icon: Users,
     highlighted: true,
+    columnKey: 'team' as const,
   },
   {
     name: 'AI Agents',
     price: '$7',
     period: '/ agent / month',
     description: 'Bring your AI agents into the workspace.',
-    features: [
-      'Service key per agent',
-      'Assign tasks to agents',
-      'Agent activity tracking',
-      'Token & cost monitoring',
-      'API access included',
-    ],
-    excluded: [],
     cta: 'Add AI Agents',
     icon: Bot,
     highlighted: false,
+    columnKey: 'agent' as const,
   },
 ];
 
@@ -68,9 +64,12 @@ const PricingSection = () => (
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3 items-stretch">
+      {/* Pricing Cards */}
+      <div className="grid gap-6 md:grid-cols-3 items-stretch mb-16">
         {plans.map((plan) => {
           const Icon = plan.icon;
+          const includedFeatures = allFeatures.filter(f => f[plan.columnKey]);
+          const excludedFeatures = allFeatures.filter(f => !f[plan.columnKey]);
           return (
             <div
               key={plan.name}
@@ -107,16 +106,16 @@ const PricingSection = () => (
               </div>
 
               <ul className="mb-8 flex-1 space-y-3">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
+                {includedFeatures.map((f) => (
+                  <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
                     <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-accent))]" />
-                    {f}
+                    {f.name}
                   </li>
                 ))}
-                {plan.excluded.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text-muted))] line-through opacity-50">
-                    <Check size={16} className="mt-0.5 flex-shrink-0 opacity-30" />
-                    {f}
+                {excludedFeatures.map((f) => (
+                  <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text-muted))] opacity-40">
+                    <X size={16} className="mt-0.5 flex-shrink-0" />
+                    <span className="line-through">{f.name}</span>
                   </li>
                 ))}
               </ul>
@@ -137,6 +136,46 @@ const PricingSection = () => (
             </div>
           );
         })}
+      </div>
+
+      {/* Feature Comparison Table (desktop) */}
+      <div className="hidden md:block rounded-2xl border border-border/40 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/40 bg-[hsl(var(--marketing-surface-alt))]">
+              <th className="text-left p-4 text-[hsl(var(--marketing-text))] font-semibold">Feature</th>
+              {plans.map(p => (
+                <th key={p.name} className="text-center p-4 text-[hsl(var(--marketing-text))] font-semibold w-40">
+                  {p.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {allFeatures.map((f, i) => {
+              const FeatureIcon = f.icon;
+              return (
+                <tr key={f.name} className={i < allFeatures.length - 1 ? 'border-b border-border/20' : ''}>
+                  <td className="p-4 text-[hsl(var(--marketing-text))]">
+                    <span className="flex items-center gap-2.5">
+                      <FeatureIcon size={16} className="text-[hsl(var(--marketing-text-muted))] flex-shrink-0" />
+                      {f.name}
+                    </span>
+                  </td>
+                  {plans.map(p => (
+                    <td key={p.name} className="text-center p-4">
+                      {f[p.columnKey] ? (
+                        <Check size={18} className="mx-auto text-[hsl(var(--marketing-accent))]" />
+                      ) : (
+                        <X size={18} className="mx-auto text-[hsl(var(--marketing-text-muted))] opacity-30" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       <p className="mt-10 text-center text-sm text-[hsl(var(--marketing-text-muted))]">
