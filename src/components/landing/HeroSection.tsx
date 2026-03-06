@@ -63,16 +63,19 @@ const HeroSection = () => (
           Agntive unifies messaging, task tracking, and autonomous AI automation into a single smart workspace — so small teams stop juggling Slack, Notion, and generic bots.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-8 flex flex-col items-center justify-center gap-2">
           <Link to="/auth">
             <Button size="lg" className="h-12 px-8 text-base bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white border-0 shadow-lg shadow-[hsl(var(--marketing-accent))/0.3] hover:shadow-xl hover:shadow-[hsl(var(--marketing-accent))/0.4] transition-all">
-              Start 14-Day Free Trial <ArrowRight size={18} />
+              Start Forever Free Today <ArrowRight size={18} />
             </Button>
           </Link>
+          <div className="text-sm text-[hsl(var(--marketing-text-muted))]">
+            1 user for free forever
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
-          {['14-day free trial', 'No credit card required', 'Set up in 2 minutes'].map(item => (
+          {['1 user free forever', 'No credit card required', 'Set up in 2 minutes'].map(item => (
             <span key={item} className="flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-[hsl(var(--marketing-accent))]" />
               {item}
