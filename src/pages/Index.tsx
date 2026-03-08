@@ -202,8 +202,9 @@ const Index = () => {
         <button
           {...attributes}
           {...listeners}
-          className="shrink-0 cursor-grab text-[hsl(var(--sidebar-panel-foreground)/0.2)] opacity-0 group-hover:opacity-100 transition-opacity active:cursor-grabbing px-0.5"
+          className="shrink-0 cursor-grab text-[hsl(var(--sidebar-panel-foreground)/0.2)] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity active:cursor-grabbing px-0.5"
           title="Drag to reorder"
+          type="button"
         >
           <GripVertical size={12} />
         </button>
@@ -612,7 +613,7 @@ const Index = () => {
       </aside>
 
       {/* Main */}
-      <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
+      <main className="relative flex flex-1 flex-col min-w-0 overflow-hidden">
         {activeRailTab === 'calendar' ? (
           <CalendarView />
 
@@ -621,8 +622,12 @@ const Index = () => {
           <div className="flex flex-col h-full overflow-hidden">
             <header className="flex items-center gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-6 py-3 shadow-sm">
               {isMobile && (
-                <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
-                  <Menu size={20} />
+                <button
+                  onClick={() => setSidebarOpen((open) => !open)}
+                  className="relative z-[60] mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all"
+                  type="button"
+                >
+                  {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
               )}
               <Archive size={20} className="text-primary" />
@@ -728,8 +733,12 @@ const Index = () => {
               {/* Chat header */}
               <header className="flex items-center gap-3 border-b border-border bg-card px-4 md:px-6 py-3 shrink-0">
                 {isMobile && (
-                  <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
-                    <Menu size={20} />
+                  <button
+                    onClick={() => setSidebarOpen((open) => !open)}
+                    className="relative z-[60] mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all"
+                    type="button"
+                  >
+                    {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                   </button>
                 )}
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -753,8 +762,12 @@ const Index = () => {
             /* Empty state */
             <div className="flex flex-1 flex-col items-center justify-center gap-4">
               {isMobile && (
-                <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
-                  <Menu size={20} />
+                <button
+                  onClick={() => setSidebarOpen((open) => !open)}
+                  className="absolute top-4 left-4 z-[60] flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all"
+                  type="button"
+                >
+                  {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
               )}
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
@@ -971,8 +984,12 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
             <header className="flex items-center justify-between border-b border-border bg-card px-4 md:px-6 py-3">
               <div className="flex items-center gap-3 min-w-0">
                 {isMobile && (
-                  <button onClick={() => setSidebarOpen(true)} className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
-                    <Menu size={20} />
+                  <button
+                    onClick={() => setSidebarOpen((open) => !open)}
+                    className="relative z-[60] mr-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all"
+                    type="button"
+                  >
+                    {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                   </button>
                 )}
                 <div className="min-w-0">
@@ -1211,8 +1228,12 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
           /* ============ HOME DASHBOARD ============ */
           <>
             {isMobile && (
-              <button onClick={() => setSidebarOpen(true)} className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all">
-                <Menu size={20} />
+              <button
+                onClick={() => setSidebarOpen((open) => !open)}
+                className="absolute top-4 left-4 z-[60] flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-foreground active:scale-95 transition-all"
+                type="button"
+              >
+                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             )}
             <DashboardHome

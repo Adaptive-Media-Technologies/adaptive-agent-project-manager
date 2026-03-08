@@ -13,6 +13,18 @@ type AuthCtx = {
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
+const requestStoragePersistence = async () => {
+  try {
+    if (typeof navigator === 'undefined') return;
+    // Best-effort: helps some browsers (notably iOS) keep storage between idle/tab discards.
+    if ('storage' in navigator && typeof navigator.storage?.persist === 'function') {
+      await navigator.storage.persist();
+    }
+  } catch {
+    // Ignore — persistence requests are opportunistic.
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,18 +37,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // If token refresh failed, try to recover once
       if (event === 'TOKEN_REFRESHED' && !session) {
-        console.warn('[Auth] Token refresh returned no session, clearing state');
+        console.warn('[Auth] Token refresh returned no session');
+      }
+
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        console.warn('[Auth] Token refresh failed; attempting recovery refresh');
+        (async () => {
+          const { error } = await supabase.auth.refreshSession();
+          if (error) console.error('[Auth] Recovery refresh failed:', error.message);
+        })();
+      }
+
+      if (session) {
+        requestStoragePersistence();
       }
     });
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         console.error('[Auth] getSession error:', error.message);
       }
+
+      // If a session exists but is near expiry, proactively refresh on startup.
+      if (session?.expires_at && session.expires_at * 1000 - Date.now() < 5 * 60 * 1000) {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) console.error('[Auth] startup refresh failed:', refreshError.message);
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      if (session) {
+        requestStoragePersistence();
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -61,6 +95,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.log('[Auth] Token near expiry, proactively refreshing');
               await supabase.auth.refreshSession();
             }
+          } else {
+            // If storage was cleared (common on iOS tab discard), try a best-effort refresh to recover.
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('[Auth] refresh recovery failed:', refreshError.message);
+            }
           }
         } catch (err) {
           console.error('[Auth] visibility change handler error:', err);
@@ -75,11 +115,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // pageshow is important for Safari/iOS bfcache restores
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (document.visibilityState === 'visible') {
+        if (e.persisted) {
+          console.log('[Auth] pageshow persisted; re-checking session');
+        }
+        handleVisibilityChange();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handlePageShow);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, []);
 
@@ -94,6 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    requestStoragePersistence();
   };
 
   const signOut = async () => {

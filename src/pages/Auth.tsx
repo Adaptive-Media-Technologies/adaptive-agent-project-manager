@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -76,7 +77,15 @@ const Auth = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="space-y-3">
+          <img
+            src={agntfindLogo}
+            alt="Agntive logo"
+            className="mx-auto h-12 w-12 rounded-2xl shadow-lg shadow-[hsl(var(--marketing-accent))/0.18]"
+          />
+          <p className="text-center text-sm text-muted-foreground">
+            Log in or sign up to start managing project workspaces, tasks, notes and AI Agents.
+          </p>
           <CardTitle className="text-center text-2xl">
             {isForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Sign In'}
           </CardTitle>
