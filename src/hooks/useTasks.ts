@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 export type Task = {
   id: string;
@@ -11,7 +12,9 @@ export type Task = {
   completed_at: string | null;
   created_at: string;
   created_by: string;
+  start_date: string | null;
   due_date: string | null;
+  group_id: string | null;
   assigned_to: string | null;
   assigned_type: 'user' | 'agent' | null;
 };
@@ -153,6 +156,40 @@ export const useTasks = (projectId: string | null) => {
     await Promise.all(reordered.map(t => supabase.from('tasks').update({ position: t.position }).eq('id', t.id)));
   };
 
+  const reorderGrouped = async (groups: { group_id: string | null; task_ids: string[] }[]) => {
+    const prev = tasks;
+    // Optimistic update
+    const updates = new Map<string, { group_id: string | null; position: number }>();
+    for (const g of groups) {
+      g.task_ids.forEach((id, idx) => updates.set(id, { group_id: g.group_id, position: idx }));
+    }
+    setTasks((prev) =>
+      prev.map((t) => {
+        const u = updates.get(t.id);
+        return u ? { ...t, group_id: u.group_id, position: u.position } : t;
+      })
+    );
+
+    // Persist via UPDATEs (avoids RLS edge cases with upsert policies/checks)
+    const results = await Promise.all(
+      Array.from(updates.entries()).map(([id, u]) =>
+        supabase
+          .from('tasks')
+          .update({ group_id: u.group_id, position: u.position } as any, { count: 'exact' } as any)
+          .eq('id', id)
+      )
+    );
+    const error = results.find(r => r.error)?.error;
+    const anyZero = results.some(r => (r as any).count === 0);
+    if (error || anyZero) {
+      console.error('Failed to persist grouped reorder:', error ?? '0 rows affected (RLS?)');
+      toast.error(error?.message ?? 'Could not save task order (permission denied). Reverting…');
+      setTasks(prev);
+      await fetch();
+      throw error ?? new Error('0 rows affected');
+    }
+  };
+
   const deleteTask = async (id: string) => {
     setTasks(t => t.filter(tt => tt.id !== id));
     await supabase.from('tasks').delete().eq('id', id);
@@ -170,6 +207,12 @@ export const useTasks = (projectId: string | null) => {
     setTasks(t => t.map(tt => tt.id === id ? { ...tt, due_date: dueDate } : tt));
   };
 
+  const updateStartDate = async (id: string, startDate: string | null) => {
+    const { error } = await supabase.from('tasks').update({ start_date: startDate } as any).eq('id', id);
+    if (error) throw error;
+    setTasks(t => t.map(tt => tt.id === id ? { ...tt, start_date: startDate } : tt));
+  };
+
   const assignTask = async (id: string, assigneeId: string, assigneeType: 'user' | 'agent') => {
     setTasks(t => t.map(tt => tt.id === id ? { ...tt, assigned_to: assigneeId, assigned_type: assigneeType } : tt));
     const { error } = await supabase.from('tasks').update({ assigned_to: assigneeId, assigned_type: assigneeType } as any).eq('id', id);
@@ -185,7 +228,7 @@ export const useTasks = (projectId: string | null) => {
   // Filter out archived tasks from normal view
   const activeTasks = tasks.filter(t => t.status !== 'archived');
 
-  return { tasks: activeTasks, loading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, archiveTask, refresh: fetch };
+  return { tasks: activeTasks, loading, addTask, cycleStatus, reorder, reorderGrouped, deleteTask, renameTask, updateDueDate, updateStartDate, assignTask, unassignTask, archiveTask, refresh: fetch };
 };
 
 export const useArchivedTasks = () => {

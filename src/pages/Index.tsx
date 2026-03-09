@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects, useTasks, useArchivedTasks } from '@/hooks/useTasks';
@@ -16,6 +16,8 @@ import FormattingToolbar from '@/components/FormattingToolbar';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import TaskList from '@/components/TaskList';
+import TaskTimeline from '@/components/TaskTimeline';
+import { useTaskGroups } from '@/hooks/useTaskGroups';
 import ProfileSheet from '@/components/ProfileSheet';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
 import {
@@ -35,7 +37,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
@@ -69,7 +71,8 @@ const Index = () => {
   const { teams, refresh: teamsRefresh } = useTeams();
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorder, deleteTask, renameTask, updateDueDate, assignTask, unassignTask, archiveTask } = useTasks(activeProjectId);
+  const { tasks, loading: tasksLoading, addTask, cycleStatus, reorderGrouped, deleteTask, renameTask, updateDueDate, updateStartDate, assignTask, unassignTask, archiveTask } = useTasks(activeProjectId);
+  const { groups: taskGroups, createGroup, renameGroup, deleteGroup } = useTaskGroups(activeProjectId);
   const { tasks: archivedTasks, loading: archivedLoading, restoreTask, hardDelete, refresh: refreshArchived } = useArchivedTasks();
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
@@ -80,7 +83,24 @@ const Index = () => {
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [taskView, setTaskView] = useState<'list' | 'timeline'>('list');
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [dashboardOpenTaskId, setDashboardOpenTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTaskView('list');
+  }, [activeProjectId]);
+
+  const projectTimelineSections = useMemo(() => {
+    const sections = taskGroups.map(g => ({
+      id: g.id,
+      label: g.name,
+      taskIds: tasks.filter(t => t.group_id === g.id).map(t => t.id),
+    }));
+    const ungrouped = tasks.filter(t => !t.group_id).map(t => t.id);
+    sections.push({ id: 'ungrouped', label: 'Ungrouped', taskIds: ungrouped });
+    return sections.filter(s => s.taskIds.length > 0);
+  }, [taskGroups, tasks]);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -356,7 +376,8 @@ const Index = () => {
           </button>
         </div>
 
-        {/* Level 2: Content Panel */}
+        {/* Level 2: Content Panel (hidden for Calendar; Calendar has its own left filters) */}
+        {activeRailTab !== 'calendar' && (
         <div className="flex w-[232px] flex-col bg-[hsl(var(--sidebar-panel-background))] border-r border-[hsl(var(--sidebar-panel-border))]">
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
@@ -610,6 +631,7 @@ const Index = () => {
             </nav>
           )}
         </div>
+        )}
       </aside>
 
       {/* Main */}
@@ -1103,28 +1125,74 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                     </span>
-                    <button
-                      onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
-                      className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
-                    >
-                      + Add Task
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center bg-muted rounded-lg p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setTaskView('list')}
+                          className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${taskView === 'list' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          List
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTaskView('timeline')}
+                          className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${taskView === 'timeline' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Timeline
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
+                        className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
+                        type="button"
+                      >
+                        + Add Task
+                      </button>
+                    </div>
                   </div>
                   <div className="px-3">
-                    <TaskList
-                      tasks={tasks}
-                      onCycle={cycleStatus}
-                      onDelete={archiveTask}
-                      onReorder={reorder}
-                      onLogTime={handleLogTime}
-                      taskMinutes={taskMinutes}
-                      onRenameTask={renameTask}
-                      onUpdateDueDate={updateDueDate}
-                      onAssignTask={assignTask}
-                      onUnassignTask={unassignTask}
-                      projectId={activeProjectId}
-                      teamId={activeProject?.team_id}
-                    />
+                    {taskView === 'list' ? (
+                      <TaskList
+                        tasks={tasks}
+                        groups={taskGroups}
+                        onCreateGroup={createGroup}
+                        onRenameGroup={renameGroup}
+                        onDeleteGroup={deleteGroup}
+                        onCycle={cycleStatus}
+                        onDelete={archiveTask}
+                        onReorderGrouped={reorderGrouped}
+                        onLogTime={handleLogTime}
+                        taskMinutes={taskMinutes}
+                        onRenameTask={renameTask}
+                        onUpdateStartDate={updateStartDate}
+                        onUpdateDueDate={updateDueDate}
+                        onAssignTask={assignTask}
+                        onUnassignTask={unassignTask}
+                        openTaskId={dashboardOpenTaskId}
+                        onOpenedTaskId={() => setDashboardOpenTaskId(null)}
+                        projectId={activeProjectId}
+                        teamId={activeProject?.team_id}
+                      />
+                    ) : (
+                      <div className="py-3">
+                        <TaskTimeline
+                          tasks={tasks}
+                          sections={projectTimelineSections}
+                          rangeStart={startOfMonth(new Date())}
+                          rangeEnd={endOfMonth(new Date())}
+                          selectedDate={new Date()}
+                          taskMinutes={taskMinutes}
+                          onRenameTask={renameTask}
+                          onUpdateStartDate={updateStartDate}
+                          onUpdateDueDate={updateDueDate}
+                          onAssignTask={assignTask}
+                          onUnassignTask={unassignTask}
+                          projectId={activeProjectId}
+                          teamId={activeProject?.team_id}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1243,6 +1311,12 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
               totalUnread={totalUnread}
               onNewProject={() => setShowCreateProject(true)}
               onSelectProject={(id) => setActiveProjectId(id)}
+              onOpenTask={(projectId, taskId) => {
+                setActiveRailTab('home');
+                setActiveProjectId(projectId);
+                setDashboardOpenTaskId(taskId);
+                if (isMobile) setSidebarOpen(false);
+              }}
               onNavigate={(tab) => setActiveRailTab(tab)}
             />
           </>

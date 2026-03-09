@@ -15,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { parseISO } from 'date-fns';
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
 
 const statusConfig = {
   open: { icon: Circle, label: 'Open', dot: 'bg-[hsl(var(--status-open))]', badge: 'bg-[hsl(var(--status-open)/0.1)] text-[hsl(var(--status-open))]' },
@@ -31,6 +32,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   totalMinutes: number;
   onRename?: (id: string, newTitle: string) => Promise<void>;
+  onUpdateStartDate?: (id: string, startDate: string | null) => Promise<void>;
   onUpdateDueDate?: (id: string, dueDate: string | null) => Promise<void>;
   onAssign?: (id: string, assigneeId: string, type: 'user' | 'agent') => Promise<void>;
   onUnassign?: (id: string) => Promise<void>;
@@ -38,7 +40,7 @@ type Props = {
   teamId?: string | null;
 };
 
-const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, onUpdateDueDate, onAssign, onUnassign, projectId, teamId }: Props) => {
+const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, onUpdateStartDate, onUpdateDueDate, onAssign, onUnassign, projectId, teamId }: Props) => {
   const { notes, loading, addNote, deleteNote } = useNotes(open ? task.id : null);
   const { attachments, loading: attachLoading, uploading, uploadFiles, deleteAttachment, getPublicUrl } = useTaskAttachments(open ? task.id : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -278,9 +280,45 @@ const TaskDetailDialog = ({ task, open, onOpenChange, totalMinutes, onRename, on
             <span>Created: {format(new Date(task.created_at), 'PPp')}</span>
             {task.completed_at && <span>Completed: {format(new Date(task.completed_at), 'PPp')}</span>}
             
+            {/* Start Date */}
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Start:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs rounded-lg">
+                    <CalendarDays size={12} />
+                    {task.start_date ? format(parseISO(task.start_date), 'PPP') : 'Set start date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={task.start_date ? parseISO(task.start_date) : undefined}
+                    onSelect={(date) => {
+                      const val = date ? format(date, 'yyyy-MM-dd') : null;
+                      onUpdateStartDate?.(task.id, val);
+                    }}
+                    className="p-3 pointer-events-auto"
+                  />
+                  {task.start_date && (
+                    <div className="px-3 pb-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs text-destructive hover:text-destructive"
+                        onClick={() => onUpdateStartDate?.(task.id, null)}
+                      >
+                        Clear start date
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Due Date */}
             <div className="flex items-center gap-2">
-              <span>Due:</span>
+              <Label className="text-xs text-muted-foreground">Due:</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs rounded-lg">

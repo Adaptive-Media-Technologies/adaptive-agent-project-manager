@@ -4,8 +4,10 @@ import { useAuth } from './useAuth';
 
 export type DashboardTask = {
   id: string;
+  title: string;
   status: string;
   project_id: string;
+  due_date: string | null;
   assigned_to: string | null;
   assigned_type: string | null;
 };
@@ -29,7 +31,7 @@ export function useDashboardStats() {
     const [tasksRes, membersRes] = await Promise.all([
       supabase
         .from('tasks')
-        .select('id, status, project_id, assigned_to, assigned_type')
+        .select('id, title, status, project_id, due_date, assigned_to, assigned_type')
         .neq('status', 'archived'),
       supabase
         .from('team_members')

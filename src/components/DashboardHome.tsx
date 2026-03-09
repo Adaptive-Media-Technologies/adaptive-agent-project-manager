@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import type { Profile } from '@/hooks/useProfile';
 import type { Agent } from '@/hooks/useAgents';
 import type { Project } from '@/hooks/useTasks';
-import { format } from 'date-fns';
+import { format, parseISO, isToday, isWithinInterval, startOfDay, endOfWeek, addDays } from 'date-fns';
 
 interface DashboardHomeProps {
   profile: Profile | null;
@@ -22,6 +22,7 @@ interface DashboardHomeProps {
   totalUnread: number;
   onNewProject: () => void;
   onSelectProject: (id: string) => void;
+  onOpenTask: (projectId: string, taskId: string) => void;
   onNavigate: (tab: 'chat' | 'calendar' | 'archive' | 'agents') => void;
 }
 
@@ -34,8 +35,52 @@ const STATUS_COLORS = {
 export default function DashboardHome({
   profile, projects, agents, totalUnread,
   onNewProject, onSelectProject, onNavigate,
+  onOpenTask,
 }: DashboardHomeProps) {
   const { allTasks, teamMembers, loading } = useDashboardStats();
+
+  const projectNameById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const p of projects) map[p.id] = p.name;
+    return map;
+  }, [projects]);
+
+  const parseDueDate = (due: string) => {
+    // Supabase commonly stores date-only as YYYY-MM-DD; treat as local date to avoid timezone shifts.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(due)) {
+      const [y, m, d] = due.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    return parseISO(due);
+  };
+
+  const { dueToday, dueThisWeek } = useMemo(() => {
+    const today = startOfDay(new Date());
+    const tomorrow = addDays(today, 1);
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+
+    const withDue = allTasks
+      .filter((t) => !!(t as any).due_date)
+      .map((t) => {
+        const due = (t as any).due_date as string;
+        const dueDate = parseDueDate(due);
+        return { ...t, dueDate };
+      });
+
+    const dueToday = withDue.filter((t) => isToday(t.dueDate));
+
+    const dueThisWeek = withDue.filter((t) =>
+      !isToday(t.dueDate) &&
+      isWithinInterval(t.dueDate, { start: tomorrow, end: weekEnd })
+    );
+
+    const statusRank = (status: string) => (status === 'complete' ? 2 : status === 'in_progress' ? 1 : 0);
+
+    dueToday.sort((a, b) => statusRank(a.status) - statusRank(b.status));
+    dueThisWeek.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime() || (statusRank(a.status) - statusRank(b.status)));
+
+    return { dueToday, dueThisWeek };
+  }, [allTasks]);
 
   const stats = useMemo(() => {
     const open = allTasks.filter(t => t.status === 'open').length;
@@ -160,6 +205,92 @@ export default function DashboardHome({
         <div className="grid md:grid-cols-5 gap-4">
           {/* Left Column */}
           <div className="md:col-span-3 space-y-4">
+            {/* Due Today */}
+            <Card className="rounded-xl border-border animate-fade-in-up" style={{ animationDelay: '140ms' }}>
+              <CardHeader className="pb-2 px-4 pt-4">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <CalendarDays size={15} className="text-muted-foreground" />
+                  Tasks due today ({dueToday.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                {dueToday.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tasks due today.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {dueToday.slice(0, 6).map((t: any) => (
+                      <button
+                        key={t.id}
+                        onClick={() => onOpenTask(t.project_id, t.id)}
+                        className="w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`h-2 w-2 rounded-full shrink-0 ${
+                            t.status === 'complete' ? 'bg-[hsl(var(--status-done))]' :
+                            t.status === 'in_progress' ? 'bg-[hsl(var(--status-progress))]' :
+                            'bg-[hsl(var(--status-open))]'
+                          }`} />
+                          <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">{t.title}</span>
+                          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">
+                            {t.status === 'complete' ? 'Done' : t.status === 'in_progress' ? 'Doing' : 'Open'}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground truncate">
+                          {projectNameById[t.project_id] || 'Project'}
+                        </div>
+                      </button>
+                    ))}
+                    {dueToday.length > 6 && (
+                      <p className="text-[10px] text-muted-foreground">+{dueToday.length - 6} more</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Due This Week */}
+            <Card className="rounded-xl border-border animate-fade-in-up" style={{ animationDelay: '180ms' }}>
+              <CardHeader className="pb-2 px-4 pt-4">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <BookOpen size={15} className="text-muted-foreground" />
+                  Tasks due this week ({dueThisWeek.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                {dueThisWeek.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tasks due later this week.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {dueThisWeek.slice(0, 6).map((t: any) => (
+                      <button
+                        key={t.id}
+                        onClick={() => onOpenTask(t.project_id, t.id)}
+                        className="w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`h-2 w-2 rounded-full shrink-0 ${
+                            t.status === 'complete' ? 'bg-[hsl(var(--status-done))]' :
+                            t.status === 'in_progress' ? 'bg-[hsl(var(--status-progress))]' :
+                            'bg-[hsl(var(--status-open))]'
+                          }`} />
+                          <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">{t.title}</span>
+                          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">
+                            {format(t.dueDate, 'EEE MMM d')}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground truncate">
+                          {projectNameById[t.project_id] || 'Project'}
+                        </div>
+                      </button>
+                    ))}
+                    {dueThisWeek.length > 6 && (
+                      <p className="text-[10px] text-muted-foreground">+{dueThisWeek.length - 6} more</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Task Distribution Donut */}
             <Card className="rounded-xl border-border animate-fade-in-up" style={{ animationDelay: '200ms' }}>
               <CardHeader className="pb-2 px-4 pt-4">

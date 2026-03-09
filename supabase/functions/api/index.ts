@@ -16,9 +16,9 @@
 //   --- Tasks ---
 //   GET    /api/tasks?project_id=xxx        - List tasks
 //   POST   /api/tasks                       - Create task { project_id, title }
-//   PATCH  /api/tasks/:id                   - Update task { title?, status?, due_date? }
+//   PATCH  /api/tasks/:id                   - Update task { title?, status?, due_date?, start_date? }
 //   DELETE /api/tasks/:id                   - Delete task
-//   POST   /api/tasks/reorder               - Reorder { project_id, task_ids[] }
+//   POST   /api/tasks/reorder               - Reorder { project_id, task_ids[] } or grouped { project_id, groups: [{ group_id, task_ids[] }] }
 //
 //   --- Task Notes ---
 //   GET    /api/notes?task_id=xxx           - List notes for a task
@@ -346,7 +346,7 @@ serve(async (req) => {
 
     if (path === '/tasks' && method === 'POST') {
       const body = await req.json()
-      const { project_id, title, assign_to } = body
+      const { project_id, title, assign_to, group_id, start_date, due_date } = body
       if (!project_id || !title) return json({ error: 'project_id and title required' }, 400)
       const scopeError = checkScope(project_id)
       if (scopeError) return scopeError
@@ -355,6 +355,9 @@ serve(async (req) => {
       const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
       
       const insert: Record<string, unknown> = { project_id, title, created_by: userId, position }
+      if (group_id !== undefined) insert.group_id = group_id
+      if (start_date !== undefined) insert.start_date = start_date
+      if (due_date !== undefined) insert.due_date = due_date
       if (assign_to) {
         const resolved = await resolveAssignee(assign_to, project_id)
         if (!resolved) return json({ error: `Could not find user or agent with name "${assign_to}"` }, 400)
@@ -376,6 +379,7 @@ serve(async (req) => {
       if (updates.title !== undefined) allowed.title = updates.title
       if (updates.status !== undefined) allowed.status = updates.status
       if (updates.due_date !== undefined) allowed.due_date = updates.due_date
+      if (updates.start_date !== undefined) allowed.start_date = updates.start_date
 
       // If scoped, verify the task belongs to the scoped project
       let taskProjectId: string | null = null
@@ -422,14 +426,41 @@ serve(async (req) => {
     }
 
     if (path === '/tasks/reorder' && method === 'POST') {
-      const { project_id, task_ids } = await req.json()
-      if (!project_id || !task_ids?.length) return json({ error: 'project_id and task_ids required' }, 400)
+      const body = await req.json()
+      const { project_id, task_ids, groups } = body
+      if (!project_id) return json({ error: 'project_id required' }, 400)
       const scopeError = checkScope(project_id)
       if (scopeError) return scopeError
       if (!(await canAccessProject(project_id))) return json({ error: 'Access denied' }, 403)
-      await Promise.all(task_ids.map((id: string, i: number) =>
-        supabase.from('tasks').update({ position: i }).eq('id', id).eq('project_id', project_id)
-      ))
+
+      // Back-compat: ungrouped reorder
+      if (Array.isArray(task_ids) && task_ids.length > 0) {
+        await Promise.all(task_ids.map((id: string, i: number) =>
+          supabase.from('tasks').update({ position: i }).eq('id', id).eq('project_id', project_id)
+        ))
+        return json({ ok: true })
+      }
+
+      // Grouped reorder: update group_id + position per group
+      if (!Array.isArray(groups) || groups.length === 0) {
+        return json({ error: 'task_ids[] or groups[] required' }, 400)
+      }
+
+      const updates: Promise<any>[] = []
+      for (const g of groups) {
+        const gid = g.group_id ?? null
+        const ids: string[] = Array.isArray(g.task_ids) ? g.task_ids : []
+        ids.forEach((id: string, i: number) => {
+          updates.push(
+            supabase
+              .from('tasks')
+              .update({ group_id: gid, position: i })
+              .eq('id', id)
+              .eq('project_id', project_id)
+          )
+        })
+      }
+      await Promise.all(updates)
       return json({ ok: true })
     }
 
