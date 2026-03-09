@@ -6,9 +6,12 @@ import { Task } from '@/hooks/useTasks';
 import { Calendar } from '@/components/ui/calendar';
 import { endOfMonth, format, isSameDay, parseISO, startOfMonth } from 'date-fns';
 import { CalendarDays, Filter } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TaskTimeline from '@/components/TaskTimeline';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 
 const statusConfig = {
   open: { label: 'Open', dot: 'bg-[hsl(var(--status-open))]', badge: 'bg-[hsl(var(--status-open)/0.1)] text-[hsl(var(--status-open))]' },
@@ -19,8 +22,14 @@ const statusConfig = {
 type TaskWithProject = Task & { project_name?: string };
 type CalendarProject = { id: string; name: string; type: 'private' | 'team'; team_id: string | null; archived: boolean };
 
-const CalendarView = () => {
+type Props = {
+  /** Desktop-only: whether the left calendar column should be collapsed */
+  desktopLeftCollapsed?: boolean;
+};
+
+const CalendarView = ({ desktopLeftCollapsed = false }: Props) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { teams } = useTeams();
   const [tasks, setTasks] = useState<TaskWithProject[]>([]);
   const [projects, setProjects] = useState<CalendarProject[]>([]);
@@ -30,6 +39,7 @@ const CalendarView = () => {
   const [mode, setMode] = useState<'month' | 'timeline'>('month');
   const [teamFilter, setTeamFilter] = useState<'all' | 'personal' | string>('all');
   const [projectFilter, setProjectFilter] = useState<'all' | string>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     if (!user) return;
@@ -118,84 +128,133 @@ const CalendarView = () => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, start_date: startDate } : t));
   }, []);
 
-  return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <header className="flex items-center gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-6 py-3 shadow-sm">
-        <CalendarDays size={20} className="text-primary" />
-        <h2 className="text-lg font-bold text-foreground">Calendar</h2>
-      </header>
+  const filtersPanel = (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="rounded-xl border border-border/60 bg-background p-3 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <Filter size={14} className="text-muted-foreground" />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters</p>
+        </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Calendar */}
-        <div className="w-[340px] shrink-0 border-r border-border bg-card p-4 overflow-y-auto">
-          {/* Filters */}
-          <div className="mb-4 rounded-xl border border-border/60 bg-background p-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Filter size={14} className="text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters</p>
-            </div>
-
-            <div className="space-y-2.5">
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium text-muted-foreground">Team</p>
-                <Select value={teamFilter} onValueChange={(v) => setTeamFilter(v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All teams" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All teams</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    {teams.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium text-muted-foreground">Project</p>
-                <Select
-                  value={projectFilter}
-                  onValueChange={(v) => setProjectFilter(v as any)}
-                  disabled={teamFilter === 'all'}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={teamFilter === 'all' ? 'Select a team first' : 'All projects'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
-                    {filteredProjects.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <div className="space-y-2.5">
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium text-muted-foreground">Team</p>
+            <Select value={teamFilter} onValueChange={(v) => setTeamFilter(v as any)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All teams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="personal">Personal</SelectItem>
+                {teams.map(t => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(d) => d && setSelectedDate(d)}
-            month={month}
-            onMonthChange={setMonth}
-            className="p-3 pointer-events-auto"
-            modifiers={{ hasTasks: datesWithTasks }}
-            modifiersClassNames={{ hasTasks: 'font-bold text-primary' }}
-          />
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium text-muted-foreground">Project</p>
+            <Select
+              value={projectFilter}
+              onValueChange={(v) => setProjectFilter(v as any)}
+              disabled={teamFilter === 'all'}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={teamFilter === 'all' ? 'Select a team first' : 'All projects'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All projects</SelectItem>
+                {filteredProjects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
 
-          <div className="mt-4 px-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              {format(selectedDate, 'EEEE, MMMM d')}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {tasksForDate.length} task{tasksForDate.length !== 1 ? 's' : ''} due
+      <Calendar
+        mode="single"
+        selected={selectedDate}
+        onSelect={(d) => {
+          if (!d) return;
+          setSelectedDate(d);
+          if (isMobile) setFiltersOpen(false);
+        }}
+        month={month}
+        onMonthChange={setMonth}
+        className="p-3 pointer-events-auto"
+        modifiers={{ hasTasks: datesWithTasks }}
+        modifiersClassNames={{ hasTasks: 'font-bold text-primary' }}
+      />
+
+      <div className="px-2">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+          {format(selectedDate, 'EEEE, MMMM d')}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {tasksForDate.length} task{tasksForDate.length !== 1 ? 's' : ''} due
+        </p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <header className="flex items-center justify-between gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0">
+          <CalendarDays size={20} className="text-primary" />
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold text-foreground">Calendar</h2>
+            <p className="text-xs text-muted-foreground md:hidden truncate">
+              {format(selectedDate, 'EEE, MMM d')}
             </p>
           </div>
         </div>
 
+        {/* Mobile: open Filters + Calendar sheet */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="md:hidden h-9 gap-2 rounded-xl"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <Filter size={14} />
+          Calendar
+        </Button>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop: left calendar panel */}
+        {!isMobile && !desktopLeftCollapsed && (
+          <div className="w-[340px] shrink-0 border-r border-border bg-card p-4 overflow-y-auto">
+            {filtersPanel}
+          </div>
+        )}
+
+        {/* Mobile: filters/calendar sheet */}
+        {isMobile && (
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetContent side="left" className="p-0">
+              <div className="h-full overflow-y-auto bg-card">
+                <div className="border-b border-border px-4 py-3">
+                  <SheetHeader className="space-y-0 text-left">
+                    <SheetTitle className="text-base">Calendar</SheetTitle>
+                  </SheetHeader>
+                </div>
+                <div className="p-4">
+                  {filtersPanel}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
         {/* Right: Tasks for selected date */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
             <TabsList>
               <TabsTrigger value="month">Month</TabsTrigger>

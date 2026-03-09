@@ -9,7 +9,7 @@ import { useTeams } from '@/hooks/useTeams';
 import { useTeamInvites } from '@/hooks/useTeamInvites';
 import { useAgents, type Agent } from '@/hooks/useAgents';
 import { useUnreadCounts } from '@/hooks/useUnreadCounts';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FormattingToolbar from '@/components/FormattingToolbar';
@@ -42,6 +42,7 @@ import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
 import DashboardHome from '@/components/DashboardHome';
+import ManageTeamsMain from '@/components/ManageTeamsMain';
 import {
   DndContext,
   closestCenter,
@@ -62,6 +63,8 @@ import type { Project } from '@/hooks/useTasks';
 
 
 const Index = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
@@ -72,7 +75,7 @@ const Index = () => {
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorderGrouped, deleteTask, renameTask, updateDueDate, updateStartDate, assignTask, unassignTask, archiveTask } = useTasks(activeProjectId);
-  const { groups: taskGroups, createGroup, renameGroup, deleteGroup } = useTaskGroups(activeProjectId);
+  const { groups: taskGroups, createGroup, renameGroup, updateGroupDates, deleteGroup } = useTaskGroups(activeProjectId);
   const { tasks: archivedTasks, loading: archivedLoading, restoreTask, hardDelete, refresh: refreshArchived } = useArchivedTasks();
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
@@ -104,7 +107,22 @@ const Index = () => {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [activeRailTab, setActiveRailTab] = useState<'home' | 'chat' | 'teams' | 'agents' | 'calendar' | 'archive' | 'settings'>('home');
+  // Keep rail tab in sync with URL for top-level pages.
+  useEffect(() => {
+    if (location.pathname === '/teams') {
+      setActiveRailTab('teams');
+      setActiveProjectId(null);
+      return;
+    }
+    if (location.pathname === '/' || location.pathname === '/dashboard') {
+      // Only auto-switch back to home if we aren't explicitly in another rail view.
+      // (prevents flicker when user uses in-app tabs)
+      // No-op if already set.
+      setActiveRailTab((prev) => (prev === 'teams' ? 'home' : prev));
+    }
+  }, [location.pathname]);
 
   // Agent dialog state
   const [showAddAgent, setShowAddAgent] = useState(false);
@@ -309,7 +327,16 @@ const Index = () => {
           {railItems.map(item => (
             <button
               key={item.key}
-              onClick={() => setActiveRailTab(item.key)}
+              onClick={() => {
+                if (item.key === 'teams') {
+                  if (isMobile) setSidebarOpen(false);
+                  setActiveProjectId(null);
+                  setActiveRailTab('teams');
+                  navigate('/teams');
+                  return;
+                }
+                setActiveRailTab(item.key);
+              }}
               title={item.label}
               className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
                 activeRailTab === item.key
@@ -326,6 +353,18 @@ const Index = () => {
               )}
             </button>
           ))}
+
+          {/* Desktop: collapse/expand sidebar panel */}
+          {!isMobile && (
+            <button
+              onClick={() => setPanelCollapsed((v) => !v)}
+              title={panelCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="mt-2 flex h-9 w-9 items-center justify-center rounded-xl text-[hsl(var(--sidebar-foreground)/0.5)] hover:bg-[hsl(var(--sidebar-accent)/0.5)] hover:text-[hsl(var(--sidebar-foreground)/0.8)] transition-all"
+              type="button"
+            >
+              <ChevronRight size={18} className={panelCollapsed ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            </button>
+          )}
 
           {/* Spacer */}
           <div className="flex-1" />
@@ -377,7 +416,7 @@ const Index = () => {
         </div>
 
         {/* Level 2: Content Panel (hidden for Calendar; Calendar has its own left filters) */}
-        {activeRailTab !== 'calendar' && (
+        {activeRailTab !== 'calendar' && !panelCollapsed && (
         <div className="flex w-[232px] flex-col bg-[hsl(var(--sidebar-panel-background))] border-r border-[hsl(var(--sidebar-panel-border))]">
           {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-[hsl(var(--sidebar-panel-border))]">
@@ -637,7 +676,13 @@ const Index = () => {
       {/* Main */}
       <main className="relative flex flex-1 flex-col min-w-0 overflow-hidden">
         {activeRailTab === 'calendar' ? (
-          <CalendarView />
+          <CalendarView desktopLeftCollapsed={panelCollapsed} />
+
+        ) : activeRailTab === 'teams' ? (
+          <ManageTeamsMain
+            isMobile={isMobile}
+            onToggleSidebar={() => setSidebarOpen((open) => !open)}
+          />
 
         ) : activeRailTab === 'archive' ? (
           /* ============ ARCHIVE MAIN AREA ============ */
@@ -1125,7 +1170,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <div className="flex items-center bg-muted rounded-lg p-0.5">
                         <button
                           type="button"
@@ -1144,20 +1189,21 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                       </div>
                       <button
                         onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]')?.focus()}
-                        className="text-sm font-semibold text-[hsl(var(--sidebar-panel-active))] hover:opacity-80 transition-opacity"
+                        className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[hsl(var(--sidebar-panel-active))] hover:bg-[hsl(var(--sidebar-panel-active))/0.10] active:bg-[hsl(var(--sidebar-panel-active))/0.14] transition-colors"
                         type="button"
                       >
                         + Add Task
                       </button>
                     </div>
                   </div>
-                  <div className="px-3">
+                  <div className="px-3 py-3 pb-6">
                     {taskView === 'list' ? (
                       <TaskList
                         tasks={tasks}
                         groups={taskGroups}
                         onCreateGroup={createGroup}
                         onRenameGroup={renameGroup}
+                      onUpdateGroupDates={updateGroupDates}
                         onDeleteGroup={deleteGroup}
                         onCycle={cycleStatus}
                         onDelete={archiveTask}
@@ -1175,7 +1221,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                         teamId={activeProject?.team_id}
                       />
                     ) : (
-                      <div className="py-3">
+                      <div>
                         <TaskTimeline
                           tasks={tasks}
                           sections={projectTimelineSections}

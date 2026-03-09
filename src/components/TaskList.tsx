@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Plus, Trash2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 import {
   DndContext,
   closestCenter,
@@ -39,6 +40,7 @@ type Props = {
   groups: TaskGroup[];
   onCreateGroup: (name: string) => Promise<void> | void;
   onRenameGroup: (id: string, name: string) => Promise<void> | void;
+  onUpdateGroupDates?: (id: string, startDate: string | null, endDate: string | null) => Promise<void> | void;
   onDeleteGroup: (id: string) => Promise<void> | void;
   onCycle: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -67,7 +69,7 @@ const GroupDropZone = ({ id, children }: { id: ContainerId; children: React.Reac
   );
 };
 
-const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
+const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [assigneeMap, setAssigneeMap] = useState<Record<string, AssigneeInfo>>({});
@@ -76,6 +78,9 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, 
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editDatesGroupId, setEditDatesGroupId] = useState<string | null>(null);
+  const [draftGroupStart, setDraftGroupStart] = useState<string | null>(null);
+  const [draftGroupEnd, setDraftGroupEnd] = useState<string | null>(null);
 
   const saveInFlightRef = useRef(false);
   const pendingSaveRef = useRef<{ group_id: string | null; task_ids: string[] }[] | null>(null);
@@ -328,6 +333,69 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, 
         </DialogContent>
       </Dialog>
 
+      {/* Edit group dates dialog */}
+      <Dialog
+        open={!!editDatesGroupId}
+        onOpenChange={(open) => {
+          if (!open) setEditDatesGroupId(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Group dates</DialogTitle>
+            <DialogDescription>Optional start/end dates for this group.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground">Start date</p>
+              <Input
+                type="date"
+                value={draftGroupStart ?? ''}
+                onChange={(e) => setDraftGroupStart(e.target.value ? e.target.value : null)}
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground">End date</p>
+              <Input
+                type="date"
+                value={draftGroupEnd ?? ''}
+                onChange={(e) => setDraftGroupEnd(e.target.value ? e.target.value : null)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditDatesGroupId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                if (!editDatesGroupId) return;
+                await onUpdateGroupDates?.(editDatesGroupId, null, null);
+                setEditDatesGroupId(null);
+              }}
+            >
+              Clear
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!editDatesGroupId) return;
+                await onUpdateGroupDates?.(editDatesGroupId, draftGroupStart, draftGroupEnd);
+                setEditDatesGroupId(null);
+              }}
+              disabled={!editDatesGroupId || !onUpdateGroupDates}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -336,7 +404,7 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, 
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="space-y-4">
+        <div className="space-y-4 pb-6">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Groups
@@ -356,13 +424,32 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, 
             const group = groups.find((g) => g.id === cid);
             const label = cid === UNGROUPED_ID ? 'Ungrouped' : (group?.name || 'Group');
             const ids = itemsByContainer[cid] || [];
+            const groupStart = cid !== UNGROUPED_ID ? (group?.start_date ?? null) : null;
+            const groupEnd = cid !== UNGROUPED_ID ? (group?.end_date ?? null) : null;
+            const groupDateLabel =
+              groupStart && groupEnd
+                ? `${format(parseISO(groupStart), 'MMM d')} – ${format(parseISO(groupEnd), 'MMM d')}`
+                : groupStart
+                  ? `Starts ${format(parseISO(groupStart), 'MMM d')}`
+                  : groupEnd
+                    ? `Ends ${format(parseISO(groupEnd), 'MMM d')}`
+                    : null;
             return (
               <GroupDropZone key={cid} id={cid}>
                 <div className="rounded-xl border border-border bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{label}</p>
-                      <p className="text-[11px] text-muted-foreground">{ids.length} task{ids.length !== 1 ? 's' : ''}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[11px] text-muted-foreground">
+                          {ids.length} task{ids.length !== 1 ? 's' : ''}
+                        </p>
+                        {groupDateLabel && (
+                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                            {groupDateLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {cid !== UNGROUPED_ID && group && (
@@ -386,6 +473,16 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onDeleteGroup, 
                             }}
                           >
                             <Pencil className="mr-2 h-4 w-4" /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditDatesGroupId(group.id);
+                              setDraftGroupStart((group as any).start_date ?? null);
+                              setDraftGroupEnd((group as any).end_date ?? null);
+                            }}
+                            disabled={!onUpdateGroupDates}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> Edit dates
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

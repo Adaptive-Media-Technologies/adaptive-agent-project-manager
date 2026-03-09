@@ -7,6 +7,8 @@ export type TaskGroup = {
   project_id: string;
   name: string;
   position: number;
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
 };
 
@@ -55,6 +57,17 @@ export const useTaskGroups = (projectId: string | null) => {
     setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, name } : g)));
   };
 
+  const updateGroupDates = async (id: string, startDate: string | null, endDate: string | null) => {
+    const { error } = await supabase
+      .from('task_groups')
+      .update({ start_date: startDate, end_date: endDate } as any)
+      .eq('id', id);
+    if (error) throw error;
+    setGroups((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, start_date: startDate, end_date: endDate } : g))
+    );
+  };
+
   const deleteGroup = async (id: string) => {
     // Tasks will be moved to Ungrouped via FK ON DELETE SET NULL.
     const { error } = await supabase.from('task_groups').delete().eq('id', id);
@@ -78,6 +91,7 @@ export const useTaskGroups = (projectId: string | null) => {
     loading,
     createGroup,
     renameGroup,
+    updateGroupDates,
     deleteGroup,
     reorderGroups,
     refresh: fetch,

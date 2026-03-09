@@ -8,7 +8,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Teams from "./pages/Teams";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
@@ -46,7 +45,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/teams" element={<Teams />} />
+              <Route path="/teams" element={<Index />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />

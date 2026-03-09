@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '@/hooks/useTasks';
 import { addDays, differenceInCalendarDays, format, isAfter, isBefore, isSameDay, parseISO, startOfDay } from 'date-fns';
 import TaskDetailDialog from '@/components/TaskDetailDialog';
@@ -58,6 +58,7 @@ export default function TaskTimeline({
   teamId,
 }: Props) {
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   const tasksById = useMemo(() => {
     const m: Record<string, Task> = {};
@@ -109,9 +110,23 @@ export default function TaskTimeline({
 
   const totalWidth = LEFT_W + gridWidth;
 
+  // Auto-scroll timeline to selected date (or today) so bars aren't "off screen".
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const idx = selectedIdx ?? todayIdx;
+    if (idx === null) return;
+    // Scroll so the target day is near the left, leaving some lookahead room.
+    const target = Math.max(0, LEFT_W + idx * CELL_W - CELL_W * 3);
+    // Only adjust if we're far away, to avoid fighting user scroll.
+    if (Math.abs(el.scrollLeft - target) > CELL_W * 6) {
+      el.scrollLeft = target;
+    }
+  }, [selectedIdx, todayIdx]);
+
   return (
     <div className="rounded-xl border border-border bg-background overflow-hidden">
-      <div className="relative overflow-auto">
+      <div ref={scrollerRef} className="relative overflow-auto">
         <div style={{ width: totalWidth, minWidth: '100%' }}>
           {/* Header row */}
           <div className="grid border-b border-border" style={{ gridTemplateColumns: `${LEFT_W}px ${gridWidth}px` }}>
@@ -212,7 +227,10 @@ export default function TaskTimeline({
               }
 
               const t = row.task;
-              const end = t.due_date ? parseDateOnly(t.due_date) : null;
+              // Timeline bar range:
+              // - If due_date exists: end = due_date
+              // - Else if only start_date exists: treat as single-day bar at start_date
+              const end = t.due_date ? parseDateOnly(t.due_date) : (t.start_date ? parseDateOnly(t.start_date) : null);
               const start = t.start_date ? parseDateOnly(t.start_date) : end;
 
               const startIdxRaw = start ? differenceInCalendarDays(start, startOfDay(rangeStart)) : null;
@@ -271,7 +289,7 @@ export default function TaskTimeline({
                       />
                     )}
 
-                    {!isOutOfRange && endIdx !== null && (
+                    {!isOutOfRange && endIdx !== null && startIdx !== null && (
                       <button
                         type="button"
                         onClick={() => setDetailTaskId(t.id)}
