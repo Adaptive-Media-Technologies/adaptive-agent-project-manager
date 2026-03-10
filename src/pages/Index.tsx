@@ -227,7 +227,7 @@ const Index = () => {
       transform,
       transition,
       isDragging,
-    } = useSortable({ id: project.id });
+    } = useSortable({ id: project.id, disabled: isMobile });
 
     const style = {
       transform: CSS.Transform.toString(transform),
@@ -240,7 +240,7 @@ const Index = () => {
         <button
           {...attributes}
           {...listeners}
-          className="shrink-0 cursor-grab text-[hsl(var(--sidebar-panel-foreground)/0.2)] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity active:cursor-grabbing px-0.5"
+          className="hidden md:inline-flex shrink-0 cursor-grab text-[hsl(var(--sidebar-panel-foreground)/0.2)] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity active:cursor-grabbing px-0.5"
           title="Drag to reorder"
           type="button"
         >

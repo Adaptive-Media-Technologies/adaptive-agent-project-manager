@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '@/hooks/useTasks';
 import { addDays, differenceInCalendarDays, format, isAfter, isBefore, isSameDay, parseISO, startOfDay } from 'date-fns';
 import TaskDetailDialog from '@/components/TaskDetailDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export type TimelineSection = {
   id: string;
@@ -57,6 +58,7 @@ export default function TaskTimeline({
   projectId,
   teamId,
 }: Props) {
+  const isMobile = useIsMobile();
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -126,7 +128,21 @@ export default function TaskTimeline({
 
   return (
     <div className="rounded-xl border border-border bg-background overflow-hidden">
-      <div ref={scrollerRef} className="relative overflow-auto">
+      <div
+        ref={scrollerRef}
+        className={[
+          'relative',
+          // Mobile: prioritize horizontal swipe; avoid nested vertical scrolling issues on iOS.
+          isMobile ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto',
+          // Improve iOS momentum scrolling.
+          'overscroll-x-contain',
+        ].join(' ')}
+        style={{ WebkitOverflowScrolling: 'touch' } as any}
+      >
+        {/* Mobile scroll hint */}
+        {isMobile && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent z-40" />
+        )}
         <div style={{ width: totalWidth, minWidth: '100%' }}>
           {/* Header row */}
           <div className="grid border-b border-border" style={{ gridTemplateColumns: `${LEFT_W}px ${gridWidth}px` }}>
