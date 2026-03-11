@@ -36,8 +36,14 @@ export const useProjects = () => {
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.from('projects').select('*').order('position').order('created_at');
+    if (!user) {
+      setProjects([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase.from('projects').select('*').order('position').order('created_at');
+    if (error) console.error('[useProjects] fetch error:', error);
     setProjects((data as Project[]) || []);
     setLoading(false);
   }, [user]);
@@ -110,11 +116,18 @@ export const useTasks = (projectId: string | null) => {
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!projectId) { setTasks([]); setLoading(false); return; }
-    const { data } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('position');
-    setTasks((data as Task[]) || []);
+    if (!user || !projectId) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('position');
+    if (error) console.error('[useTasks] fetch error:', error);
+    const next = ((data as Task[]) || []).filter((t) => t.project_id === projectId);
+    setTasks(next);
     setLoading(false);
-  }, [projectId]);
+  }, [user?.id, projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -237,7 +250,12 @@ export const useArchivedTasks = () => {
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const { data } = await supabase
       .from('tasks')
       .select('*, projects(name)')

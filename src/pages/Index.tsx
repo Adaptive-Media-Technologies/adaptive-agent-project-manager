@@ -90,6 +90,14 @@ const Index = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [dashboardOpenTaskId, setDashboardOpenTaskId] = useState<string | null>(null);
 
+  // Important: if the signed-in user changes (logout/login or account switch in same tab),
+  // clear any project-scoped UI state so we never show stale data from a prior session.
+  useEffect(() => {
+    setActiveProjectId(null);
+    setDashboardOpenTaskId(null);
+    setTaskView('list');
+  }, [user?.id]);
+
   useEffect(() => {
     setTaskView('list');
   }, [activeProjectId]);
