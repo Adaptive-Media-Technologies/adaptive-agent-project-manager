@@ -52,12 +52,14 @@ export const useProjects = () => {
 
   const create = async (name: string, type: 'private' | 'team' = 'private', teamId?: string) => {
     if (!user) return;
-    // Determine position as max existing position + 1 within group
     const group = projects.filter(p => type === 'team' ? p.team_id === teamId : p.type === 'private');
     const position = group.length;
-    const insert: any = { name, owner_id: user.id, type, position };
-    if (type === 'team' && teamId) insert.team_id = teamId;
-    const { data, error } = await supabase.from('projects').insert(insert).select().single();
+    const { data, error } = await supabase.rpc('create_project', {
+      p_name: name,
+      p_type: type,
+      p_team_id: type === 'team' && teamId ? teamId : null,
+      p_position: position,
+    });
     if (error) throw error;
     setProjects(p => [...p, data as Project]);
     return data as Project;
