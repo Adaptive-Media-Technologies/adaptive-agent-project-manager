@@ -72,7 +72,7 @@ const GroupDropZone = ({ id, children }: { id: ContainerId; children: React.Reac
   );
 };
 
-const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
+const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onReorderGroups, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [assigneeMap, setAssigneeMap] = useState<Record<string, AssigneeInfo>>({});
