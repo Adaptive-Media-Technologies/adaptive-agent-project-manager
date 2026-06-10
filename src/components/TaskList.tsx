@@ -276,6 +276,9 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       }
     };
 
+    // Normalize overId — if dropped on a group header, treat as that container.
+    const overRef = overId.startsWith('g:') ? overId.slice(2) : overId;
+
     // Compute deterministic "next" state for persistence. We cannot rely on itemsByContainer
     // always being updated by onDragOver before dragEnd fires.
     let next: Record<ContainerId, string[]> = itemsByContainer;
@@ -283,7 +286,7 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     if (activeContainer === overContainer) {
       const items = next[activeContainer] || [];
       const oldIndex = items.indexOf(activeTaskId);
-      const newIndex = items.indexOf(overId);
+      const newIndex = items.indexOf(overRef);
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const nextItems = arrayMove(items, oldIndex, newIndex);
         next = { ...next, [activeContainer]: nextItems };
@@ -298,8 +301,8 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       if (!toItems.includes(activeTaskId)) {
         const fromIdx = fromItems.indexOf(activeTaskId);
         if (fromIdx !== -1) fromItems.splice(fromIdx, 1);
-        const overIndex = toItems.indexOf(overId);
-        const insertIndex = overId in current ? toItems.length : Math.max(0, overIndex);
+        const overIndex = toItems.indexOf(overRef);
+        const insertIndex = overRef in current ? toItems.length : Math.max(0, overIndex);
         toItems.splice(insertIndex, 0, activeTaskId);
       }
 
