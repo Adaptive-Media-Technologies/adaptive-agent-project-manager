@@ -72,6 +72,20 @@ const GroupDropZone = ({ id, children }: { id: ContainerId; children: React.Reac
   );
 };
 
+const SortableGroup = ({ gid, children }: { gid: string; children: (handle: { listeners: any; attributes: any; setActivatorNodeRef: (el: HTMLElement | null) => void }) => React.ReactNode }) => {
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging, setActivatorNodeRef } = useSortable({ id: `g:${gid}` });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, setActivatorNodeRef })}
+    </div>
+  );
+};
+
 const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onReorderGroups, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
