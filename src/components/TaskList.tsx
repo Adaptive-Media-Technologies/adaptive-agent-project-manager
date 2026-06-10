@@ -238,8 +238,23 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const activeTaskId = String(active.id);
     const overId = String(over.id);
 
+    // Group reorder
+    if (activeTaskId.startsWith('g:') && overId.startsWith('g:') && onReorderGroups) {
+      const activeGid = activeTaskId.slice(2);
+      const overGid = overId.slice(2);
+      const sortedGroups = groups.slice().sort((a, b) => a.position - b.position);
+      const from = sortedGroups.findIndex((g) => g.id === activeGid);
+      const to = sortedGroups.findIndex((g) => g.id === overGid);
+      if (from !== -1 && to !== -1 && from !== to) {
+        try { await onReorderGroups(from, to); }
+        catch (err: any) { toast.error(err?.message || 'Failed to reorder groups'); }
+      }
+      return;
+    }
+    if (activeTaskId.startsWith('g:')) return;
+
     const activeContainer = findContainer(activeTaskId);
-    const overContainer = findContainer(overId);
+    const overContainer = findContainer(overId.startsWith('g:') ? overId.slice(2) : overId);
     if (!activeContainer || !overContainer) return;
 
     const requestSave = async (payload: { group_id: string | null; task_ids: string[] }[]) => {
