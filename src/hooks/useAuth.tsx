@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.warn('[Auth] Token refresh returned no session');
       }
 
-      if (event === 'TOKEN_REFRESH_FAILED') {
+      if ((event as string) === 'TOKEN_REFRESH_FAILED') {
         console.warn('[Auth] Token refresh failed; attempting recovery refresh');
         (async () => {
           const { error } = await supabase.auth.refreshSession();
