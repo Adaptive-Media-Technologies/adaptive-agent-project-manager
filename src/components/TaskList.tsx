@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Plus, Trash2, Pencil } from 'lucide-react';
+import { MoreHorizontal, Plus, Trash2, Pencil, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import {
@@ -29,7 +29,9 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   arrayMove,
+  useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type AssigneeInfo = { name: string; avatar_url?: string | null; type: 'user' | 'agent' };
 
@@ -45,6 +47,7 @@ type Props = {
   onCycle: (task: Task) => void;
   onDelete: (id: string) => void;
   onReorderGrouped: (groups: { group_id: string | null; task_ids: string[] }[]) => Promise<void> | void;
+  onReorderGroups?: (fromIndex: number, toIndex: number) => Promise<void> | void;
   onLogTime?: (taskId: string, minutes: number) => void;
   taskMinutes?: Record<string, number>;
   onRenameTask?: (id: string, newTitle: string) => Promise<void>;
@@ -69,7 +72,21 @@ const GroupDropZone = ({ id, children }: { id: ContainerId; children: React.Reac
   );
 };
 
-const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
+const SortableGroup = ({ gid, children }: { gid: string; children: (handle: { listeners: any; attributes: any; setActivatorNodeRef: (el: HTMLElement | null) => void }) => React.ReactNode }) => {
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging, setActivatorNodeRef } = useSortable({ id: `g:${gid}` });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, setActivatorNodeRef })}
+    </div>
+  );
+};
+
+const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDates, onDeleteGroup, onCycle, onDelete, onReorderGrouped, onReorderGroups, onLogTime, taskMinutes = {}, onRenameTask, onUpdateStartDate, onUpdateDueDate, onAssignTask, onUnassignTask, openTaskId, onOpenedTaskId, projectId, teamId }: Props) => {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [assigneeMap, setAssigneeMap] = useState<Record<string, AssigneeInfo>>({});
@@ -81,6 +98,20 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
   const [editDatesGroupId, setEditDatesGroupId] = useState<string | null>(null);
   const [draftGroupStart, setDraftGroupStart] = useState<string | null>(null);
   const [draftGroupEnd, setDraftGroupEnd] = useState<string | null>(null);
+  const collapseStorageKey = projectId ? `taskgroup-collapsed:${projectId}` : null;
+  const [collapsed, setCollapsed] = useState<Record<ContainerId, boolean>>(() => {
+    if (typeof window === 'undefined' || !projectId) return {};
+    try {
+      const raw = window.localStorage.getItem(`taskgroup-collapsed:${projectId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    if (!collapseStorageKey || typeof window === 'undefined') return;
+    try { window.localStorage.setItem(collapseStorageKey, JSON.stringify(collapsed)); } catch {}
+  }, [collapsed, collapseStorageKey]);
+  const toggleCollapsed = (cid: ContainerId) =>
+    setCollapsed((prev) => ({ ...prev, [cid]: !prev[cid] }));
 
   const saveInFlightRef = useRef(false);
   const pendingSaveRef = useRef<{ group_id: string | null; task_ids: string[] }[] | null>(null);
@@ -175,9 +206,20 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const activeTaskId = String(active.id);
     const overId = String(over.id);
 
+    // Group drag — handled in dragEnd only.
+    if (activeTaskId.startsWith('g:')) return;
+
+    // If hovering a group header item (sortable), treat as the container.
+    const overContainerCandidate = overId.startsWith('g:') ? overId.slice(2) : overId;
+
     const activeContainer = findContainer(activeTaskId);
-    const overContainer = findContainer(overId);
+    const overContainer = findContainer(overContainerCandidate);
     if (!activeContainer || !overContainer) return;
+
+    // Auto-expand collapsed group on hover so user can drop into it.
+    if (collapsed[overContainer]) {
+      setCollapsed((prev) => ({ ...prev, [overContainer]: false }));
+    }
 
     if (activeContainer === overContainer) return;
 
@@ -190,8 +232,8 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       if (fromIndex === -1) return prev;
       fromItems.splice(fromIndex, 1);
 
-      const overIndex = toItems.indexOf(overId);
-      const insertIndex = overId in prev ? toItems.length : Math.max(0, overIndex);
+      const overIndex = toItems.indexOf(overContainerCandidate);
+      const insertIndex = overContainerCandidate in prev ? toItems.length : Math.max(0, overIndex);
       toItems.splice(insertIndex, 0, activeTaskId);
 
       next[activeContainer] = fromItems;
@@ -210,8 +252,23 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const activeTaskId = String(active.id);
     const overId = String(over.id);
 
+    // Group reorder
+    if (activeTaskId.startsWith('g:') && overId.startsWith('g:') && onReorderGroups) {
+      const activeGid = activeTaskId.slice(2);
+      const overGid = overId.slice(2);
+      const sortedGroups = groups.slice().sort((a, b) => a.position - b.position);
+      const from = sortedGroups.findIndex((g) => g.id === activeGid);
+      const to = sortedGroups.findIndex((g) => g.id === overGid);
+      if (from !== -1 && to !== -1 && from !== to) {
+        try { await onReorderGroups(from, to); }
+        catch (err: any) { toast.error(err?.message || 'Failed to reorder groups'); }
+      }
+      return;
+    }
+    if (activeTaskId.startsWith('g:')) return;
+
     const activeContainer = findContainer(activeTaskId);
-    const overContainer = findContainer(overId);
+    const overContainer = findContainer(overId.startsWith('g:') ? overId.slice(2) : overId);
     if (!activeContainer || !overContainer) return;
 
     const requestSave = async (payload: { group_id: string | null; task_ids: string[] }[]) => {
@@ -233,6 +290,9 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       }
     };
 
+    // Normalize overId — if dropped on a group header, treat as that container.
+    const overRef = overId.startsWith('g:') ? overId.slice(2) : overId;
+
     // Compute deterministic "next" state for persistence. We cannot rely on itemsByContainer
     // always being updated by onDragOver before dragEnd fires.
     let next: Record<ContainerId, string[]> = itemsByContainer;
@@ -240,7 +300,7 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     if (activeContainer === overContainer) {
       const items = next[activeContainer] || [];
       const oldIndex = items.indexOf(activeTaskId);
-      const newIndex = items.indexOf(overId);
+      const newIndex = items.indexOf(overRef);
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const nextItems = arrayMove(items, oldIndex, newIndex);
         next = { ...next, [activeContainer]: nextItems };
@@ -255,8 +315,8 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       if (!toItems.includes(activeTaskId)) {
         const fromIdx = fromItems.indexOf(activeTaskId);
         if (fromIdx !== -1) fromItems.splice(fromIdx, 1);
-        const overIndex = toItems.indexOf(overId);
-        const insertIndex = overId in current ? toItems.length : Math.max(0, overIndex);
+        const overIndex = toItems.indexOf(overRef);
+        const insertIndex = overRef in current ? toItems.length : Math.max(0, overIndex);
         toItems.splice(insertIndex, 0, activeTaskId);
       }
 
@@ -420,10 +480,15 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
             </div>
           )}
 
+          <SortableContext
+            items={groups.slice().sort((a, b) => a.position - b.position).map((g) => `g:${g.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
           {orderedContainers.map((cid) => {
             const group = groups.find((g) => g.id === cid);
             const label = cid === UNGROUPED_ID ? 'Ungrouped' : (group?.name || 'Group');
             const ids = itemsByContainer[cid] || [];
+            const isCollapsed = !!collapsed[cid];
             const groupStart = cid !== UNGROUPED_ID ? (group?.start_date ?? null) : null;
             const groupEnd = cid !== UNGROUPED_ID ? (group?.end_date ?? null) : null;
             const groupDateLabel =
@@ -434,21 +499,49 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
                   : groupEnd
                     ? `Ends ${format(parseISO(groupEnd), 'MMM d')}`
                     : null;
-            return (
-              <GroupDropZone key={cid} id={cid}>
+
+            const renderCard = (handle?: { listeners: any; attributes: any; setActivatorNodeRef: (el: HTMLElement | null) => void }) => (
+              <GroupDropZone id={cid}>
                 <div className="rounded-xl border border-border bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{label}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[11px] text-muted-foreground">
-                          {ids.length} task{ids.length !== 1 ? 's' : ''}
-                        </p>
-                        {groupDateLabel && (
-                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                            {groupDateLabel}
-                          </span>
-                        )}
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      {handle && (
+                        <button
+                          type="button"
+                          ref={handle.setActivatorNodeRef}
+                          {...handle.listeners}
+                          {...handle.attributes}
+                          className="h-7 w-6 -ml-1 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted cursor-grab active:cursor-grabbing touch-none"
+                          title="Drag to reorder group"
+                          aria-label="Drag to reorder group"
+                        >
+                          <GripVertical size={14} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleCollapsed(cid)}
+                        className="h-7 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                        title={isCollapsed ? 'Expand group' : 'Collapse group'}
+                        aria-label={isCollapsed ? 'Expand group' : 'Collapse group'}
+                      >
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      <div
+                        className="min-w-0 cursor-pointer select-none"
+                        onClick={() => toggleCollapsed(cid)}
+                      >
+                        <p className="text-sm font-semibold text-foreground truncate">{label}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[11px] text-muted-foreground">
+                            {ids.length} task{ids.length !== 1 ? 's' : ''}
+                          </p>
+                          {groupDateLabel && (
+                            <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                              {groupDateLabel}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -499,43 +592,55 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
                     )}
                   </div>
 
-                  <div className="px-3">
-                    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-2 py-1">
-                        {ids.map((taskId) => {
-                          const t = tasksById.get(taskId);
-                          if (!t) return null;
-                          const assigneeId = t.assigned_to || (t as any).created_by;
-                          const info = assigneeId ? assigneeMap[assigneeId] : undefined;
-                          const effectiveType = t.assigned_to ? info?.type : 'user';
-                          return (
-                            <TaskItem
-                              key={t.id}
-                              task={t}
-                              onCycle={() => onCycle(t)}
-                              onDelete={() => onDelete(t.id)}
-                              onStartTimer={() => setActiveTimerTaskId(activeTimerTaskId === t.id ? null : t.id)}
-                              isTimerActive={activeTimerTaskId === t.id}
-                              totalMinutes={taskMinutes[t.id] || 0}
-                              onOpenDetail={() => setDetailTaskId(t.id)}
-                              assigneeName={info?.name}
-                              assigneeType={effectiveType}
-                              assigneeAvatarUrl={info?.avatar_url}
-                            />
-                          );
-                        })}
-                        {ids.length === 0 && (
-                          <div className="py-4 text-center text-sm text-muted-foreground">
-                            Drop tasks here
-                          </div>
-                        )}
-                      </div>
-                    </SortableContext>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="px-3">
+                      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-2 py-1">
+                          {ids.map((taskId) => {
+                            const t = tasksById.get(taskId);
+                            if (!t) return null;
+                            const assigneeId = t.assigned_to || (t as any).created_by;
+                            const info = assigneeId ? assigneeMap[assigneeId] : undefined;
+                            const effectiveType = t.assigned_to ? info?.type : 'user';
+                            return (
+                              <TaskItem
+                                key={t.id}
+                                task={t}
+                                onCycle={() => onCycle(t)}
+                                onDelete={() => onDelete(t.id)}
+                                onStartTimer={() => setActiveTimerTaskId(activeTimerTaskId === t.id ? null : t.id)}
+                                isTimerActive={activeTimerTaskId === t.id}
+                                totalMinutes={taskMinutes[t.id] || 0}
+                                onOpenDetail={() => setDetailTaskId(t.id)}
+                                assigneeName={info?.name}
+                                assigneeType={effectiveType}
+                                assigneeAvatarUrl={info?.avatar_url}
+                              />
+                            );
+                          })}
+                          {ids.length === 0 && (
+                            <div className="py-4 text-center text-sm text-muted-foreground">
+                              Drop tasks here
+                            </div>
+                          )}
+                        </div>
+                      </SortableContext>
+                    </div>
+                  )}
                 </div>
               </GroupDropZone>
             );
+
+            if (cid === UNGROUPED_ID || !group) {
+              return <div key={cid}>{renderCard()}</div>;
+            }
+            return (
+              <SortableGroup key={cid} gid={cid}>
+                {(handle) => renderCard(handle)}
+              </SortableGroup>
+            );
           })}
+          </SortableContext>
         </div>
       </DndContext>
 
