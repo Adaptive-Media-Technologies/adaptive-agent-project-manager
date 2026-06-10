@@ -525,6 +525,44 @@ export type Database = {
           },
         ]
       }
+      task_groups: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          position: number
+          project_id: string
+          start_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          position?: number
+          project_id: string
+          start_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_groups_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string | null
@@ -533,9 +571,11 @@ export type Database = {
           created_at: string | null
           created_by: string
           due_date: string | null
+          group_id: string | null
           id: string
           position: number
           project_id: string
+          start_date: string | null
           status: string
           title: string
           updated_at: string | null
@@ -547,9 +587,11 @@ export type Database = {
           created_at?: string | null
           created_by: string
           due_date?: string | null
+          group_id?: string | null
           id?: string
           position?: number
           project_id: string
+          start_date?: string | null
           status?: string
           title: string
           updated_at?: string | null
@@ -561,14 +603,23 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           due_date?: string | null
+          group_id?: string | null
           id?: string
           position?: number
           project_id?: string
+          start_date?: string | null
           status?: string
           title?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "task_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
@@ -842,6 +893,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_project_for_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      create_project: {
+        Args: {
+          p_name: string
+          p_position?: number
+          p_team_id?: string
+          p_type?: string
+        }
+        Returns: {
+          archived: boolean
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+          position: number
+          team_id: string | null
+          type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_pending_team_invite: {
         Args: { _email: string; _team_id: string }
         Returns: boolean
