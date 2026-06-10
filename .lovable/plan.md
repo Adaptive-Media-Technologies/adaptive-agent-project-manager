@@ -1,32 +1,31 @@
-## Goal
-Give `kath@adaptivemedia.com.au` access to TEAM KATH and PROJECT KATH.
+## Problem
 
-## Findings
-- User id: `84495bd0-171e-445c-bf5e-1729a62b0fdb`
-- Team KATH id: `42723671-0e59-45e8-aa6e-407c66e849a7`
-- Project KATH id: `5e80d4b2-1f52-4f38-ba71-622e4a199297` — type `team`, already linked to team KATH
+The Manage Teams page (`ManageTeamsMain.tsx`) only lets you create/delete teams. There's no way to view members, invite, or remove people. The full member UI exists in `src/pages/Teams.tsx` but isn't reachable from the in-app sidebar.
 
-Because PROJECT KATH is a team project, project access is governed by team membership (`is_project_member` / `is_project_team_member`). Adding Kath to the team is sufficient — no extra project row required.
+## Plan
 
-## Change
-One insert into `public.team_members`:
+Enhance `ManageTeamsMain.tsx` so each team row is expandable and exposes full member management — mirroring the pattern already in `Teams.tsx` (reusing `useTeamMembers` + `useTeamInvites`).
 
-```sql
-INSERT INTO public.team_members (team_id, user_id, role)
-VALUES (
-  '42723671-0e59-45e8-aa6e-407c66e849a7',
-  '84495bd0-171e-445c-bf5e-1729a62b0fdb',
-  'member'
-)
-ON CONFLICT (team_id, user_id) DO NOTHING;
-```
+### Changes
 
-## Verification
-```sql
-SELECT team_id, user_id, role
-FROM public.team_members
-WHERE team_id = '42723671-0e59-45e8-aa6e-407c66e849a7'
-  AND user_id = '84495bd0-171e-445c-bf5e-1729a62b0fdb';
-```
+**1. `src/components/ManageTeamsMain.tsx`**
+- Make each team card clickable to expand/collapse (one open at a time).
+- When expanded, show a `TeamMembersSection` panel containing:
+  - Member list with avatar, display name, @username, Owner badge.
+  - Remove button (UserMinus icon) per non-owner member — visible only to team owner.
+  - Invite-by-email form (Input + Send button) — visible only to team owner.
+- Add a Pending Invites section at the top of the list (for the current user) with Accept / Decline actions, using `useTeamInvites`.
+- Keep existing Create Team dialog and Delete team button.
 
-No schema migration and no code changes.
+**2. No backend / RLS changes**
+- `useTeamMembers`, `useTeamInvites`, and existing policies already support invite/remove/accept/decline.
+- No migration needed.
+
+### Out of scope
+- Editing a member's role (current schema only distinguishes `owner` vs `member`; no role editor today).
+- Changes to the standalone `/teams` page.
+
+### Technical notes
+- Reuse the exact `TeamMembersSection` component logic from `src/pages/Teams.tsx` (extract inline into `ManageTeamsMain.tsx`, or import — extraction into a small shared component `src/components/TeamMembersSection.tsx` is cleaner and lets both screens use it).
+- Owner check: `team.owner_id === user.id`.
+- Expansion state: `const [expandedTeam, setExpandedTeam] = useState<string | null>(null)`.
