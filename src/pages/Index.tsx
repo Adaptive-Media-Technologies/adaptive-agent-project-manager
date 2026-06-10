@@ -599,13 +599,6 @@ const Index = () => {
               )}
             </nav>
 
-          ) : activeRailTab === 'calendar' ? (
-            <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-              <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
-                <CalendarDays size={20} className="text-[hsl(var(--sidebar-panel-active))]" />
-                <p className="text-xs text-[hsl(var(--sidebar-panel-foreground)/0.5)]">View your task schedule in the main panel</p>
-              </div>
-            </nav>
           ) : activeRailTab === 'archive' ? (
             <nav className="flex-1 overflow-y-auto p-3 space-y-4">
               <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
