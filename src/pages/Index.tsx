@@ -75,7 +75,7 @@ const Index = () => {
   const { pendingInvites, acceptInvite, declineInvite } = useTeamInvites();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const { tasks, loading: tasksLoading, addTask, cycleStatus, reorderGrouped, deleteTask, renameTask, updateDueDate, updateStartDate, assignTask, unassignTask, archiveTask } = useTasks(activeProjectId);
-  const { groups: taskGroups, createGroup, renameGroup, updateGroupDates, deleteGroup } = useTaskGroups(activeProjectId);
+  const { groups: taskGroups, createGroup, renameGroup, updateGroupDates, deleteGroup, reorderGroups } = useTaskGroups(activeProjectId);
   const { tasks: archivedTasks, loading: archivedLoading, restoreTask, hardDelete, refresh: refreshArchived } = useArchivedTasks();
   const { logTime, taskMinutes } = useTimeEntries(activeProjectId);
   const { content: projectNote, color: noteColor, save: saveProjectNote, setColor: setNoteColor } = useProjectNotes(activeProjectId);
