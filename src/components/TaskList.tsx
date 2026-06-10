@@ -29,7 +29,9 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   arrayMove,
+  useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type AssigneeInfo = { name: string; avatar_url?: string | null; type: 'user' | 'agent' };
 
