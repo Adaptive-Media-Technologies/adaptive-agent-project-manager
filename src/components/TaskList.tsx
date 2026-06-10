@@ -460,7 +460,17 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={((args) => {
+          const aid = String(args.active?.id ?? '');
+          if (aid.startsWith('g:')) {
+            // Restrict to group sortable droppables when dragging a group.
+            const filtered = args.droppableContainers.filter((c) => String(c.id).startsWith('g:'));
+            return closestCenter({ ...args, droppableContainers: filtered });
+          }
+          // Tasks: exclude group sortable ids so they don't interfere.
+          const filtered = args.droppableContainers.filter((c) => !String(c.id).startsWith('g:'));
+          return closestCenter({ ...args, droppableContainers: filtered });
+        }) as CollisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
