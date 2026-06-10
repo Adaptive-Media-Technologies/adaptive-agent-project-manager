@@ -254,9 +254,10 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const overId = String(over.id);
 
     // Group reorder
-    if (activeTaskId.startsWith('g:') && overId.startsWith('g:') && onReorderGroups) {
+    if (activeTaskId.startsWith('g:') && onReorderGroups) {
       const activeGid = activeTaskId.slice(2);
-      const overGid = overId.slice(2);
+      // Allow over to be either `g:<id>` or a plain container UUID.
+      const overGid = overId.startsWith('g:') ? overId.slice(2) : overId;
       const sortedGroups = groups.slice().sort((a, b) => a.position - b.position);
       const from = sortedGroups.findIndex((g) => g.id === activeGid);
       const to = sortedGroups.findIndex((g) => g.id === overGid);
