@@ -1202,7 +1202,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                       <TaskList
                         tasks={tasks}
                         groups={taskGroups}
-                        onCreateGroup={createGroup}
+                        onCreateGroup={async (n) => { await createGroup(n); }}
                         onRenameGroup={renameGroup}
                       onUpdateGroupDates={updateGroupDates}
                         onDeleteGroup={deleteGroup}
