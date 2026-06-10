@@ -23,6 +23,7 @@ import {
   DragOverEvent,
   DragStartEvent,
   useDroppable,
+  CollisionDetection,
 } from '@dnd-kit/core';
 import {
   SortableContext,
