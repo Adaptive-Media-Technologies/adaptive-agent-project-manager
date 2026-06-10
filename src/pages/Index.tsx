@@ -1209,6 +1209,7 @@ curl -X POST "${supabaseProjectUrl}/chat" \\
                         onCycle={cycleStatus}
                         onDelete={archiveTask}
                         onReorderGrouped={reorderGrouped}
+                        onReorderGroups={reorderGroups}
                         onLogTime={handleLogTime}
                         taskMinutes={taskMinutes}
                         onRenameTask={renameTask}
