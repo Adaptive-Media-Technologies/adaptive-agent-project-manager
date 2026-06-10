@@ -84,6 +84,20 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
   const [editDatesGroupId, setEditDatesGroupId] = useState<string | null>(null);
   const [draftGroupStart, setDraftGroupStart] = useState<string | null>(null);
   const [draftGroupEnd, setDraftGroupEnd] = useState<string | null>(null);
+  const collapseStorageKey = projectId ? `taskgroup-collapsed:${projectId}` : null;
+  const [collapsed, setCollapsed] = useState<Record<ContainerId, boolean>>(() => {
+    if (typeof window === 'undefined' || !projectId) return {};
+    try {
+      const raw = window.localStorage.getItem(`taskgroup-collapsed:${projectId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    if (!collapseStorageKey || typeof window === 'undefined') return;
+    try { window.localStorage.setItem(collapseStorageKey, JSON.stringify(collapsed)); } catch {}
+  }, [collapsed, collapseStorageKey]);
+  const toggleCollapsed = (cid: ContainerId) =>
+    setCollapsed((prev) => ({ ...prev, [cid]: !prev[cid] }));
 
   const saveInFlightRef = useRef(false);
   const pendingSaveRef = useRef<{ group_id: string | null; task_ids: string[] }[] | null>(null);
