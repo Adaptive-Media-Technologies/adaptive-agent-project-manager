@@ -480,10 +480,15 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
             </div>
           )}
 
+          <SortableContext
+            items={groups.slice().sort((a, b) => a.position - b.position).map((g) => `g:${g.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
           {orderedContainers.map((cid) => {
             const group = groups.find((g) => g.id === cid);
             const label = cid === UNGROUPED_ID ? 'Ungrouped' : (group?.name || 'Group');
             const ids = itemsByContainer[cid] || [];
+            const isCollapsed = !!collapsed[cid];
             const groupStart = cid !== UNGROUPED_ID ? (group?.start_date ?? null) : null;
             const groupEnd = cid !== UNGROUPED_ID ? (group?.end_date ?? null) : null;
             const groupDateLabel =
@@ -494,21 +499,49 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
                   : groupEnd
                     ? `Ends ${format(parseISO(groupEnd), 'MMM d')}`
                     : null;
-            return (
-              <GroupDropZone key={cid} id={cid}>
+
+            const renderCard = (handle?: { listeners: any; attributes: any; setActivatorNodeRef: (el: HTMLElement | null) => void }) => (
+              <GroupDropZone id={cid}>
                 <div className="rounded-xl border border-border bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{label}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[11px] text-muted-foreground">
-                          {ids.length} task{ids.length !== 1 ? 's' : ''}
-                        </p>
-                        {groupDateLabel && (
-                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                            {groupDateLabel}
-                          </span>
-                        )}
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      {handle && (
+                        <button
+                          type="button"
+                          ref={handle.setActivatorNodeRef}
+                          {...handle.listeners}
+                          {...handle.attributes}
+                          className="h-7 w-6 -ml-1 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted cursor-grab active:cursor-grabbing touch-none"
+                          title="Drag to reorder group"
+                          aria-label="Drag to reorder group"
+                        >
+                          <GripVertical size={14} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleCollapsed(cid)}
+                        className="h-7 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                        title={isCollapsed ? 'Expand group' : 'Collapse group'}
+                        aria-label={isCollapsed ? 'Expand group' : 'Collapse group'}
+                      >
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      <div
+                        className="min-w-0 cursor-pointer select-none"
+                        onClick={() => toggleCollapsed(cid)}
+                      >
+                        <p className="text-sm font-semibold text-foreground truncate">{label}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[11px] text-muted-foreground">
+                            {ids.length} task{ids.length !== 1 ? 's' : ''}
+                          </p>
+                          {groupDateLabel && (
+                            <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                              {groupDateLabel}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -559,43 +592,55 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
                     )}
                   </div>
 
-                  <div className="px-3">
-                    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-2 py-1">
-                        {ids.map((taskId) => {
-                          const t = tasksById.get(taskId);
-                          if (!t) return null;
-                          const assigneeId = t.assigned_to || (t as any).created_by;
-                          const info = assigneeId ? assigneeMap[assigneeId] : undefined;
-                          const effectiveType = t.assigned_to ? info?.type : 'user';
-                          return (
-                            <TaskItem
-                              key={t.id}
-                              task={t}
-                              onCycle={() => onCycle(t)}
-                              onDelete={() => onDelete(t.id)}
-                              onStartTimer={() => setActiveTimerTaskId(activeTimerTaskId === t.id ? null : t.id)}
-                              isTimerActive={activeTimerTaskId === t.id}
-                              totalMinutes={taskMinutes[t.id] || 0}
-                              onOpenDetail={() => setDetailTaskId(t.id)}
-                              assigneeName={info?.name}
-                              assigneeType={effectiveType}
-                              assigneeAvatarUrl={info?.avatar_url}
-                            />
-                          );
-                        })}
-                        {ids.length === 0 && (
-                          <div className="py-4 text-center text-sm text-muted-foreground">
-                            Drop tasks here
-                          </div>
-                        )}
-                      </div>
-                    </SortableContext>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="px-3">
+                      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-2 py-1">
+                          {ids.map((taskId) => {
+                            const t = tasksById.get(taskId);
+                            if (!t) return null;
+                            const assigneeId = t.assigned_to || (t as any).created_by;
+                            const info = assigneeId ? assigneeMap[assigneeId] : undefined;
+                            const effectiveType = t.assigned_to ? info?.type : 'user';
+                            return (
+                              <TaskItem
+                                key={t.id}
+                                task={t}
+                                onCycle={() => onCycle(t)}
+                                onDelete={() => onDelete(t.id)}
+                                onStartTimer={() => setActiveTimerTaskId(activeTimerTaskId === t.id ? null : t.id)}
+                                isTimerActive={activeTimerTaskId === t.id}
+                                totalMinutes={taskMinutes[t.id] || 0}
+                                onOpenDetail={() => setDetailTaskId(t.id)}
+                                assigneeName={info?.name}
+                                assigneeType={effectiveType}
+                                assigneeAvatarUrl={info?.avatar_url}
+                              />
+                            );
+                          })}
+                          {ids.length === 0 && (
+                            <div className="py-4 text-center text-sm text-muted-foreground">
+                              Drop tasks here
+                            </div>
+                          )}
+                        </div>
+                      </SortableContext>
+                    </div>
+                  )}
                 </div>
               </GroupDropZone>
             );
+
+            if (cid === UNGROUPED_ID || !group) {
+              return <div key={cid}>{renderCard()}</div>;
+            }
+            return (
+              <SortableGroup key={cid} gid={cid}>
+                {(handle) => renderCard(handle)}
+              </SortableGroup>
+            );
           })}
+          </SortableContext>
         </div>
       </DndContext>
 
