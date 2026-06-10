@@ -23,6 +23,7 @@ import {
   DragOverEvent,
   DragStartEvent,
   useDroppable,
+  CollisionDetection,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -253,9 +254,10 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const overId = String(over.id);
 
     // Group reorder
-    if (activeTaskId.startsWith('g:') && overId.startsWith('g:') && onReorderGroups) {
+    if (activeTaskId.startsWith('g:') && onReorderGroups) {
       const activeGid = activeTaskId.slice(2);
-      const overGid = overId.slice(2);
+      // Allow over to be either `g:<id>` or a plain container UUID.
+      const overGid = overId.startsWith('g:') ? overId.slice(2) : overId;
       const sortedGroups = groups.slice().sort((a, b) => a.position - b.position);
       const from = sortedGroups.findIndex((g) => g.id === activeGid);
       const to = sortedGroups.findIndex((g) => g.id === overGid);
@@ -458,7 +460,17 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={((args) => {
+          const aid = String(args.active?.id ?? '');
+          if (aid.startsWith('g:')) {
+            // Restrict to group sortable droppables when dragging a group.
+            const filtered = args.droppableContainers.filter((c) => String(c.id).startsWith('g:'));
+            return closestCenter({ ...args, droppableContainers: filtered });
+          }
+          // Tasks: exclude group sortable ids so they don't interfere.
+          const filtered = args.droppableContainers.filter((c) => !String(c.id).startsWith('g:'));
+          return closestCenter({ ...args, droppableContainers: filtered });
+        }) as CollisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
