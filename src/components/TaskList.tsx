@@ -192,9 +192,20 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
     const activeTaskId = String(active.id);
     const overId = String(over.id);
 
+    // Group drag — handled in dragEnd only.
+    if (activeTaskId.startsWith('g:')) return;
+
+    // If hovering a group header item (sortable), treat as the container.
+    const overContainerCandidate = overId.startsWith('g:') ? overId.slice(2) : overId;
+
     const activeContainer = findContainer(activeTaskId);
-    const overContainer = findContainer(overId);
+    const overContainer = findContainer(overContainerCandidate);
     if (!activeContainer || !overContainer) return;
+
+    // Auto-expand collapsed group on hover so user can drop into it.
+    if (collapsed[overContainer]) {
+      setCollapsed((prev) => ({ ...prev, [overContainer]: false }));
+    }
 
     if (activeContainer === overContainer) return;
 
@@ -207,8 +218,8 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
       if (fromIndex === -1) return prev;
       fromItems.splice(fromIndex, 1);
 
-      const overIndex = toItems.indexOf(overId);
-      const insertIndex = overId in prev ? toItems.length : Math.max(0, overIndex);
+      const overIndex = toItems.indexOf(overContainerCandidate);
+      const insertIndex = overContainerCandidate in prev ? toItems.length : Math.max(0, overIndex);
       toItems.splice(insertIndex, 0, activeTaskId);
 
       next[activeContainer] = fromItems;
