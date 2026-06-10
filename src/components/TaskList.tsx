@@ -47,6 +47,7 @@ type Props = {
   onCycle: (task: Task) => void;
   onDelete: (id: string) => void;
   onReorderGrouped: (groups: { group_id: string | null; task_ids: string[] }[]) => Promise<void> | void;
+  onReorderGroups?: (fromIndex: number, toIndex: number) => Promise<void> | void;
   onLogTime?: (taskId: string, minutes: number) => void;
   taskMinutes?: Record<string, number>;
   onRenameTask?: (id: string, newTitle: string) => Promise<void>;
