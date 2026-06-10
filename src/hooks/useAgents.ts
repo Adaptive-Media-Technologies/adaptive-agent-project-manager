@@ -95,7 +95,7 @@ export function useAgents() {
 
     const { data, error } = await supabase
       .from('agents' as any)
-      .insert(insertData)
+      .insert(insertData as any)
       .select('id, owner_id, display_name, email, key_prefix, created_at')
       .single();
 
