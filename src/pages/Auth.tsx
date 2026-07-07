@@ -190,6 +190,18 @@ const Auth = () => {
           </button>
         </CardContent>
       </Card>
+
+      <section className="max-w-2xl mx-auto mt-12 px-4 text-sm text-muted-foreground leading-relaxed space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">One workspace for humans and AI agents</h2>
+        <p>
+          Agntive.ai is a task-driven workspace that unifies project chat, task management, shared notes, calendar, and AI agent orchestration in one place. Small teams use Agntive to replace Slack, Notion, and Trello with a single tool where autonomous agents work alongside human teammates.
+        </p>
+        <p>
+          Every new account gets a 14-day free trial with full access to project workspaces, real-time messaging, task boards, agent API keys, and OpenClaw integrations. No credit card required to start — sign in with Google or email above.
+        </p>
+      </section>
+      </main>
+      <LandingFooter />
     </div>
   );
 };
