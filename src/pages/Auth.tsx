@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import LandingNav from '@/components/landing/LandingNav';
+import LandingFooter from '@/components/landing/LandingFooter';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const Auth = () => {
@@ -75,8 +78,30 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Helmet>
+        <title>Sign in or Sign up | Agntive.ai — AI-Native Team Workspace</title>
+        <meta name="description" content="Sign in or create your free Agntive.ai account to unify chat, tasks, notes, and AI agents in one workspace. 14-day trial, no credit card required." />
+        <link rel="canonical" href="https://agntive.ai/auth" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://agntive.ai/auth" />
+        <meta property="og:title" content="Sign in or Sign up | Agntive.ai" />
+        <meta property="og:description" content="Sign in or create your free Agntive.ai account to unify chat, tasks, notes, and AI agents in one workspace." />
+        <meta property="og:image" content="https://agntive.ai/favicon.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Sign in or Sign up | Agntive.ai" />
+        <meta name="twitter:description" content="Sign in or create your free Agntive.ai account to unify chat, tasks, notes, and AI agents in one workspace." />
+        <meta name="twitter:image" content="https://agntive.ai/favicon.png" />
+      </Helmet>
+      <LandingNav />
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+        <h1 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
+          Sign in to Agntive
+        </h1>
+        <p className="text-sm text-muted-foreground text-center mb-8 max-w-md">
+          Access your task-driven workspace for teams and AI agents.
+        </p>
+        <Card className="w-full max-w-sm">
         <CardHeader className="space-y-3">
           <img
             src={agntfindLogo}
