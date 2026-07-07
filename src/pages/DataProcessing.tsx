@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const DataProcessing = () => (
-  <StaticPageLayout title="Data Processing" metaDescription="Agntive.ai Data Processing Agreement (DPA) — how we handle, store, and protect data on behalf of our customers.">
+  <StaticPageLayout title="Data Processing" path="/data-processing" metaDescription="Agntive.ai Data Processing Agreement (DPA) — how we handle, store, and protect customer data under GDPR, including sub-processors and retention.">
     <p className="text-sm text-[hsl(var(--marketing-text-muted))]">Last updated: February 1, 2026</p>
 
     <p className="text-xl leading-relaxed mb-8">

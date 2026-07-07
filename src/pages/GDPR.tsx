@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const GDPR = () => (
-  <StaticPageLayout title="GDPR Compliance" metaDescription="How Agntive.ai complies with the General Data Protection Regulation (GDPR) — your rights, our practices.">
+  <StaticPageLayout title="GDPR Compliance" path="/gdpr" metaDescription="How Agntive.ai complies with the EU General Data Protection Regulation (GDPR) — your rights, our practices, data transfers, and DPA requests.">
     <p className="text-sm text-[hsl(var(--marketing-text-muted))]">Last updated: February 1, 2026</p>
 
     <p className="text-xl leading-relaxed mb-8">

@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const CookiePolicy = () => (
-  <StaticPageLayout title="Cookie Policy" metaDescription="Agntive.ai Cookie Policy — what cookies we use, why, and how to manage them.">
+  <StaticPageLayout title="Cookie Policy" path="/cookie-policy" metaDescription="Agntive.ai Cookie Policy — what cookies we use, why we use them, how they support the workspace, and how you can manage or disable them in your browser.">
     <p className="text-sm text-[hsl(var(--marketing-text-muted))]">Last updated: February 1, 2026</p>
 
     <h2>What Are Cookies?</h2>

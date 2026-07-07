@@ -2,7 +2,7 @@ import StaticPageLayout from '@/components/landing/StaticPageLayout';
 import { Shield, Lock, Eye, Server } from 'lucide-react';
 
 const Security = () => (
-  <StaticPageLayout title="Security" metaDescription="How Agntive.ai protects your data — encryption, access controls, infrastructure security, and compliance.">
+  <StaticPageLayout title="Security" path="/security" metaDescription="How Agntive.ai protects your data — TLS 1.3 and AES-256 encryption, row-level access controls, audit logging, SOC 2 infrastructure, and compliance.">
     <p className="text-xl leading-relaxed mb-8">
       Security isn't a feature — it's the foundation. Here's how we protect your team's data and your AI agents' operations.
     </p>

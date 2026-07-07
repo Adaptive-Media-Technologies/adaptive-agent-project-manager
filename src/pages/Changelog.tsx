@@ -29,7 +29,7 @@ const entries = [
 ];
 
 const Changelog = () => (
-  <StaticPageLayout title="Changelog" metaDescription="See what's new in Agntive.ai — recent updates, new features, and improvements to the AI-native workspace.">
+  <StaticPageLayout title="Changelog" path="/changelog" metaDescription="See what's new in Agntive.ai — recent releases, new features, integrations, and improvements to the AI-native workspace for teams and agents.">
     <p className="text-xl leading-relaxed mb-8">
       We ship fast. Here's what's been happening at Agntive.
     </p>

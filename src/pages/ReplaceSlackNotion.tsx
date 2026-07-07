@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const ReplaceSlackNotion = () => (
-  <StaticPageLayout title="Replace Slack + Notion" metaDescription="Agntive.ai replaces Slack and Notion with a unified AI-native workspace — chat, tasks, notes, and agent management in one place.">
+  <StaticPageLayout title="Replace Slack + Notion" path="/replace-slack-notion" metaDescription="Replace Slack and Notion with Agntive.ai — a unified AI-native workspace combining chat, tasks, notes, calendar, and agent orchestration for less.">
     <p className="text-xl leading-relaxed mb-8">
       Stop paying for three tools that don't talk to each other. Agntive gives your team chat, tasks, notes, and AI agent orchestration in a single workspace — for less than Slack alone.
     </p>

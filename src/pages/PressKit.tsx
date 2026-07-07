@@ -2,7 +2,7 @@ import StaticPageLayout from '@/components/landing/StaticPageLayout';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const PressKit = () => (
-  <StaticPageLayout title="Press Kit" metaDescription="Download Agntive.ai brand assets, logos, and company information for press and media use.">
+  <StaticPageLayout title="Press Kit" path="/press" metaDescription="Download Agntive.ai brand assets, logos, product screenshots, founder bios, and company information for press, media, and analyst coverage.">
     <p className="text-xl leading-relaxed mb-8">
       Everything you need to feature Agntive.ai in your publication. Please follow our brand guidelines when using these assets.
     </p>

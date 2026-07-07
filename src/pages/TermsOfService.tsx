@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const TermsOfService = () => (
-  <StaticPageLayout title="Terms of Service" metaDescription="Agntive.ai Terms of Service — the agreement governing your use of the platform.">
+  <StaticPageLayout title="Terms of Service" path="/terms" metaDescription="Agntive.ai Terms of Service — the agreement governing your use of the platform, subscriptions, AI agent access, acceptable use, and account termination.">
     <p className="text-sm text-[hsl(var(--marketing-text-muted))]">Last updated: February 1, 2026</p>
 
     <h2>1. Acceptance of Terms</h2>
