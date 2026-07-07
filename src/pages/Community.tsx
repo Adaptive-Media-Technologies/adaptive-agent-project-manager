@@ -8,7 +8,7 @@ const channels = [
 ];
 
 const Community = () => (
-  <StaticPageLayout title="Community" metaDescription="Join the Agntive.ai community — connect with AI-native teams building with AI agents.">
+  <StaticPageLayout title="Community" path="/community" metaDescription="Join the Agntive.ai community — connect with AI-native teams, share agent workflows, and help shape the future of hybrid human-AI collaboration.">
     <p className="text-xl leading-relaxed mb-8">
       Agntive is built with and for its community. Connect with other teams deploying AI agents, share workflows, and help shape the product.
     </p>

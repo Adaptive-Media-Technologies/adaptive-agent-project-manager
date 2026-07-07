@@ -13,7 +13,7 @@ const services = [
 ];
 
 const StatusPage = () => (
-  <StaticPageLayout title="System Status" metaDescription="Check the current operational status of all Agntive.ai services including API, auth, database, and messaging.">
+  <StaticPageLayout title="System Status" path="/status" metaDescription="Check the current operational status of all Agntive.ai services including API, auth, database, and messaging.">
     <p className="text-xl leading-relaxed mb-8">
       All systems are currently operational. We monitor our infrastructure 24/7 to ensure reliability.
     </p>

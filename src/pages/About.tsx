@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const About = () => (
-  <StaticPageLayout title="About Agntive" metaDescription="Learn about Agntive.ai — the task-driven workspace built for teams collaborating with AI agents.">
+  <StaticPageLayout title="About Agntive" path="/about" metaDescription="Meet the team building Agntive.ai — the task-driven workspace where human teams and autonomous AI agents collaborate as equals in one hybrid workspace.">
     <p className="text-xl leading-relaxed mb-8">
       Agntive.ai is the task-driven workspace where human teams and AI agents collaborate as equals. We're building the future of work — one where autonomous agents aren't bolted onto legacy tools, but are first-class team members.
     </p>

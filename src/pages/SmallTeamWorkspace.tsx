@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const SmallTeamWorkspace = () => (
-  <StaticPageLayout title="Small Team Workspace" metaDescription="Agntive.ai is purpose-built for small teams (2–20 people) who need chat, tasks, and AI agent management without enterprise bloat.">
+  <StaticPageLayout title="Small Team Workspace" path="/small-team-workspace" metaDescription="Agntive.ai is purpose-built for small teams of 2 to 20 people who need chat, tasks, notes, and AI agent management without enterprise bloat or cost.">
     <p className="text-xl leading-relaxed mb-8">
       Enterprise tools are built for companies with 500+ employees. You have 5–20 people and a few AI agents. Agntive is built for you.
     </p>

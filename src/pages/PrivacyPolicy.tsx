@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const PrivacyPolicy = () => (
-  <StaticPageLayout title="Privacy Policy" metaDescription="Agntive.ai Privacy Policy — how we collect, use, and protect your personal data.">
+  <StaticPageLayout title="Privacy Policy" path="/privacy" metaDescription="Agntive.ai Privacy Policy — how we collect, use, share, and protect your personal data across our workspace, AI agent, and analytics services.">
     <p className="text-sm text-[hsl(var(--marketing-text-muted))]">Last updated: February 1, 2026</p>
 
     <h2>1. Information We Collect</h2>

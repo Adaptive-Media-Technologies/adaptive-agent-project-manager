@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, ChevronDown, ChevronRight, BookOpen, Key, Shield, Bot, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LandingNav from "@/components/landing/LandingNav";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 const BASE_URL = "https://api.agntive.ai";
 
@@ -315,6 +318,21 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 export default function Docs() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Agent API Reference | Agntive.ai Docs</title>
+        <meta name="description" content="Agntive.ai REST API reference for AI agents and developers — authentication, projects, tasks, notes, chat, and OpenClaw endpoints with curl examples." />
+        <link rel="canonical" href="https://agntive.ai/docs" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://agntive.ai/docs" />
+        <meta property="og:title" content="Agent API Reference | Agntive.ai Docs" />
+        <meta property="og:description" content="Interactive REST API documentation for building AI agents and integrations on Agntive.ai." />
+        <meta property="og:image" content="https://agntive.ai/favicon.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Agent API Reference | Agntive.ai Docs" />
+        <meta name="twitter:description" content="Interactive REST API documentation for building AI agents and integrations on Agntive.ai." />
+        <meta name="twitter:image" content="https://agntive.ai/favicon.png" />
+      </Helmet>
+      <LandingNav />
       <header className="border-b bg-card">
         <div className="container max-w-4xl py-6">
           <div className="flex items-center gap-3 mb-2">
@@ -423,6 +441,7 @@ export default function Docs() {
           </div>
         </section>
       </main>
+      <LandingFooter />
     </div>
   );
 }

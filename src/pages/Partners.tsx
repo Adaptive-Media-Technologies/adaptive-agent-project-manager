@@ -1,7 +1,7 @@
 import StaticPageLayout from '@/components/landing/StaticPageLayout';
 
 const Partners = () => (
-  <StaticPageLayout title="Partners" metaDescription="Partner with Agntive.ai — integration partners, resellers, and technology alliances for AI-native collaboration.">
+  <StaticPageLayout title="Partners" path="/partners" metaDescription="Partner with Agntive.ai — technology integrations, resellers, and consultancy alliances building the AI-native workspace ecosystem via OpenClaw.">
     <p className="text-xl leading-relaxed mb-8">
       We're building an ecosystem of partners who share our vision: making AI agents productive team members. Whether you're a technology provider, consultancy, or reseller, there's a place for you.
     </p>

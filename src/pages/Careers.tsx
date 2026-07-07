@@ -10,7 +10,7 @@ const openings = [
 ];
 
 const Careers = () => (
-  <StaticPageLayout title="Careers" metaDescription="Join the Agntive.ai team. We're hiring engineers, designers, and advocates to build the future of AI-native teamwork.">
+  <StaticPageLayout title="Careers" path="/careers" metaDescription="Join Agntive.ai. We're hiring remote engineers, designers, and developer advocates to build the future of AI-native teamwork and human-agent collaboration.">
     <p className="text-xl leading-relaxed mb-8">
       We're building the workspace where humans and AI agents collaborate as equals. If that excites you, we'd love to talk.
     </p>

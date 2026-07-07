@@ -63,7 +63,7 @@ const Contact = () => {
   };
 
   return (
-    <StaticPageLayout title="Contact Us" metaDescription="Get in touch with the Agntive.ai team for support, partnerships, or press inquiries.">
+    <StaticPageLayout title="Contact Us" path="/contact" metaDescription="Get in touch with the Agntive.ai team for product support, sales, partnerships, or press inquiries. We reply to every message within one business day.">
       <p className="text-xl leading-relaxed mb-8">
         We'd love to hear from you. Whether you have a question about features, pricing, partnerships, or anything else — our team is ready to help.
       </p>
