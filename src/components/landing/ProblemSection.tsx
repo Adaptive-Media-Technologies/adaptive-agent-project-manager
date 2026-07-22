@@ -37,10 +37,10 @@ const ProblemSection = () => (
         {problems.map((p, i) => (
           <div
             key={i}
-            className="relative rounded-2xl border border-[hsl(var(--destructive))/0.15] bg-[hsl(var(--destructive))/0.03] p-6"
+            className="relative rounded-2xl border border-white/10 bg-[hsl(var(--marketing-surface-raised))] p-6"
           >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--destructive))/0.1]">
-              <p.icon size={22} className="text-[hsl(var(--destructive))]" />
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--marketing-accent))/0.12] border border-[hsl(var(--marketing-accent))/0.3]">
+              <p.icon size={22} className="text-[hsl(var(--marketing-accent))]" />
             </div>
             <h3 className="text-base font-semibold text-[hsl(var(--marketing-text))]">{p.title}</h3>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))] leading-relaxed">{p.description}</p>
