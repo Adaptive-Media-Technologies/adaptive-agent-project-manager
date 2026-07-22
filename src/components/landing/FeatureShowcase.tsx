@@ -179,8 +179,8 @@ const FeatureShowcase = () => {
               onClick={() => setActiveTab(t.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === t.id
-                  ? 'bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] text-white shadow-lg shadow-[hsl(var(--marketing-accent))/0.25]'
-                  : 'bg-[hsl(var(--marketing-surface))] text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] border border-border/60'
+                  ? 'bg-[hsl(var(--marketing-accent))] text-white border border-[hsl(var(--marketing-accent))] shadow-lg shadow-[hsl(var(--marketing-accent))/0.35]'
+                  : 'bg-[hsl(var(--marketing-surface-raised))] text-white/70 hover:text-white border border-white/10'
               }`}
             >
               <t.icon size={16} />

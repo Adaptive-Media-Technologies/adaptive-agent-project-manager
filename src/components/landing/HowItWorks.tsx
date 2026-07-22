@@ -19,12 +19,12 @@ const HowItWorks = () => (
 
       <div className="relative max-w-2xl mx-auto">
         {/* Vertical line */}
-        <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] hidden md:block" />
+        <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px bg-white/10 hidden md:block" />
 
         <div className="space-y-10">
           {steps.map((s, i) => (
             <div key={i} className="flex gap-6 items-start">
-              <div className="flex-shrink-0 relative z-10 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] text-white font-extrabold text-lg shadow-lg shadow-[hsl(var(--marketing-accent))/0.2]">
+              <div className="flex-shrink-0 relative z-10 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-2xl bg-[hsl(var(--marketing-surface-raised))] border border-white/10 text-[hsl(var(--marketing-accent))] font-mono font-bold text-lg">
                 {s.step}
               </div>
               <div className="pt-1 md:pt-3">

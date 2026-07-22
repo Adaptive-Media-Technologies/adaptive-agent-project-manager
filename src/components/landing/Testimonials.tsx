@@ -35,7 +35,7 @@ const Testimonials = () => (
           <div key={i} className="rounded-2xl border border-border/60 bg-[hsl(var(--marketing-surface))] p-6">
             <p className="text-[hsl(var(--marketing-text))] leading-relaxed italic">"{t.quote}"</p>
             <div className="mt-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] flex items-center justify-center text-white font-bold text-sm">
+              <div className="h-10 w-10 rounded-full bg-[hsl(var(--marketing-accent))/0.15] border border-[hsl(var(--marketing-accent))/0.35] flex items-center justify-center text-[hsl(var(--marketing-accent))] font-bold text-sm">
                 {t.name[0]}
               </div>
               <div>
