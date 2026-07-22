@@ -33,20 +33,21 @@ const PricingSection = () => (
 
       {/* Pricing Cards */}
       <div className="grid gap-6 md:grid-cols-2 items-stretch mb-16">
-        <div className="relative flex flex-col border border-[hsl(var(--marketing-text))] bg-[hsl(var(--marketing-surface))] p-8">
-          <div className="absolute -top-3 left-6 bg-[hsl(var(--marketing-text))] text-[hsl(var(--marketing-surface))] px-2 py-0.5 text-[10px] font-mono font-bold tracking-widest">
-            SELECTED
+        <div className="relative flex flex-col border border-[hsl(var(--marketing-accent))] bg-[hsl(var(--marketing-surface-raised))] p-8 shadow-[0_0_0_1px_hsl(var(--marketing-accent)/0.3),0_20px_60px_-20px_hsl(var(--marketing-accent)/0.35),inset_0_1px_0_hsl(0_0%_100%/0.04)]">
+          <div className="absolute -top-3 left-6 bg-[hsl(var(--marketing-accent))] text-[hsl(var(--marketing-accent-foreground))] px-2 py-0.5 text-[10px] font-mono font-bold tracking-widest">
+            RECOMMENDED
           </div>
 
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
-                <User size={18} className="text-[hsl(var(--marketing-text))]" />
+              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border-strong))] bg-[hsl(var(--marketing-surface))]">
+                <User size={18} className="text-[hsl(var(--marketing-accent))]" />
               </div>
               <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">Free Forever</h3>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="font-display text-4xl font-bold text-[hsl(var(--marketing-text))] tabular-nums">$0</span>
+              <span className="font-display text-5xl font-bold text-[hsl(var(--marketing-text))] tabular-nums">$0</span>
+              <span className="text-sm font-mono text-[hsl(var(--marketing-warning))] ml-1">/ forever</span>
             </div>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))]">
               Perfect for solo founders and personal projects. 1 user for free.
@@ -56,7 +57,7 @@ const PricingSection = () => (
           <ul className="mb-8 flex-1 space-y-3">
             {freeFeatures.map((f) => (
               <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-text))]" />
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-accent))]" />
                 {f.name}
               </li>
             ))}
@@ -64,7 +65,7 @@ const PricingSection = () => (
 
           <Link to="/auth" className="mt-auto">
             <Button
-              className="w-full rounded-sm font-bold tracking-wide bg-[hsl(var(--marketing-text))] text-[hsl(var(--marketing-surface))] hover:bg-white border-0"
+              className="w-full rounded-sm font-bold tracking-wide bg-[hsl(var(--marketing-accent))] text-[hsl(var(--marketing-accent-foreground))] hover:brightness-110 border-0"
               size="lg"
             >
               GET STARTED FREE <ArrowRight size={16} />
@@ -72,13 +73,17 @@ const PricingSection = () => (
           </Link>
         </div>
 
-        <div className="relative flex flex-col border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface))] p-8">
+        <div className="relative flex flex-col border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface-raised))] p-8 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
-                <Users size={18} className="text-[hsl(var(--marketing-text-muted))]" />
+              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border-strong))] bg-[hsl(var(--marketing-surface))]">
+                <Users size={18} className="text-[hsl(var(--marketing-warning))]" />
               </div>
               <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">Add-ons</h3>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-5xl font-bold text-[hsl(var(--marketing-text))] tabular-nums">$5</span>
+              <span className="text-sm font-mono text-[hsl(var(--marketing-warning))]">/ user / mo</span>
             </div>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))]">
               Add teammates and AI agents when you're ready.
@@ -88,7 +93,7 @@ const PricingSection = () => (
           <ul className="mb-8 flex-1 space-y-3">
             {addOnItems.map((f) => (
               <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-text))]" />
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-warning))]" />
                 {f.name}
               </li>
             ))}
@@ -96,7 +101,7 @@ const PricingSection = () => (
 
           <Link to="/auth" className="mt-auto">
             <Button
-              className="w-full rounded-sm font-bold tracking-wide bg-transparent border border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text))] hover:bg-white/5"
+              className="w-full rounded-sm font-bold tracking-wide bg-[hsl(var(--marketing-surface))] border border-[hsl(var(--marketing-border-strong))] text-[hsl(var(--marketing-text))] hover:border-[hsl(var(--marketing-text-muted))]"
               variant="outline"
               size="lg"
             >
