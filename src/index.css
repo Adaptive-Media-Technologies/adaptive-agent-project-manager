@@ -70,15 +70,16 @@ All colors MUST be HSL.
     --chat-mention-bg: 210 60% 90%;
     --chat-mention-text: 210 70% 40%;
 
-    --marketing-gradient-start: 240 70% 55%;
-    --marketing-gradient-mid: 262 72% 56%;
-    --marketing-gradient-end: 280 68% 58%;
-    --marketing-accent: 240 70% 55%;
-    --marketing-accent-foreground: 0 0% 100%;
-    --marketing-surface: 0 0% 100%;
-    --marketing-surface-alt: 260 20% 97%;
-    --marketing-text: 260 25% 11%;
-    --marketing-text-muted: 260 10% 46%;
+    --marketing-gradient-start: 0 0% 90%;
+    --marketing-gradient-mid: 0 0% 88%;
+    --marketing-gradient-end: 0 0% 86%;
+    --marketing-accent: 217 91% 60%;
+    --marketing-accent-foreground: 0 0% 4%;
+    --marketing-surface: 0 0% 4%;
+    --marketing-surface-alt: 0 0% 6%;
+    --marketing-text: 220 14% 91%;
+    --marketing-text-muted: 214 20% 65%;
+    --marketing-border: 217 19% 23%;
   }
 
   .dark {
