@@ -1,54 +1,66 @@
-## Redesign: monochrome tool surface
+## Goals
 
-Rebuild the landing page around the picked "Monochrome tool surface" direction. Locked: greyscale palette (#0a0a0a / #2d3748 / #a0aec0 / #e5e7eb), Sora headings + Manrope body + JetBrains Mono for readouts, blue only as a rare status accent. Strip all purple gradients, glowy shadows, and rainbow icon tiles.
+Fix the washed-out, wireframe feel of the redesigned landing without going back to purple. Restore the Agntive logo mark, deepen contrast, and introduce controlled blue + yellow accents alongside a broader grey scale so surfaces feel finished, not skeletal.
 
-### 1. Fonts + tokens
+## Fixes
 
-- `index.html`: preconnect + load Sora, Manrope, JetBrains Mono.
-- `tailwind.config.ts`: extend `fontFamily` with `sora`, `manrope`, `mono`.
-- `src/index.css`: repoint marketing tokens to greyscale.
-  - `--marketing-surface: 0 0% 4%` (#0a0a0a), `--marketing-surface-alt: 0 0% 6%`.
-  - `--marketing-text: 220 14% 91%` (#e5e7eb), `--marketing-text-muted: 214 20% 65%` (#a0aec0).
-  - `--marketing-accent: 217 91% 60%` (blue, used sparingly for status only).
-  - Replace `--marketing-gradient-start/mid/end` with three near-identical greys so any legacy gradient reads as a flat monochrome bar.
-  - Same values in `:root` and `.dark` (page is dark either way).
-- Add `.font-display { font-family: 'Sora', ui-sans-serif; }` and set body font to Manrope via Tailwind `font-manrope`.
+**1. Logo (top-left, currently invisible/missing on some viewports)**
+- `HeroSection.tsx` and `LandingNav.tsx`: replace the plain `<div>` mark with a proper logo lockup — a filled rounded-sm tile containing a bold "A" glyph (Sora, tracking-tight) plus the "Agntive" wordmark. Ensure the mark uses `--marketing-text` on `--marketing-surface-alt` so it reads on both nav and hero shell.
+- Make it a shared `<LandingLogo />` component in `src/components/landing/LandingLogo.tsx` so nav + hero + footer stay consistent.
 
-### 2. HeroSection
+**2. Palette — less washed, more depth (`src/index.css`)**
 
-Rewrite `src/components/landing/HeroSection.tsx` as the dashboard-shell hero from the picked prototype:
-- Bordered `max-w-6xl` shell with 1px `#2d3748` rules, sharp corners (`rounded-sm`).
-- Top bar: Agntive mark + workspace/deployments/library nav + `SYSTEM_ACTIVE` pill (pulsing blue dot) + white "Start free" button linking to `/auth`.
-- Left icon rail (w-16) with 3 stroke icons.
-- Center panel: mono status chip, `font-display` H1 "One workspace for your team and AI agents." with muted second line, muted subhead, two CTAs (solid white "Start free", outlined "Read the docs" → `/docs`).
-- Bottom row: TERMINAL_FEED panel (JetBrains Mono log rows including a bot task line) + METRICS bar chart with LATENCY readout.
-- Right auxiliary column (xl+): INSPECTOR with TASKS / AGENTS / TIME_TRACKED cards using real product nouns, not "LLM_ORCHESTRATOR" placeholder copy.
-- Product-accurate copy throughout — no invented "vector store / TFLOPs" language. Keep it about tasks, chat, agents, time tracking.
+Refine marketing tokens (kept scoped to `--marketing-*`, no product theme change):
 
-### 3. LandingNav
+```text
+--marketing-surface:        0 0% 5%      (near-black, slightly warmer)
+--marketing-surface-alt:    220 13% 9%   (panel)
+--marketing-surface-raised: 220 13% 12%  (cards, inspector items)
+--marketing-border:         220 13% 18%  (crisper than current 23% L)
+--marketing-border-strong:  220 13% 28%
+--marketing-text:           0 0% 98%     (true white for headings)
+--marketing-text-muted:     220 9% 62%
+--marketing-text-dim:       220 9% 42%
+--marketing-accent:         210 100% 60% (electric blue — CTA + status)
+--marketing-accent-soft:    210 80% 70%
+--marketing-warning:        45 100% 60%  (yellow — highlight/badge accent)
+--marketing-success:        142 60% 50%  (kept for status pills)
+```
 
-Rewrite `src/components/landing/LandingNav.tsx`:
-- Drop the purple gradient announcement bar; replace with a thin monochrome strip: mono type, small blue dot, "New — OpenClaw integration".
-- Nav bar: black bg, hairline bottom border, Sora wordmark, muted links, ghost "Log in", solid white "Start free" (no gradient).
-- Theme toggle stays but restyled to match.
+**3. Apply the new tokens where things feel skeletal**
 
-### 4. Downstream sections
+- **Nav (`LandingNav.tsx`)**: primary CTA becomes `bg-[--marketing-accent] text-black` (blue button, not white); announcement bar pulse dot switches to yellow; nav border uses `--marketing-border`.
+- **Hero (`HeroSection.tsx`)**:
+  - Headline: white; accent word "AI agents" wrapped in a subtle yellow underline (`border-b-2 border-[--marketing-warning]`) instead of grey-on-grey.
+  - Primary CTA: blue fill, black text; secondary CTA keeps outline but uses `--marketing-border-strong`.
+  - `SYSTEM_ACTIVE` badge: yellow dot + white text on `--marketing-surface-raised`.
+  - Activity feed `[TASK]`/`[AGENT]`/`[CHAT]` tags: colorize (blue / yellow / white) instead of all blue — gives the terminal panel life.
+  - Throughput bars: gradient of grey→blue for the tallest bar; remaining bars use `--marketing-border-strong` (currently too faint).
+  - Inspector cards: `bg-[--marketing-surface-raised]` with `border-[--marketing-border]`; label icons tint blue.
+  - Icon rail: active item gets a 2px left blue bar.
+- **PricingSection.tsx**: featured tier ("Team") gets blue border + subtle blue glow (`shadow-[0_0_0_1px_hsl(var(--marketing-accent)/0.6)]`), price numerals in white, "$5" unit in yellow. Non-featured tiers use `--marketing-surface-raised` fill so cards read as cards, not empty frames.
+- **StatsSection.tsx**: giant numerals in white; unit suffix (`x`, `%`) in yellow. Dividers use `--marketing-border-strong`.
+- **AgentDeepDive.tsx / FinalCTA.tsx**: swap any remaining `bg-white/[0.02]` empty panels for `--marketing-surface-raised` and give the primary CTA the blue fill treatment.
 
-`ProblemSection`, `FeatureShowcase`, `OpenClawSection`, `HowItWorks`, `AgentDeepDive`, `PricingSection`, `StatsSection`, `Testimonials`, `FAQSection`, `FinalCTA`, `LandingFooter` already consume `--marketing-*` tokens, so the token flip alone removes purple. In addition:
-- `AgentDeepDive.tsx`: remove the `from-...gradient-start/0.1` icon-tile background and the accent-color hover shadow; use a flat bordered square with a mono icon, and swap capability pills for `border border-[#2d3748]` chips.
-- `FinalCTA.tsx` and `PricingSection.tsx`: replace any `bg-gradient-to-r` CTAs with solid `bg-[#e5e7eb] text-[#0a0a0a]` buttons (matching hero).
-- `StatsSection.tsx`: numbers in Sora, thin rules between stats.
-- No other structural changes to these files — copy stays, only classNames adjust.
+**4. Finish pass — remove the wireframe feel**
 
-### 5. Global body font
+- Replace the current `bg-white/5` and `bg-white/[0.02]` washes with the real `--marketing-surface-raised` token so panels have actual fill.
+- Add a subtle 1px inner top highlight on cards (`shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]`) for depth.
+- Radial dot grid opacity bumped from 0.04 → 0.08 so the hero backdrop is visible without being noisy.
+- Tighten all border colors to the new `--marketing-border` — the current 23% lightness reads muddy.
 
-- `src/index.css` body rule: add `font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;` so the whole marketing surface reads Manrope by default and Sora only where `font-display` is applied.
+## Files touched
 
-### Out of scope
+- `src/index.css` — token refresh (marketing scope only)
+- `src/components/landing/LandingLogo.tsx` — new shared component
+- `src/components/landing/LandingNav.tsx` — logo + CTA colors
+- `src/components/landing/HeroSection.tsx` — logo, CTA, accent colorization, panel fills
+- `src/components/landing/PricingSection.tsx` — featured tier accent, card fills
+- `src/components/landing/StatsSection.tsx` — numeral + suffix color
+- `src/components/landing/AgentDeepDive.tsx` — panel fills, CTA
+- `src/components/landing/FinalCTA.tsx` — CTA color
 
-- App/product routes (`/`, `/auth`, dashboard) — untouched. Redesign is marketing surface only.
-- No new sections, no new imagery, no logo change.
+## Out of scope
 
-### Verification
-
-After edits: `curl` localhost:8080, screenshot the landing hero via Playwright at 1440×900, compare against picked prototype. Confirm zero purple pixels in hero region.
+- Product app theme (`--background`, `--primary`, etc.) — unchanged.
+- No layout restructuring; this is a color, contrast, and logo pass only.

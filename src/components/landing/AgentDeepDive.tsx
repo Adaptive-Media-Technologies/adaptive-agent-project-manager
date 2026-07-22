@@ -38,18 +38,21 @@ const AgentDeepDive = () => (
 
       <div className="grid gap-0 md:grid-cols-3 border border-[hsl(var(--marketing-border))] divide-y md:divide-y-0 md:divide-x divide-[hsl(var(--marketing-border))]">
         {agents.map((a, i) => (
-          <div key={i} className="p-6 bg-[hsl(var(--marketing-surface))] hover:bg-white/[0.02] transition-colors">
-            <div className="mb-4 flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
-              <a.icon size={18} className="text-[hsl(var(--marketing-text))]" />
+          <div
+            key={i}
+            className="p-6 bg-[hsl(var(--marketing-surface-raised))] hover:bg-[hsl(var(--marketing-surface))] transition-colors shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]"
+          >
+            <div className="mb-4 flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border-strong))] bg-[hsl(var(--marketing-surface))]">
+              <a.icon size={18} className="text-[hsl(var(--marketing-accent))]" />
             </div>
-            <div className="text-[10px] font-mono tracking-widest text-[hsl(var(--marketing-text-muted))] mb-1">
+            <div className="text-[10px] font-mono tracking-widest text-[hsl(var(--marketing-warning))] mb-1">
               [{String(i + 1).padStart(2, '0')}]
             </div>
             <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">{a.name}</h3>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))] leading-relaxed">{a.description}</p>
             <div className="mt-4 flex flex-wrap gap-1.5">
               {a.capabilities.map((c, j) => (
-                <span key={j} className="text-[10px] font-mono px-2 py-0.5 border border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text-muted))]">
+                <span key={j} className="text-[10px] font-mono px-2 py-0.5 border border-[hsl(var(--marketing-border-strong))] bg-[hsl(var(--marketing-surface))] text-[hsl(var(--marketing-text))]">
                   {c}
                 </span>
               ))}
