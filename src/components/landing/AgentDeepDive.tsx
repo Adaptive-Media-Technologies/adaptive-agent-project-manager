@@ -22,31 +22,34 @@ const agents = [
 ];
 
 const AgentDeepDive = () => (
-  <section className="bg-[hsl(var(--marketing-surface-alt))] py-20 md:py-28">
+  <section className="bg-[hsl(var(--marketing-surface-alt))] py-20 md:py-28 border-y border-[hsl(var(--marketing-border))]">
     <div className="mx-auto max-w-6xl px-6">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-          Humans and AI agents, working as{' '}
-          <span className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
-            one team
-          </span>
+      <div className="mb-16">
+        <div className="inline-block px-2 py-1 mb-4 border border-[hsl(var(--marketing-border))] text-[10px] font-mono tracking-widest text-[hsl(var(--marketing-text-muted))]">
+          AGENTS
+        </div>
+        <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-[hsl(var(--marketing-text))] max-w-2xl">
+          Humans and AI agents, working as one team.
         </h2>
-        <p className="mt-4 text-[hsl(var(--marketing-text-muted))] max-w-xl mx-auto">
+        <p className="mt-4 text-[hsl(var(--marketing-text-muted))] max-w-xl">
           Give every agent a seat at the table alongside your human teammates.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-0 md:grid-cols-3 border border-[hsl(var(--marketing-border))] divide-y md:divide-y-0 md:divide-x divide-[hsl(var(--marketing-border))]">
         {agents.map((a, i) => (
-          <div key={i} className="rounded-2xl border border-border/60 bg-[hsl(var(--marketing-surface))] p-6 hover:shadow-lg hover:shadow-[hsl(var(--marketing-accent))/0.06] transition-all">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))/0.1] to-[hsl(var(--marketing-gradient-end))/0.1]">
-              <a.icon size={24} className="text-[hsl(var(--marketing-accent))]" />
+          <div key={i} className="p-6 bg-[hsl(var(--marketing-surface))] hover:bg-white/[0.02] transition-colors">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
+              <a.icon size={18} className="text-[hsl(var(--marketing-text))]" />
             </div>
-            <h3 className="text-lg font-semibold text-[hsl(var(--marketing-text))]">{a.name}</h3>
+            <div className="text-[10px] font-mono tracking-widest text-[hsl(var(--marketing-text-muted))] mb-1">
+              [{String(i + 1).padStart(2, '0')}]
+            </div>
+            <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">{a.name}</h3>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))] leading-relaxed">{a.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-1.5">
               {a.capabilities.map((c, j) => (
-                <span key={j} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--marketing-accent))/0.08] text-[hsl(var(--marketing-accent))]">
+                <span key={j} className="text-[10px] font-mono px-2 py-0.5 border border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text-muted))]">
                   {c}
                 </span>
               ))}

@@ -33,30 +33,30 @@ const PricingSection = () => (
 
       {/* Pricing Cards */}
       <div className="grid gap-6 md:grid-cols-2 items-stretch mb-16">
-        <div className="relative flex flex-col rounded-2xl border p-8 transition-all border-[hsl(var(--marketing-accent))] bg-[hsl(var(--marketing-surface))] shadow-xl shadow-[hsl(var(--marketing-accent))/0.1] scale-[1.01]">
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] px-4 py-1 text-xs font-semibold text-white">
-            Selected
+        <div className="relative flex flex-col border border-[hsl(var(--marketing-text))] bg-[hsl(var(--marketing-surface))] p-8">
+          <div className="absolute -top-3 left-6 bg-[hsl(var(--marketing-text))] text-[hsl(var(--marketing-surface))] px-2 py-0.5 text-[10px] font-mono font-bold tracking-widest">
+            SELECTED
           </div>
 
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--marketing-gradient-start))] to-[hsl(var(--marketing-gradient-end))] text-white">
-                <User size={20} />
+              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
+                <User size={18} className="text-[hsl(var(--marketing-text))]" />
               </div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--marketing-text))]">Free Forever</h3>
+              <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">Free Forever</h3>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold text-[hsl(var(--marketing-text))]">$0</span>
+              <span className="font-display text-4xl font-bold text-[hsl(var(--marketing-text))] tabular-nums">$0</span>
             </div>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))]">
-              Perfect for solo founders and personal projects. 1 User for Free.
+              Perfect for solo founders and personal projects. 1 user for free.
             </p>
           </div>
 
           <ul className="mb-8 flex-1 space-y-3">
             {freeFeatures.map((f) => (
               <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-accent))]" />
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-text))]" />
                 {f.name}
               </li>
             ))}
@@ -64,40 +64,43 @@ const PricingSection = () => (
 
           <Link to="/auth" className="mt-auto">
             <Button
-              className="w-full bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white border-0 shadow-lg shadow-[hsl(var(--marketing-accent))/0.25]"
-              variant="default"
+              className="w-full rounded-sm font-bold tracking-wide bg-[hsl(var(--marketing-text))] text-[hsl(var(--marketing-surface))] hover:bg-white border-0"
               size="lg"
             >
-              Get Started Free <ArrowRight size={16} />
+              GET STARTED FREE <ArrowRight size={16} />
             </Button>
           </Link>
         </div>
 
-        <div className="relative flex flex-col rounded-2xl border p-8 transition-all border-border/40 bg-[hsl(var(--marketing-surface))]">
+        <div className="relative flex flex-col border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface))] p-8">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--marketing-surface-alt))] text-[hsl(var(--marketing-text-muted))]">
-                <Users size={20} />
+              <div className="flex h-10 w-10 items-center justify-center border border-[hsl(var(--marketing-border))]">
+                <Users size={18} className="text-[hsl(var(--marketing-text-muted))]" />
               </div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--marketing-text))]">Add ons</h3>
+              <h3 className="font-display text-lg font-semibold text-[hsl(var(--marketing-text))]">Add-ons</h3>
             </div>
             <p className="mt-2 text-sm text-[hsl(var(--marketing-text-muted))]">
-              Add teammates and AI agents when you’re ready.
+              Add teammates and AI agents when you're ready.
             </p>
           </div>
 
           <ul className="mb-8 flex-1 space-y-3">
             {addOnItems.map((f) => (
               <li key={f.name} className="flex items-start gap-2.5 text-sm text-[hsl(var(--marketing-text))]">
-                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-accent))]" />
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-[hsl(var(--marketing-text))]" />
                 {f.name}
               </li>
             ))}
           </ul>
 
           <Link to="/auth" className="mt-auto">
-            <Button className="w-full" variant="outline" size="lg">
-              Start Free <ArrowRight size={16} />
+            <Button
+              className="w-full rounded-sm font-bold tracking-wide bg-transparent border border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text))] hover:bg-white/5"
+              variant="outline"
+              size="lg"
+            >
+              START FREE <ArrowRight size={16} />
             </Button>
           </Link>
         </div>

@@ -5,15 +5,15 @@ const stats = [
 ];
 
 const StatsSection = () => (
-  <section className="py-20 md:py-28">
+  <section className="py-20 md:py-28 border-y border-[hsl(var(--marketing-border))]">
     <div className="mx-auto max-w-6xl px-6">
-      <div className="grid gap-8 md:grid-cols-3 text-center">
+      <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[hsl(var(--marketing-border))]">
         {stats.map((s, i) => (
-          <div key={i}>
-            <p className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] bg-clip-text text-transparent">
+          <div key={i} className="px-6 py-8 text-center md:text-left">
+            <p className="font-display text-5xl md:text-6xl font-bold tracking-tight text-[hsl(var(--marketing-text))] tabular-nums">
               {s.value}
             </p>
-            <p className="mt-3 text-[hsl(var(--marketing-text-muted))] text-sm md:text-base">{s.label}</p>
+            <p className="mt-3 text-[hsl(var(--marketing-text-muted))] text-sm">{s.label}</p>
           </div>
         ))}
       </div>

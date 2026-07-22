@@ -1,58 +1,59 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import agntfindLogo from '@/assets/agntfind-logo.png';
 
 const LandingNav = () => {
   const { theme, setTheme } = useTheme();
   return (
-  <>
-    {/* Announcement Bar */}
-    <div className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white text-center text-sm py-2 px-4">
-      <a href="#openclaw" className="inline-flex items-center gap-2 hover:underline">
-        <Sparkles size={14} />
-        <span className="font-medium">NEW: OpenClaw Integration</span>
-        <span className="hidden sm:inline">— One workspace for your team and AI agents</span>
-      </a>
-    </div>
-
-    {/* Nav */}
-    <header className="sticky top-0 z-50 border-b border-border/40 bg-[hsl(var(--marketing-surface))/0.85] backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src={agntfindLogo} alt="Agntive" className="h-8 w-8 rounded-xl" />
-          <span className="text-lg font-bold tracking-tight text-[hsl(var(--marketing-text))]">
-            Agntive<span className="text-[hsl(var(--marketing-accent))]">.ai</span>
-          </span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
-          <a href="#features" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Features</a>
-          <a href="#openclaw" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Integrations</a>
-          <a href="#how-it-works" className="hover:text-[hsl(var(--marketing-text))] transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
-          <Link to="/blog" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Blog</Link>
-        </nav>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] hover:bg-[hsl(var(--marketing-surface-alt))] transition-colors"
-            title="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          <Link to="/auth">
-            <Button variant="ghost" size="sm">Log in</Button>
-          </Link>
-          <Link to="/auth">
-            <Button size="sm" className="bg-gradient-to-r from-[hsl(var(--marketing-gradient-start))] via-[hsl(var(--marketing-gradient-mid))] to-[hsl(var(--marketing-gradient-end))] text-white border-0 shadow-lg shadow-[hsl(var(--marketing-accent))/0.25] hover:shadow-xl hover:shadow-[hsl(var(--marketing-accent))/0.35] transition-all">
-              Start Free Trial
-            </Button>
-          </Link>
-        </div>
+    <>
+      {/* Announcement Bar */}
+      <div className="bg-[hsl(var(--marketing-surface))] border-b border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text-muted))] text-center text-[11px] font-mono py-2 px-4">
+        <a href="#openclaw" className="inline-flex items-center gap-2 hover:text-[hsl(var(--marketing-text))] transition-colors uppercase tracking-widest">
+          <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--marketing-accent))] animate-pulse" />
+          <span>NEW · OpenClaw Integration</span>
+        </a>
       </div>
-    </header>
-  </>
+
+      {/* Nav */}
+      <header className="sticky top-0 z-50 border-b border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface))]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-[hsl(var(--marketing-text))] rounded-sm" />
+            <span className="font-display text-lg font-bold tracking-tight text-[hsl(var(--marketing-text))]">
+              Agntive
+            </span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
+            <a href="#features" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Features</a>
+            <a href="#openclaw" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Integrations</a>
+            <a href="#how-it-works" className="hover:text-[hsl(var(--marketing-text))] transition-colors">How it works</a>
+            <a href="#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
+            <Link to="/blog" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Blog</Link>
+          </nav>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex h-8 w-8 items-center justify-center rounded-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] hover:bg-white/5 transition-colors"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <Link
+              to="/auth"
+              className="hidden sm:inline-flex px-3 py-1.5 text-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] transition-colors"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/auth"
+              className="px-3 py-1.5 bg-[hsl(var(--marketing-text))] text-[hsl(var(--marketing-surface))] text-xs font-bold rounded-sm hover:bg-white transition-colors"
+            >
+              START FREE
+            </Link>
+          </div>
+        </div>
+      </header>
+    </>
   );
 };
 export default LandingNav;
