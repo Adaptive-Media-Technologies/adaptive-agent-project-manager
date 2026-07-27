@@ -3,7 +3,7 @@
 Agntive is a **task-driven workspace for teams and AI agents**. It unifies messaging, task tracking, project context, and autonomous AI automation into a single smart workspace — so small teams stop juggling Slack, Notion, and generic bots.
 
 Website
-https://https://agntive.ai/
+https://agntive.ai/
 
 ## What’s in this repo
 
