@@ -5,29 +5,17 @@ import LandingLogo from './LandingLogo';
 const HeroSection = () => (
   <section className="relative bg-[hsl(var(--marketing-surface))] px-4 py-8 lg:px-8 lg:py-12">
     <div className="mx-auto w-full max-w-6xl border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface-alt))] flex flex-col overflow-hidden shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_hsl(0_0%_100%/0.04)]">
-      {/* Top bar */}
-      <header className="h-14 border-b border-[hsl(var(--marketing-border))] flex items-center justify-between px-4 bg-[hsl(var(--marketing-surface))]">
-        <div className="flex items-center gap-6">
-          <LandingLogo size="sm" />
-          <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-[hsl(var(--marketing-text-muted))]">
-            <a href="#features" className="text-[hsl(var(--marketing-text))] px-2 py-1 bg-[hsl(var(--marketing-surface-raised))] rounded">Workspace</a>
-            <a href="#openclaw" className="px-2 py-1 hover:text-[hsl(var(--marketing-text))] transition-colors">Agents</a>
-            <a href="#pricing" className="px-2 py-1 hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
-          </nav>
+      {/* Status strip (no duplicate logo/CTA — main nav covers that) */}
+      <div className="h-10 border-b border-[hsl(var(--marketing-border))] flex items-center justify-between px-4 bg-[hsl(var(--marketing-surface))]">
+        <div className="flex items-center gap-2 text-[10px] font-mono text-[hsl(var(--marketing-text-muted))] tracking-widest">
+          <Menu className="w-3 h-3" />
+          WORKSPACE / OVERVIEW
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface-raised))] rounded text-[10px] font-mono text-[hsl(var(--marketing-text))]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--marketing-warning))] animate-pulse" />
-            SYSTEM_ACTIVE
-          </div>
-          <Link
-            to="/auth"
-            className="px-3 py-1.5 bg-[hsl(var(--marketing-accent))] text-[hsl(var(--marketing-accent-foreground))] text-xs font-bold rounded-sm hover:brightness-110 transition-all"
-          >
-            START FREE
-          </Link>
+        <div className="flex items-center gap-1.5 px-2 py-1 border border-[hsl(var(--marketing-border))] bg-[hsl(var(--marketing-surface-raised))] rounded text-[10px] font-mono text-[hsl(var(--marketing-text))]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--marketing-warning))] animate-pulse" />
+          SYSTEM_ACTIVE
         </div>
-      </header>
+      </div>
 
       <div className="flex flex-1">
         {/* Left icon rail */}
