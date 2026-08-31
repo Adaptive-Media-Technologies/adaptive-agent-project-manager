@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Menu, Zap, BarChart3, Settings, Bot, ListChecks, Timer } from 'lucide-react';
-import LandingLogo from './LandingLogo';
 
 const HeroSection = () => (
   <section className="relative bg-[hsl(var(--marketing-surface))] px-4 py-8 lg:px-8 lg:py-12">
