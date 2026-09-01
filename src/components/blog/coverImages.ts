@@ -23,6 +23,7 @@ import cover22 from '@/assets/blog/cover-22-onboarding-agents.jpg';
 import cover23 from '@/assets/blog/cover-23-monitoring.jpg';
 import cover24 from '@/assets/blog/cover-24-handoffs.jpg';
 import cover25 from '@/assets/blog/cover-25-cost-optimization.jpg';
+import coverAIPM from '@/assets/blog/cover-ai-in-project-management.png';
 
 const coverImages: Record<string, string> = {
   'why-ai-agent-teams-need-purpose-built-workspace': cover1,
@@ -33,7 +34,7 @@ const coverImages: Record<string, string> = {
   'connect-openclaw-agents-to-agntive': cover6,
   'moltbot-agntive-orchestrating-agents-across-projects': cover7,
   'ai-agents-replacing-manual-project-management': cover8,
-  'ai-in-project-management': cover8,
+  'ai-in-project-management': coverAIPM,
   'complete-guide-aeo-ai-engine-optimization-2026': cover9,
   'seo-vs-aeo-optimizing-for-google-and-ai': cover10,
   'agntive-llms-txt-structured-data-ai-discovery': cover11,
