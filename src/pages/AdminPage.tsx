@@ -28,6 +28,51 @@ type AdminUser = {
   task_count: number;
 };
 
+const StaffLogin = () => {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await signIn(email, password);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5 border rounded-xl p-6 bg-card">
+        <div className="flex items-center gap-3">
+          <Shield className="text-primary" size={26} />
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Agntive Admin</h1>
+            <p className="text-sm text-muted-foreground">Staff only</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="admin-email">Email</Label>
+          <Input id="admin-email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="admin-password">Password</Label>
+          <Input id="admin-password" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+        <Button type="submit" className="w-full" disabled={submitting}>
+          <LogIn size={16} className="mr-2" />
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
 const AdminPage = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -38,11 +83,12 @@ const AdminPage = () => {
   const [search, setSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
-  // Check admin role
+  // Check admin role — never redirect away from /admin
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate('/auth'); return; }
+    if (!user) { setIsAdmin(false); setRoleChecked(true); return; }
 
+    let cancelled = false;
     const checkAdmin = async () => {
       const { data } = await supabase
         .from('user_roles')
@@ -50,17 +96,14 @@ const AdminPage = () => {
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .maybeSingle();
-
-      if (!data) {
-        setRoleChecked(true);
-        navigate('/');
-        return;
-      }
-      setIsAdmin(true);
+      if (cancelled) return;
+      setIsAdmin(!!data);
       setRoleChecked(true);
     };
     checkAdmin();
-  }, [user, authLoading, navigate]);
+    return () => { cancelled = true; };
+  }, [user, authLoading]);
+
 
   // Fetch users
   useEffect(() => {
