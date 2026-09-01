@@ -89,7 +89,7 @@ const LandingFooter = () => (
           © {new Date().getFullYear()} Agntive. All rights reserved.
         </p>
         <p className="text-xs text-[hsl(var(--marketing-text-muted))]">
-          <a href="mailto:hello@agntive.ai" className="hover:text-[hsl(var(--marketing-text))] transition-colors">hello@agntive.ai</a>
+          <a href="mailto:hello+agntive@adaptivemedia.com.au" className="hover:text-[hsl(var(--marketing-text))] transition-colors">hello+agntive@adaptivemedia.com.au</a>
         </p>
       </div>
 

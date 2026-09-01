@@ -4,7 +4,7 @@ import { BookOpen, Mail } from 'lucide-react';
 
 const channels = [
   { icon: BookOpen, name: 'Blog', description: 'Deep dives on AI agents, AEO strategies, and how to build AI-native teams.', cta: 'Read Blog', href: '/blog' },
-  { icon: Mail, name: 'Contact Us', description: 'Have questions or want to collaborate? Reach out to our team directly.', cta: 'Email Us', href: 'mailto:hello@agntive.ai' },
+  { icon: Mail, name: 'Contact Us', description: 'Have questions or want to collaborate? Reach out to our team directly.', cta: 'Email Us', href: 'mailto:hello+agntive@adaptivemedia.com.au' },
 ];
 
 const Community = () => (

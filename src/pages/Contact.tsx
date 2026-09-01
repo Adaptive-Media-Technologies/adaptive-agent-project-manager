@@ -128,7 +128,7 @@ const Contact = () => {
       <div className="mt-12">
         <h2>Prefer Email?</h2>
         <p>
-          Reach us directly at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.
+          Reach us directly at <a href="mailto:hello+agntive@adaptivemedia.com.au">hello+agntive@adaptivemedia.com.au</a>.
         </p>
 
         <h2>Office</h2>

@@ -39,10 +39,10 @@ const DataProcessing = () => (
     </ul>
 
     <h2>Data Processing Agreement</h2>
-    <p>Enterprise customers requiring a signed DPA can request one at <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>. We provide our standard DPA at no additional cost.</p>
+    <p>Enterprise customers requiring a signed DPA can request one at <a href="mailto:hello+agntive@adaptivemedia.com.au">hello+agntive@adaptivemedia.com.au</a>. We provide our standard DPA at no additional cost.</p>
 
     <h2>Contact</h2>
-    <p>For questions about our data processing practices, contact <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.</p>
+    <p>For questions about our data processing practices, contact <a href="mailto:hello+agntive@adaptivemedia.com.au">hello+agntive@adaptivemedia.com.au</a>.</p>
   </StaticPageLayout>
 );
 

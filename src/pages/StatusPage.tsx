@@ -39,7 +39,7 @@ const StatusPage = () => (
 
     <h2>Subscribe to Updates</h2>
     <p>
-      Get notified about outages and maintenance windows by emailing <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.
+      Get notified about outages and maintenance windows by emailing <a href="mailto:hello+agntive@adaptivemedia.com.au">hello+agntive@adaptivemedia.com.au</a>.
     </p>
   </StaticPageLayout>
 );
