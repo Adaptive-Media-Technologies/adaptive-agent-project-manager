@@ -26,7 +26,11 @@ type AdminUser = {
   roles: string[];
   project_count: number;
   task_count: number;
+  suspicious?: boolean;
 };
+
+const safeAvatarUrl = (url?: string) =>
+  typeof url === 'string' && url.trim().toLowerCase().startsWith('https://') ? url.trim() : undefined;
 
 const StaffLogin = () => {
   const { signIn } = useAuth();
@@ -256,6 +260,7 @@ const AdminPage = () => {
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Usage</TableHead>
                   <TableHead className="text-center">Projects</TableHead>
                   <TableHead className="text-center">Tasks</TableHead>
                   <TableHead>Signed Up</TableHead>
@@ -268,15 +273,22 @@ const AdminPage = () => {
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={u.avatar_url} />
+                          <AvatarImage src={safeAvatarUrl(u.avatar_url)} />
                           <AvatarFallback className="text-xs">
                             {(u.display_name || u.email || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {u.display_name || '—'}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {u.display_name || '—'}
+                            </p>
+                            {u.suspicious && (
+                              <Badge className="border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0" variant="outline">
+                                Suspicious
+                              </Badge>
+                            )}
+                          </div>
                           {u.username && (
                             <p className="text-xs text-muted-foreground">@{u.username}</p>
                           )}
@@ -303,10 +315,17 @@ const AdminPage = () => {
                           </SelectContent>
                         </Select>
                       )}
+                     </TableCell>
+                    <TableCell>
+                      {u.project_count + u.task_count > 0 ? (
+                        <Badge variant="secondary" className="text-xs">Using</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Signed up only</span>
+                      )}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-muted-foreground">
-                      {u.project_count}
-                    </TableCell>
+                     <TableCell className="text-center text-sm text-muted-foreground">
+                       {u.project_count}
+                     </TableCell>
                     <TableCell className="text-center text-sm text-muted-foreground">
                       {u.task_count}
                     </TableCell>
@@ -322,7 +341,7 @@ const AdminPage = () => {
                 ))}
                 {sortedUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                       {search ? 'No users match your search.' : 'No users found.'}
                     </TableCell>
                   </TableRow>

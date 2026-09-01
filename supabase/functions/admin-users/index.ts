@@ -6,6 +6,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Flags raw profile text that should never be rendered as-is.
+const looksUnsafe = (value: unknown): boolean => {
+  if (typeof value !== "string" || value === "") return false;
+  const v = value.toLowerCase();
+  return v.includes("<") || v.includes(">") || v.includes("http") || v.includes("javascript:");
+};
+
+const cleanName = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const stripped = value.replace(/<[^>]*>/g, "").replace(/[<>]/g, "").trim();
+  if (!stripped) return "";
+  const lower = stripped.toLowerCase();
+  if (lower.includes("http://") || lower.includes("https://")) return "";
+  return stripped;
+};
+
+const cleanUsername = (value: unknown): string =>
+  typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value) ? value : "";
+
+const cleanAvatarUrl = (value: unknown): string =>
+  typeof value === "string" && value.trim().toLowerCase().startsWith("https://") ? value.trim() : "";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -85,14 +107,21 @@ serve(async (req) => {
 
       const result = users.map((u: any) => {
         const profile = profileMap.get(u.id);
+        const suspicious =
+          looksUnsafe(profile?.display_name) ||
+          looksUnsafe(profile?.username) ||
+          (typeof profile?.avatar_url === "string" &&
+            profile.avatar_url !== "" &&
+            !profile.avatar_url.trim().toLowerCase().startsWith("https://"));
         return {
           id: u.id,
           email: u.email,
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at,
-          display_name: profile?.display_name || "",
-          username: profile?.username || "",
-          avatar_url: profile?.avatar_url || "",
+          display_name: cleanName(profile?.display_name),
+          username: cleanUsername(profile?.username),
+          avatar_url: cleanAvatarUrl(profile?.avatar_url),
+          suspicious,
           roles: roleMap.get(u.id) || ["customer"],
           project_count: projectCounts.get(u.id) || 0,
           task_count: taskCounts.get(u.id) || 0,
