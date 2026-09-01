@@ -273,15 +273,22 @@ const AdminPage = () => {
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={u.avatar_url} />
+                          <AvatarImage src={safeAvatarUrl(u.avatar_url)} />
                           <AvatarFallback className="text-xs">
                             {(u.display_name || u.email || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {u.display_name || '—'}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {u.display_name || '—'}
+                            </p>
+                            {u.suspicious && (
+                              <Badge className="border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0" variant="outline">
+                                Suspicious
+                              </Badge>
+                            )}
+                          </div>
                           {u.username && (
                             <p className="text-xs text-muted-foreground">@{u.username}</p>
                           )}
