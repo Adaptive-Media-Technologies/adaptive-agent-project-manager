@@ -313,6 +313,8 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <FeedbackWidget />
+
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
