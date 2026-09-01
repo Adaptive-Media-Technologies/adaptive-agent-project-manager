@@ -26,7 +26,11 @@ type AdminUser = {
   roles: string[];
   project_count: number;
   task_count: number;
+  suspicious?: boolean;
 };
+
+const safeAvatarUrl = (url?: string) =>
+  typeof url === 'string' && url.trim().toLowerCase().startsWith('https://') ? url.trim() : undefined;
 
 const StaffLogin = () => {
   const { signIn } = useAuth();
