@@ -32,5 +32,6 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /teams
+Disallow: /admin
 
 Sitemap: https://agntive.ai/sitemap.xml

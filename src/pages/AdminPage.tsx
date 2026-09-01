@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Shield, Users, Search, ArrowLeft } from 'lucide-react';
+import { Shield, Users, Search, ArrowLeft, LogIn, Clock, UserX } from 'lucide-react';
+
 
 type AdminUser = {
   id: string;
@@ -26,6 +28,51 @@ type AdminUser = {
   task_count: number;
 };
 
+const StaffLogin = () => {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await signIn(email, password);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5 border rounded-xl p-6 bg-card">
+        <div className="flex items-center gap-3">
+          <Shield className="text-primary" size={26} />
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Agntive Admin</h1>
+            <p className="text-sm text-muted-foreground">Staff only</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="admin-email">Email</Label>
+          <Input id="admin-email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="admin-password">Password</Label>
+          <Input id="admin-password" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+        <Button type="submit" className="w-full" disabled={submitting}>
+          <LogIn size={16} className="mr-2" />
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
 const AdminPage = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -36,11 +83,12 @@ const AdminPage = () => {
   const [search, setSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
-  // Check admin role
+  // Check admin role — never redirect away from /admin
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate('/auth'); return; }
+    if (!user) { setIsAdmin(false); setRoleChecked(true); return; }
 
+    let cancelled = false;
     const checkAdmin = async () => {
       const { data } = await supabase
         .from('user_roles')
@@ -48,17 +96,14 @@ const AdminPage = () => {
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .maybeSingle();
-
-      if (!data) {
-        setRoleChecked(true);
-        navigate('/');
-        return;
-      }
-      setIsAdmin(true);
+      if (cancelled) return;
+      setIsAdmin(!!data);
       setRoleChecked(true);
     };
     checkAdmin();
-  }, [user, authLoading, navigate]);
+    return () => { cancelled = true; };
+  }, [user, authLoading]);
+
 
   // Fetch users
   useEffect(() => {
@@ -111,6 +156,12 @@ const AdminPage = () => {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
+  const stats = {
+    total: users.length,
+    active7: users.filter(u => u.last_sign_in_at && differenceInDays(new Date(), new Date(u.last_sign_in_at)) <= 7).length,
+    never: users.filter(u => !u.last_sign_in_at).length,
+  };
+
   if (authLoading || !roleChecked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -119,13 +170,24 @@ const AdminPage = () => {
     );
   }
 
-  const roleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'destructive';
-      case 'agent': return 'default';
-      default: return 'secondary';
-    }
-  };
+  if (!user) return <StaffLogin />;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center space-y-4 border rounded-xl p-6 bg-card">
+          <Shield className="text-muted-foreground mx-auto" size={26} />
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Agntive Admin</h1>
+            <p className="text-sm text-muted-foreground mt-1">This account is not an admin</p>
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -138,8 +200,8 @@ const AdminPage = () => {
             </Button>
             <Shield className="text-primary" size={28} />
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Manage users and roles</p>
+              <h1 className="text-2xl font-bold text-foreground">Agntive Admin</h1>
+              <p className="text-sm text-muted-foreground">Staff only — registrations and roles</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -147,6 +209,26 @@ const AdminPage = () => {
             <span className="text-sm font-medium">{users.length} users</span>
           </div>
         </div>
+
+        {/* Summary cards */}
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          {[
+            { label: 'Registered', value: stats.total, icon: Users },
+            { label: 'Signed in last 7 days', value: stats.active7, icon: Clock },
+            { label: 'Never signed in', value: stats.never, icon: UserX },
+          ].map(card => (
+            <div key={card.label} className="border rounded-xl bg-card p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <card.icon size={16} />
+                <span className="text-xs font-medium uppercase tracking-wide">{card.label}</span>
+              </div>
+              <p className="mt-2 text-3xl font-bold text-foreground tabular-nums">
+                {loading ? '—' : card.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
 
         {/* Search */}
         <div className="relative mb-6 max-w-sm">
