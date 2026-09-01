@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Sun, Moon } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import LandingLogo from './LandingLogo';
 
 const LandingNav = () => {
-  const { theme, setTheme } = useTheme();
   return (
     <>
       {/* Announcement Bar */}
@@ -27,13 +24,6 @@ const LandingNav = () => {
             <Link to="/blog" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Blog</Link>
           </nav>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex h-8 w-8 items-center justify-center rounded-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] hover:bg-[hsl(var(--marketing-surface-raised))] transition-colors"
-              title="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
             <Link
               to="/auth"
               className="hidden sm:inline-flex px-3 py-1.5 text-sm text-[hsl(var(--marketing-text-muted))] hover:text-[hsl(var(--marketing-text))] transition-colors"
