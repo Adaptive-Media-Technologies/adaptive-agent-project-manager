@@ -14,7 +14,13 @@
   </url>
   <url>
     <loc>https://agntive.ai/blog</loc>
-    <lastmod>2026-03-03</lastmod>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agntive.ai/blog/ai-in-project-management</loc>
+    <lastmod>2026-09-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
