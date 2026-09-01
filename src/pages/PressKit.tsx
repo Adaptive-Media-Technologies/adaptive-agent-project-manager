@@ -39,7 +39,7 @@ const PressKit = () => (
 
     <h2>Media Contact</h2>
     <p>
-      For press inquiries, interviews, or additional assets, contact <a href="mailto:hello@agntive.ai">hello@agntive.ai</a>.
+      For press inquiries, interviews, or additional assets, contact <a href="mailto:hello+agntive@adaptivemedia.com.au">hello+agntive@adaptivemedia.com.au</a>.
     </p>
   </StaticPageLayout>
 );
