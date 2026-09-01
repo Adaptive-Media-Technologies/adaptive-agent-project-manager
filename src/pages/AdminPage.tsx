@@ -132,6 +132,25 @@ const AdminPage = () => {
     fetchUsers();
   }, [isAdmin]);
 
+  // Fetch feedback
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchFeedback = async () => {
+      const { data, error } = await supabase
+        .from('product_feedback')
+        .select('id, email, category, message, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) {
+        console.error(error);
+      } else {
+        setFeedback(data || []);
+      }
+    };
+    fetchFeedback();
+  }, [isAdmin]);
+
+
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdatingRole(userId);
     const { error } = await supabase.functions.invoke('admin-users?action=update-role', {
