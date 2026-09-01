@@ -107,14 +107,21 @@ serve(async (req) => {
 
       const result = users.map((u: any) => {
         const profile = profileMap.get(u.id);
+        const suspicious =
+          looksUnsafe(profile?.display_name) ||
+          looksUnsafe(profile?.username) ||
+          (typeof profile?.avatar_url === "string" &&
+            profile.avatar_url !== "" &&
+            !profile.avatar_url.trim().toLowerCase().startsWith("https://"));
         return {
           id: u.id,
           email: u.email,
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at,
-          display_name: profile?.display_name || "",
-          username: profile?.username || "",
-          avatar_url: profile?.avatar_url || "",
+          display_name: cleanName(profile?.display_name),
+          username: cleanUsername(profile?.username),
+          avatar_url: cleanAvatarUrl(profile?.avatar_url),
+          suspicious,
           roles: roleMap.get(u.id) || ["customer"],
           project_count: projectCounts.get(u.id) || 0,
           task_count: taskCounts.get(u.id) || 0,
