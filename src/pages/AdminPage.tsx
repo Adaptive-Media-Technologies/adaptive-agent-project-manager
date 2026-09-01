@@ -86,6 +86,8 @@ const AdminPage = () => {
   const [roleChecked, setRoleChecked] = useState(false);
   const [search, setSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
+
 
   // Check admin role — never redirect away from /admin
   useEffect(() => {
