@@ -33,6 +33,7 @@ const coverImages: Record<string, string> = {
   'connect-openclaw-agents-to-agntive': cover6,
   'moltbot-agntive-orchestrating-agents-across-projects': cover7,
   'ai-agents-replacing-manual-project-management': cover8,
+  'ai-in-project-management': cover8,
   'complete-guide-aeo-ai-engine-optimization-2026': cover9,
   'seo-vs-aeo-optimizing-for-google-and-ai': cover10,
   'agntive-llms-txt-structured-data-ai-discovery': cover11,
