@@ -315,10 +315,17 @@ const AdminPage = () => {
                           </SelectContent>
                         </Select>
                       )}
+                     </TableCell>
+                    <TableCell>
+                      {u.project_count + u.task_count > 0 ? (
+                        <Badge variant="secondary" className="text-xs">Using</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Signed up only</span>
+                      )}
                     </TableCell>
-                    <TableCell className="text-center text-sm text-muted-foreground">
-                      {u.project_count}
-                    </TableCell>
+                     <TableCell className="text-center text-sm text-muted-foreground">
+                       {u.project_count}
+                     </TableCell>
                     <TableCell className="text-center text-sm text-muted-foreground">
                       {u.task_count}
                     </TableCell>
