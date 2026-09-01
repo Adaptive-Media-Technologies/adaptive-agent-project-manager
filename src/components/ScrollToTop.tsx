@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -9,6 +9,7 @@ declare global {
 
 const ScrollToTop = () => {
   const { pathname, search, hash } = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     window.gtag?.('event', 'page_view', {
@@ -18,22 +19,40 @@ const ScrollToTop = () => {
   }, [pathname, search]);
 
   useEffect(() => {
-    // When a hash is present (e.g. /#features), scroll to that section instead
-    // of the top — this lets homepage-rooted hash links work from inner pages
-    // (the target element only exists on the homepage, so the page must mount
-    // first). A double rAF gives the routed page time to render.
+    const id = hash.slice(1);
+    const marketingHashes = new Set([
+      'features',
+      'openclaw',
+      'how-it-works',
+      'pricing',
+      'faq',
+    ]);
+
+    if (pathname !== '/' && marketingHashes.has(id)) {
+      navigate({ pathname: '/', hash }, { replace: true });
+      return;
+    }
+
     if (hash) {
-      const id = hash.slice(1);
-      const raf = requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          const el = document.getElementById(id);
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        })
-      );
-      return () => cancelAnimationFrame(raf);
+      const delays = [0, 50, 150, 400, 800];
+      const timers: ReturnType<typeof setTimeout>[] = [];
+      let found = false;
+
+      delays.forEach((delay) => {
+        timers.push(setTimeout(() => {
+          if (found) return;
+          const element = document.getElementById(id);
+          if (element) {
+            found = true;
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, delay));
+      });
+
+      return () => timers.forEach(clearTimeout);
     }
     window.scrollTo(0, 0);
-  }, [pathname, search, hash]);
+  }, [pathname, search, hash, navigate]);
 
   return null;
 };
