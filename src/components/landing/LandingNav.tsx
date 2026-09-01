@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Sun, Moon } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import LandingLogo from './LandingLogo';
 
 const LandingNav = () => {
-  const { theme, setTheme } = useTheme();
   return (
     <>
       {/* Announcement Bar */}
