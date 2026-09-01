@@ -260,6 +260,7 @@ const AdminPage = () => {
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Usage</TableHead>
                   <TableHead className="text-center">Projects</TableHead>
                   <TableHead className="text-center">Tasks</TableHead>
                   <TableHead>Signed Up</TableHead>
