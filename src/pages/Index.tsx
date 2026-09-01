@@ -41,6 +41,8 @@ import { endOfMonth, format, startOfMonth } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
+import FeedbackWidget from '@/components/FeedbackWidget';
+
 import DashboardHome from '@/components/DashboardHome';
 import ManageTeamsMain from '@/components/ManageTeamsMain';
 import {
