@@ -156,6 +156,12 @@ const AdminPage = () => {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
+  const stats = {
+    total: users.length,
+    active7: users.filter(u => u.last_sign_in_at && differenceInDays(new Date(), new Date(u.last_sign_in_at)) <= 7).length,
+    never: users.filter(u => !u.last_sign_in_at).length,
+  };
+
   if (authLoading || !roleChecked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -164,13 +170,24 @@ const AdminPage = () => {
     );
   }
 
-  const roleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'destructive';
-      case 'agent': return 'default';
-      default: return 'secondary';
-    }
-  };
+  if (!user) return <StaffLogin />;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center space-y-4 border rounded-xl p-6 bg-card">
+          <Shield className="text-muted-foreground mx-auto" size={26} />
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Agntive Admin</h1>
+            <p className="text-sm text-muted-foreground mt-1">This account is not an admin</p>
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,8 +200,8 @@ const AdminPage = () => {
             </Button>
             <Shield className="text-primary" size={28} />
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Manage users and roles</p>
+              <h1 className="text-2xl font-bold text-foreground">Agntive Admin</h1>
+              <p className="text-sm text-muted-foreground">Staff only — registrations and roles</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -192,6 +209,26 @@ const AdminPage = () => {
             <span className="text-sm font-medium">{users.length} users</span>
           </div>
         </div>
+
+        {/* Summary cards */}
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          {[
+            { label: 'Registered', value: stats.total, icon: Users },
+            { label: 'Signed in last 7 days', value: stats.active7, icon: Clock },
+            { label: 'Never signed in', value: stats.never, icon: UserX },
+          ].map(card => (
+            <div key={card.label} className="border rounded-xl bg-card p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <card.icon size={16} />
+                <span className="text-xs font-medium uppercase tracking-wide">{card.label}</span>
+              </div>
+              <p className="mt-2 text-3xl font-bold text-foreground tabular-nums">
+                {loading ? '—' : card.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
 
         {/* Search */}
         <div className="relative mb-6 max-w-sm">
