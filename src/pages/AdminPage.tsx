@@ -27,6 +27,14 @@ type AdminUser = {
   project_count: number;
   task_count: number;
   suspicious?: boolean;
+  last_project_name?: string;
+  last_project_at?: string | null;
+  last_task_title?: string;
+  last_task_at?: string | null;
+  note_count?: number;
+  message_count?: number;
+  time_minutes?: number;
+  team_count?: number;
 };
 
 type FeedbackRow = {
@@ -36,6 +44,22 @@ type FeedbackRow = {
   message: string;
   created_at: string;
 };
+
+const truncate = (value: string, max = 34) =>
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+
+// Compact "what are they actually using" summary — plain text only.
+const activityLine = (u: AdminUser) => {
+  const parts: string[] = [];
+  parts.push(u.last_project_name ? truncate(u.last_project_name) : 'no project');
+  if (u.last_task_title) parts.push(`task: ${truncate(u.last_task_title, 26)}`);
+  if (u.note_count) parts.push(`${u.note_count} notes`);
+  if (u.message_count) parts.push(`${u.message_count} chats`);
+  if (u.time_minutes) parts.push(`${Math.round(u.time_minutes / 60 * 10) / 10}h tracked`);
+  if (u.team_count) parts.push(`${u.team_count} teams`);
+  return parts.join(' · ');
+};
+
 
 
 const safeAvatarUrl = (url?: string) =>
@@ -346,13 +370,17 @@ const AdminPage = () => {
                         </Select>
                       )}
                      </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[240px]">
                       {u.project_count + u.task_count > 0 ? (
                         <Badge variant="secondary" className="text-xs">Using</Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">Signed up only</span>
                       )}
+                      <p className="mt-1 text-xs text-muted-foreground truncate" title={activityLine(u)}>
+                        {activityLine(u)}
+                      </p>
                     </TableCell>
+
                      <TableCell className="text-center text-sm text-muted-foreground">
                        {u.project_count}
                      </TableCell>

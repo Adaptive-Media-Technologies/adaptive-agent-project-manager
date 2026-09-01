@@ -84,8 +84,13 @@ serve(async (req) => {
 
       const { data: profiles } = await adminClient.from("profiles").select("*");
       const { data: roles } = await adminClient.from("user_roles").select("*");
-      const { data: projects } = await adminClient.from("projects").select("id, owner_id");
-      const { data: tasks } = await adminClient.from("tasks").select("id, created_by");
+      const { data: projects } = await adminClient.from("projects").select("id, owner_id, name, created_at");
+      const { data: tasks } = await adminClient.from("tasks").select("id, created_by, title, created_at");
+      const { data: notes } = await adminClient.from("notes").select("id, user_id");
+      const { data: messages } = await adminClient.from("project_messages").select("id, user_id");
+      const { data: timeEntries } = await adminClient.from("time_entries").select("user_id, minutes");
+      const { data: teamMembers } = await adminClient.from("team_members").select("user_id, team_id");
+      const { data: teams } = await adminClient.from("teams").select("id, owner_id");
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
       const roleMap = new Map<string, string[]>();
@@ -95,14 +100,54 @@ serve(async (req) => {
         roleMap.set(r.user_id, arr);
       });
 
-      const projectCounts = new Map<string, number>();
-      (projects || []).forEach((p: any) => {
-        projectCounts.set(p.owner_id, (projectCounts.get(p.owner_id) || 0) + 1);
+      const countBy = (rows: any[] | null, key: string) => {
+        const m = new Map<string, number>();
+        (rows || []).forEach((r: any) => {
+          if (!r?.[key]) return;
+          m.set(r[key], (m.get(r[key]) || 0) + 1);
+        });
+        return m;
+      };
+
+      const projectCounts = countBy(projects, "owner_id");
+      const taskCounts = countBy(tasks, "created_by");
+      const noteCounts = countBy(notes, "user_id");
+      const messageCounts = countBy(messages, "user_id");
+
+      const timeMinutes = new Map<string, number>();
+      (timeEntries || []).forEach((t: any) => {
+        if (!t?.user_id) return;
+        timeMinutes.set(t.user_id, (timeMinutes.get(t.user_id) || 0) + (Number(t.minutes) || 0));
       });
 
-      const taskCounts = new Map<string, number>();
+      // Teams owned or joined (deduped by team id)
+      const teamSets = new Map<string, Set<string>>();
+      const addTeam = (userId?: string, teamId?: string) => {
+        if (!userId || !teamId) return;
+        const s = teamSets.get(userId) || new Set<string>();
+        s.add(teamId);
+        teamSets.set(userId, s);
+      };
+      (teams || []).forEach((t: any) => addTeam(t.owner_id, t.id));
+      (teamMembers || []).forEach((m: any) => addTeam(m.user_id, m.team_id));
+
+      // Most recent project per owner / task per creator
+      const latestProject = new Map<string, { name: string; at: string }>();
+      (projects || []).forEach((p: any) => {
+        if (!p?.owner_id) return;
+        const cur = latestProject.get(p.owner_id);
+        if (!cur || new Date(p.created_at) > new Date(cur.at)) {
+          latestProject.set(p.owner_id, { name: cleanName(p.name), at: p.created_at });
+        }
+      });
+
+      const latestTask = new Map<string, { title: string; at: string }>();
       (tasks || []).forEach((t: any) => {
-        taskCounts.set(t.created_by, (taskCounts.get(t.created_by) || 0) + 1);
+        if (!t?.created_by) return;
+        const cur = latestTask.get(t.created_by);
+        if (!cur || new Date(t.created_at) > new Date(cur.at)) {
+          latestTask.set(t.created_by, { title: cleanName(t.title), at: t.created_at });
+        }
       });
 
       const result = users.map((u: any) => {
@@ -113,6 +158,8 @@ serve(async (req) => {
           (typeof profile?.avatar_url === "string" &&
             profile.avatar_url !== "" &&
             !profile.avatar_url.trim().toLowerCase().startsWith("https://"));
+        const proj = latestProject.get(u.id);
+        const task = latestTask.get(u.id);
         return {
           id: u.id,
           email: u.email,
@@ -125,8 +172,17 @@ serve(async (req) => {
           roles: roleMap.get(u.id) || ["customer"],
           project_count: projectCounts.get(u.id) || 0,
           task_count: taskCounts.get(u.id) || 0,
+          last_project_name: proj?.name || "",
+          last_project_at: proj?.at || null,
+          last_task_title: task?.title || "",
+          last_task_at: task?.at || null,
+          note_count: noteCounts.get(u.id) || 0,
+          message_count: messageCounts.get(u.id) || 0,
+          time_minutes: timeMinutes.get(u.id) || 0,
+          team_count: teamSets.get(u.id)?.size || 0,
         };
       });
+
 
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
