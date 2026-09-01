@@ -29,6 +29,15 @@ type AdminUser = {
   suspicious?: boolean;
 };
 
+type FeedbackRow = {
+  id: string;
+  email: string | null;
+  category: string;
+  message: string;
+  created_at: string;
+};
+
+
 const safeAvatarUrl = (url?: string) =>
   typeof url === 'string' && url.trim().toLowerCase().startsWith('https://') ? url.trim() : undefined;
 
