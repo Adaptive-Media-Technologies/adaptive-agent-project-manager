@@ -9,10 +9,10 @@ const LandingNav = () => {
     <>
       {/* Announcement Bar */}
       <div className="bg-[hsl(var(--marketing-surface-alt))] border-b border-[hsl(var(--marketing-border))] text-[hsl(var(--marketing-text-muted))] text-center text-[11px] font-mono py-2 px-4">
-        <a href="#openclaw" className="inline-flex items-center gap-2 hover:text-[hsl(var(--marketing-text))] transition-colors uppercase tracking-widest">
+        <Link to="/#openclaw" className="inline-flex items-center gap-2 hover:text-[hsl(var(--marketing-text))] transition-colors uppercase tracking-widest">
           <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--marketing-warning))] animate-pulse" />
           <span>NEW · OpenClaw Integration</span>
-        </a>
+        </Link>
       </div>
 
       {/* Nav */}
@@ -20,10 +20,10 @@ const LandingNav = () => {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <LandingLogo />
           <nav className="hidden md:flex items-center gap-6 text-sm text-[hsl(var(--marketing-text-muted))]">
-            <a href="#features" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Features</a>
-            <a href="#openclaw" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Integrations</a>
-            <a href="#how-it-works" className="hover:text-[hsl(var(--marketing-text))] transition-colors">How it works</a>
-            <a href="#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</a>
+            <Link to="/#features" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Features</Link>
+            <Link to="/#openclaw" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Integrations</Link>
+            <Link to="/#how-it-works" className="hover:text-[hsl(var(--marketing-text))] transition-colors">How it works</Link>
+            <Link to="/#pricing" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Pricing</Link>
             <Link to="/blog" className="hover:text-[hsl(var(--marketing-text))] transition-colors">Blog</Link>
           </nav>
           <div className="flex items-center gap-2">
