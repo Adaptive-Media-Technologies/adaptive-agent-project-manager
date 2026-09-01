@@ -380,7 +380,32 @@ const AdminPage = () => {
             </Table>
           </div>
         )}
+
+        {/* Feedback */}
+        <section className="mt-10">
+          <div className="flex items-center gap-2 mb-3">
+            <MessageSquarePlus size={18} className="text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Product feedback</h2>
+            <Badge variant="secondary" className="text-xs">{feedback.length}</Badge>
+          </div>
+          <div className="border rounded-xl divide-y bg-card">
+            {feedback.map(f => (
+              <div key={f.id} className="p-4 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-xs capitalize">{f.category}</Badge>
+                  <span className="font-medium text-foreground">{f.email || '—'}</span>
+                  <span>{format(new Date(f.created_at), 'MMM d, yyyy h:mm a')}</span>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words">{f.message}</p>
+              </div>
+            ))}
+            {feedback.length === 0 && (
+              <p className="p-8 text-center text-sm text-muted-foreground">No feedback yet.</p>
+            )}
+          </div>
+        </section>
       </div>
+
     </div>
   );
 };
