@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Shield, Users, Search, ArrowLeft, LogIn, Clock, UserX } from 'lucide-react';
+import { Shield, Users, Search, ArrowLeft, LogIn, Clock, UserX, MessageSquarePlus } from 'lucide-react';
 
 
 type AdminUser = {
@@ -28,6 +28,15 @@ type AdminUser = {
   task_count: number;
   suspicious?: boolean;
 };
+
+type FeedbackRow = {
+  id: string;
+  email: string | null;
+  category: string;
+  message: string;
+  created_at: string;
+};
+
 
 const safeAvatarUrl = (url?: string) =>
   typeof url === 'string' && url.trim().toLowerCase().startsWith('https://') ? url.trim() : undefined;
@@ -86,6 +95,8 @@ const AdminPage = () => {
   const [roleChecked, setRoleChecked] = useState(false);
   const [search, setSearch] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
+
 
   // Check admin role — never redirect away from /admin
   useEffect(() => {
@@ -131,6 +142,25 @@ const AdminPage = () => {
     };
     fetchUsers();
   }, [isAdmin]);
+
+  // Fetch feedback
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchFeedback = async () => {
+      const { data, error } = await supabase
+        .from('product_feedback')
+        .select('id, email, category, message, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) {
+        console.error(error);
+      } else {
+        setFeedback(data || []);
+      }
+    };
+    fetchFeedback();
+  }, [isAdmin]);
+
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdatingRole(userId);
@@ -350,7 +380,32 @@ const AdminPage = () => {
             </Table>
           </div>
         )}
+
+        {/* Feedback */}
+        <section className="mt-10">
+          <div className="flex items-center gap-2 mb-3">
+            <MessageSquarePlus size={18} className="text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Product feedback</h2>
+            <Badge variant="secondary" className="text-xs">{feedback.length}</Badge>
+          </div>
+          <div className="border rounded-xl divide-y bg-card">
+            {feedback.map(f => (
+              <div key={f.id} className="p-4 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-xs capitalize">{f.category}</Badge>
+                  <span className="font-medium text-foreground">{f.email || '—'}</span>
+                  <span>{format(new Date(f.created_at), 'MMM d, yyyy h:mm a')}</span>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words">{f.message}</p>
+              </div>
+            ))}
+            {feedback.length === 0 && (
+              <p className="p-8 text-center text-sm text-muted-foreground">No feedback yet.</p>
+            )}
+          </div>
+        </section>
       </div>
+
     </div>
   );
 };

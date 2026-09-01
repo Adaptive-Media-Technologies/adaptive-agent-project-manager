@@ -41,6 +41,8 @@ import { endOfMonth, format, startOfMonth } from 'date-fns';
 import agntfindLogo from '@/assets/agntfind-logo.png';
 import CalendarView from '@/pages/CalendarView';
 import LandingPage from '@/pages/LandingPage';
+import FeedbackWidget from '@/components/FeedbackWidget';
+
 import DashboardHome from '@/components/DashboardHome';
 import ManageTeamsMain from '@/components/ManageTeamsMain';
 import {
@@ -313,6 +315,8 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <FeedbackWidget />
+
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
