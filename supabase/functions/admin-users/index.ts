@@ -6,6 +6,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Flags raw profile text that should never be rendered as-is.
+const looksUnsafe = (value: unknown): boolean => {
+  if (typeof value !== "string" || value === "") return false;
+  const v = value.toLowerCase();
+  return v.includes("<") || v.includes(">") || v.includes("http") || v.includes("javascript:");
+};
+
+const cleanName = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const stripped = value.replace(/<[^>]*>/g, "").replace(/[<>]/g, "").trim();
+  if (!stripped) return "";
+  const lower = stripped.toLowerCase();
+  if (lower.includes("http://") || lower.includes("https://")) return "";
+  return stripped;
+};
+
+const cleanUsername = (value: unknown): string =>
+  typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value) ? value : "";
+
+const cleanAvatarUrl = (value: unknown): string =>
+  typeof value === "string" && value.trim().toLowerCase().startsWith("https://") ? value.trim() : "";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
