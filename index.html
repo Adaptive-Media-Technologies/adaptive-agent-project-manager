@@ -39,7 +39,21 @@
     <meta name="twitter:title" content="Agntive.ai — Task-Driven Workspace for Teams & AI Agents" />
     <meta name="twitter:description" content="Unify chat, tasks, notes, and autonomous AI agents in one smart workspace. Replace Slack, Notion, and generic bots." />
     <meta name="twitter:image" content="https://agntive.ai/favicon.png" />
+
+    <!-- Early per-route canonical for crawlers that snapshot before React boots.
+         Helmet later overrides it with the same unique URL. -->
+    <script>
+      (function () {
+        var path = location.pathname.replace(/\/+$/, '') || '/';
+        var link = document.createElement('link');
+        link.rel = 'canonical';
+        link.setAttribute('data-early-canonical', '');
+        link.href = 'https://agntive.ai' + path;
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
+
 
   <body>
     <div id="root"></div>
