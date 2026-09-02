@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useBlogPosts, useBlogTags } from '@/hooks/useBlogPosts';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
@@ -6,48 +7,29 @@ import BlogCard from '@/components/blog/BlogCard';
 import TagFilter from '@/components/blog/TagFilter';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const BLOG_URL = 'https://agntive.ai/blog';
+const BLOG_DESC =
+  'Explore articles on AI agents, OpenClaw, Moltbot, project management, and how Agntive.ai replaces Slack and Trello for AI-native teams.';
+
 const Blog = () => {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const { data: posts, isLoading } = useBlogPosts(activeTag ?? undefined);
   const { data: tags } = useBlogTags();
 
-  useEffect(() => {
-    const baseUrl = 'https://agntive.ai';
-    document.title = 'Blog | Agntive.ai — AI Agents, Project Management & Automation';
-    
-    const setMeta = (name: string, content: string, property = false) => {
-      const attr = property ? 'property' : 'name';
-      let el = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute(attr, name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
-
-    const desc = 'Explore articles on AI agents, OpenClaw, Moltbot, project management, and how Agntive.ai replaces Slack and Trello for AI-native teams.';
-    setMeta('description', desc);
-    setMeta('og:title', 'Agntive Blog — AI Agents, Workspace Tools & Automation', true);
-    setMeta('og:description', desc, true);
-    setMeta('og:type', 'website', true);
-    setMeta('og:url', `${baseUrl}/blog`, true);
-    setMeta('twitter:title', 'Agntive Blog — AI Agents, Workspace Tools & Automation');
-    setMeta('twitter:description', desc);
-
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.href = `${baseUrl}/blog`;
-
-    return () => { canonical?.remove(); };
-  }, []);
-
   return (
     <div className="min-h-screen bg-[hsl(var(--marketing-surface))]">
+      <Helmet>
+        <title>Blog | Agntive.ai — AI Agents, Project Management &amp; Automation</title>
+        <meta name="description" content={BLOG_DESC} />
+        <link rel="canonical" href={BLOG_URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={BLOG_URL} />
+        <meta property="og:title" content="Agntive Blog — AI Agents, Workspace Tools & Automation" />
+        <meta property="og:description" content={BLOG_DESC} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Agntive Blog — AI Agents, Workspace Tools & Automation" />
+        <meta name="twitter:description" content={BLOG_DESC} />
+      </Helmet>
       <LandingNav />
 
       {/* Hero */}
