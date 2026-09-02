@@ -47,6 +47,7 @@
         var path = location.pathname.replace(/\/+$/, '') || '/';
         var link = document.createElement('link');
         link.rel = 'canonical';
+        link.setAttribute('data-early-canonical', '');
         link.href = 'https://agntive.ai' + path;
         document.head.appendChild(link);
       })();
