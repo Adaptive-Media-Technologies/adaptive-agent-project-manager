@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import { getCoverImage } from '@/components/blog/coverImages';
 import { getPostTitle } from '@/components/blog/postTitles';
+import { getPostDescription } from '@/components/blog/postMeta';
 
 const BASE_URL = 'https://agntive.ai';
 
