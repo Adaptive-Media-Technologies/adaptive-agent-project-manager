@@ -17,23 +17,27 @@ const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
   const coverSrc = slug ? getCoverImage(slug) : undefined;
-  const fallbackTitle = getPostTitle((slug ?? '').replace(/\/+$/, ''));
-  const postUrl = `${BASE_URL}/blog/${(slug ?? '').replace(/\/+$/, '')}`;
+  const cleanSlug = (slug ?? '').replace(/\/+$/, '');
+  const fallbackTitle = getPostTitle(cleanSlug);
+  const fallbackDescription = getPostDescription(cleanSlug);
+  const postUrl = `${BASE_URL}/blog/${cleanSlug}`;
+  const description = post?.meta_description ?? fallbackDescription;
 
-  // Canonical is emitted from the route immediately, before the post loads.
+  // Canonical and description are emitted from the route immediately, before the post loads.
   const head = (
     <Helmet>
-      {post ? <title>{`${post.title} | Agntive Blog`}</title> : null}
+      <title>{`${post?.title ?? fallbackTitle} | Agntive Blog`}</title>
       <link rel="canonical" href={postUrl} />
       <meta property="og:type" content="article" />
       <meta property="og:url" content={postUrl} />
       <meta name="twitter:card" content="summary_large_image" />
-      {post ? <meta name="description" content={post.meta_description} /> : null}
+      <meta property="og:title" content={post?.title ?? fallbackTitle} />
+      <meta name="twitter:title" content={post?.title ?? fallbackTitle} />
+      {description ? <meta name="description" content={description} /> : null}
+      {description ? <meta property="og:description" content={description} /> : null}
+      {description ? <meta name="twitter:description" content={description} /> : null}
       {post ? <meta name="author" content={post.author} /> : null}
-      {post ? <meta property="og:title" content={post.title} /> : null}
-      {post ? <meta property="og:description" content={post.meta_description} /> : null}
-      {post ? <meta name="twitter:title" content={post.title} /> : null}
-      {post ? <meta name="twitter:description" content={post.meta_description} /> : null}
+
       {post ? (
         <script type="application/ld+json">
           {JSON.stringify({
