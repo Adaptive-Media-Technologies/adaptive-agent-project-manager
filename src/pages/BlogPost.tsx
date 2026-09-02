@@ -63,10 +63,13 @@ const BlogPost = () => {
         <LandingNav />
         <div className="mx-auto max-w-3xl px-6 py-20 space-y-6">
           <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-8 w-3/4" />
+          <h1 className="text-3xl md:text-4xl font-bold text-[hsl(var(--marketing-text))] leading-tight">
+            {fallbackTitle}
+          </h1>
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
         </div>
+
       </div>
     );
   }
