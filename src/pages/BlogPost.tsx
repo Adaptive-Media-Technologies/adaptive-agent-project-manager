@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useBlogPost } from '@/hooks/useBlogPosts';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
@@ -10,85 +10,56 @@ import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import { getCoverImage } from '@/components/blog/coverImages';
 
+const BASE_URL = 'https://agntive.ai';
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
   const coverSrc = slug ? getCoverImage(slug) : undefined;
+  const postUrl = `${BASE_URL}/blog/${(slug ?? '').replace(/\/+$/, '')}`;
 
-  useEffect(() => {
-    if (!post) return;
-    const baseUrl = 'https://agntive.ai';
-    const postUrl = `${baseUrl}/blog/${slug}`;
-
-    // Title
-    document.title = `${post.title} | Agntive Blog`;
-
-    // Meta description
-    const setMeta = (name: string, content: string, property = false) => {
-      const attr = property ? 'property' : 'name';
-      let el = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute(attr, name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
-
-    setMeta('description', post.meta_description);
-    setMeta('author', post.author);
-
-    // Open Graph
-    setMeta('og:title', post.title, true);
-    setMeta('og:description', post.meta_description, true);
-    setMeta('og:type', 'article', true);
-    setMeta('og:url', postUrl, true);
-
-    // Twitter
-    setMeta('twitter:title', post.title);
-    setMeta('twitter:description', post.meta_description);
-    setMeta('twitter:card', 'summary_large_image');
-
-    // Canonical
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.href = postUrl;
-
-    // JSON-LD BlogPosting
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
-      headline: post.title,
-      description: post.meta_description,
-      author: { '@type': 'Organization', name: post.author, url: baseUrl },
-      datePublished: post.published_at,
-      dateModified: post.updated_at,
-      publisher: {
-        '@type': 'Organization',
-        name: 'Agntive.ai',
-        url: baseUrl,
-        logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.ico` },
-      },
-      mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
-      keywords: post.tags?.join(', '),
-    });
-    document.head.appendChild(script);
-
-    return () => {
-      script.remove();
-      canonical?.remove();
-    };
-  }, [post, slug]);
+  // Canonical is emitted from the route immediately, before the post loads.
+  const head = (
+    <Helmet>
+      {post ? <title>{`${post.title} | Agntive Blog`}</title> : null}
+      <link rel="canonical" href={postUrl} />
+      <meta property="og:type" content="article" />
+      <meta property="og:url" content={postUrl} />
+      <meta name="twitter:card" content="summary_large_image" />
+      {post ? <meta name="description" content={post.meta_description} /> : null}
+      {post ? <meta name="author" content={post.author} /> : null}
+      {post ? <meta property="og:title" content={post.title} /> : null}
+      {post ? <meta property="og:description" content={post.meta_description} /> : null}
+      {post ? <meta name="twitter:title" content={post.title} /> : null}
+      {post ? <meta name="twitter:description" content={post.meta_description} /> : null}
+      {post ? (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: post.title,
+            description: post.meta_description,
+            author: { '@type': 'Organization', name: post.author, url: BASE_URL },
+            datePublished: post.published_at,
+            dateModified: post.updated_at,
+            publisher: {
+              '@type': 'Organization',
+              name: 'Agntive.ai',
+              url: BASE_URL,
+              logo: { '@type': 'ImageObject', url: `${BASE_URL}/favicon.ico` },
+            },
+            mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+            keywords: post.tags?.join(', '),
+          })}
+        </script>
+      ) : null}
+    </Helmet>
+  );
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[hsl(var(--marketing-surface))]">
+        {head}
         <LandingNav />
         <div className="mx-auto max-w-3xl px-6 py-20 space-y-6">
           <Skeleton className="h-64 w-full rounded-xl" />
@@ -103,6 +74,7 @@ const BlogPost = () => {
   if (!post) {
     return (
       <div className="min-h-screen bg-[hsl(var(--marketing-surface))]">
+        {head}
         <LandingNav />
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <h1 className="text-2xl font-bold text-[hsl(var(--marketing-text))]">Post not found</h1>
@@ -117,6 +89,8 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--marketing-surface))]">
+      {head}
+
       <LandingNav />
 
       <article className="mx-auto max-w-3xl px-6 py-12">
