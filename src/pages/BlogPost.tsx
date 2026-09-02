@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import { getCoverImage } from '@/components/blog/coverImages';
+import { getPostTitle } from '@/components/blog/postTitles';
 
 const BASE_URL = 'https://agntive.ai';
 
@@ -16,6 +17,7 @@ const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
   const coverSrc = slug ? getCoverImage(slug) : undefined;
+  const fallbackTitle = getPostTitle((slug ?? '').replace(/\/+$/, ''));
   const postUrl = `${BASE_URL}/blog/${(slug ?? '').replace(/\/+$/, '')}`;
 
   // Canonical is emitted from the route immediately, before the post loads.
@@ -63,10 +65,13 @@ const BlogPost = () => {
         <LandingNav />
         <div className="mx-auto max-w-3xl px-6 py-20 space-y-6">
           <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-8 w-3/4" />
+          <h1 className="text-3xl md:text-4xl font-bold text-[hsl(var(--marketing-text))] leading-tight">
+            {fallbackTitle}
+          </h1>
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
         </div>
+
       </div>
     );
   }
@@ -77,7 +82,8 @@ const BlogPost = () => {
         {head}
         <LandingNav />
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <h1 className="text-2xl font-bold text-[hsl(var(--marketing-text))]">Post not found</h1>
+          <h1 className="text-2xl font-bold text-[hsl(var(--marketing-text))]">{fallbackTitle}</h1>
+          <p className="text-[hsl(var(--marketing-text-muted))] mt-3">This article could not be found.</p>
           <Link to="/blog" className="text-[hsl(var(--marketing-accent))] hover:underline mt-4 inline-block">
             ← Back to Blog
           </Link>
