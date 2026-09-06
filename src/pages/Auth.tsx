@@ -82,9 +82,7 @@ const Auth = () => {
       <Helmet>
         <title>Sign in or Sign up | Agntive.ai — AI-Native Team Workspace</title>
         <meta name="description" content="Sign in or create your free Agntive.ai account to unify chat, tasks, notes, and AI agents in one workspace. 14-day trial, no credit card required." />
-        <link rel="canonical" href="https://agntive.ai/auth" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://agntive.ai/auth" />
         <meta property="og:title" content="Sign in or Sign up | Agntive.ai" />
         <meta property="og:description" content="Sign in or create your free Agntive.ai account to unify chat, tasks, notes, and AI agents in one workspace." />
         <meta property="og:image" content="https://agntive.ai/favicon.png" />

@@ -28,9 +28,7 @@ const BlogPost = () => {
   const head = (
     <Helmet>
       <title>{`${post?.title ?? fallbackTitle} | Agntive Blog`}</title>
-      <link rel="canonical" href={postUrl} />
       <meta property="og:type" content="article" />
-      <meta property="og:url" content={postUrl} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta property="og:title" content={post?.title ?? fallbackTitle} />
       <meta name="twitter:title" content={post?.title ?? fallbackTitle} />
