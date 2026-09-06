@@ -40,18 +40,26 @@
     <meta name="twitter:description" content="Unify chat, tasks, notes, and autonomous AI agents in one smart workspace. Replace Slack, Notion, and generic bots." />
     <meta name="twitter:image" content="https://agntive.ai/favicon.png" />
 
-    <!-- Early per-route canonical for crawlers that snapshot before React boots.
-         Helmet later overrides it with the same unique URL. -->
+    <!-- Early per-route canonical + og:url for crawlers that snapshot before React boots.
+         Query strings are stripped and trailing slashes normalised (homepage stays "/").
+         Helmet later overrides both with the same unique URL. -->
     <script>
       (function () {
         var path = location.pathname.replace(/\/+$/, '') || '/';
+        var url = 'https://agntive.ai' + path;
         var link = document.createElement('link');
         link.rel = 'canonical';
         link.setAttribute('data-early-canonical', '');
-        link.href = 'https://agntive.ai' + path;
+        link.href = url;
         document.head.appendChild(link);
+        var og = document.createElement('meta');
+        og.setAttribute('property', 'og:url');
+        og.setAttribute('data-early-canonical', '');
+        og.setAttribute('content', url);
+        document.head.appendChild(og);
       })();
     </script>
+
   </head>
 
 
