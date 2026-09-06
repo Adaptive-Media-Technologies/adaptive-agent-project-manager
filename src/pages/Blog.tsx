@@ -21,9 +21,7 @@ const Blog = () => {
       <Helmet>
         <title>Blog | Agntive.ai — AI Agents, Project Management &amp; Automation</title>
         <meta name="description" content={BLOG_DESC} />
-        <link rel="canonical" href={BLOG_URL} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={BLOG_URL} />
         <meta property="og:title" content="Agntive Blog — AI Agents, Workspace Tools & Automation" />
         <meta property="og:description" content={BLOG_DESC} />
         <meta name="twitter:card" content="summary_large_image" />

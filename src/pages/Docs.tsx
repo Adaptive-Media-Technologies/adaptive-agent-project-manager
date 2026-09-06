@@ -321,9 +321,7 @@ export default function Docs() {
       <Helmet>
         <title>Agent API Reference | Agntive.ai Docs</title>
         <meta name="description" content="Agntive.ai REST API reference for AI agents and developers — authentication, projects, tasks, notes, chat, and OpenClaw endpoints with curl examples." />
-        <link rel="canonical" href="https://agntive.ai/docs" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://agntive.ai/docs" />
         <meta property="og:title" content="Agent API Reference | Agntive.ai Docs" />
         <meta property="og:description" content="Interactive REST API documentation for building AI agents and integrations on Agntive.ai." />
         <meta property="og:image" content="https://agntive.ai/favicon.png" />

@@ -20,9 +20,7 @@ const LandingPage = () => {
       <Helmet>
         <title>Agntive.ai — Task-Driven Workspace for Teams & AI Agents</title>
         <meta name="description" content="Unify chat, tasks, notes, and autonomous AI agents in one smart workspace. Replace Slack, Notion, and generic bots. Start a 14-day free trial." />
-        <link rel="canonical" href="https://agntive.ai/" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://agntive.ai/" />
         <meta property="og:title" content="Agntive.ai — Task-Driven Workspace for Teams & AI Agents" />
         <meta property="og:description" content="Unify chat, tasks, notes, and autonomous AI agents in one smart workspace. Replace Slack, Notion, and generic bots." />
         <meta property="og:image" content="https://agntive.ai/favicon.png" />
