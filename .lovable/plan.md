@@ -1,58 +1,68 @@
-Fix the Ahrefs audit findings. Report contents:
+# Ahrefs audit fixes — 12 Sep report
 
-| Issue | Severity | Count | Root cause |
+## What the report actually contains
+
+| Issue | Level | Pages | Verdict |
 | --- | --- | --- | --- |
-| Multiple meta description tags | Error | ~28 URLs | Static `<meta name="description">` in `index.html` + per-route Helmet description both end up in the DOM |
-| Open Graph URL not matching canonical | Warning | ~28 URLs | Static `og:url` in `index.html` hard-coded to `https://agntive.ai/` — appears on every route alongside the per-route Helmet `og:url` |
-| Slow page (TTFB / load) | Warning | 19 URLs | Font stylesheet is render-blocking, Ahrefs + gtag load in `<head>`; some hosting cold-start TTFB not fixable from code |
-| HTTP → HTTPS 301 | Notice | 1 | Expected DNS-level redirect, informational |
-| 3XX redirect | Warning | 1 | Same root redirect as above |
+| Orphan page (no incoming internal links) | Error | 22 | Crawler setting + internal links |
+| Title too long (over 60 chars) | Warning | 19 | Fix titles |
+| Low word count | Warning | 25 | Expand articles |
+| Meta description too long | Warning | 1 | Trim to under 155 chars |
+| Slow page / slow response for AI crawlers | Warning | 49 / 46 | Cannot fix in the site code |
+| Only one incoming internal link | Notice | 4 | Internal links |
+| HTTP to HTTPS redirect, 3XX redirect | Notice / Warning | 1 each | Expected, no action |
+| Changed pages not submitted to IndexNow | Notice | many | Optional, needs an outside service |
 
-## 1. Duplicate `<meta name="description">` (Error)
+Good news: the duplicate-canonical, missing-H1 and missing-description errors from the earlier reports are all gone.
 
-`index.html` and each route's `<Helmet>` both emit one. `react-helmet-async` dedupes for JS-executing crawlers but Ahrefs still records the pre-hydration tag alongside the hydrated one.
+## 1. Orphan pages (Error, 22 articles)
 
-- Remove from `index.html`: `<meta name="description">`, `<link rel="canonical">`, `<meta property="og:url">`.
-- Keep in `index.html` (as fallback for non-JS social crawlers on the homepage): `og:type`, `og:title`, `og:description`, `og:image`, `twitter:*`. These are the same value as the homepage's Helmet and won't fire the "multiple descriptions" rule because they're `property="og:*"`, not `name="description"`.
-- Every route already sets `<title>`, `<meta name="description">`, `<link rel="canonical">`, and `og:*` via Helmet — verified in `LandingPage.tsx`, `Auth.tsx`, `Docs.tsx`, `StaticPageLayout.tsx`.
+The crawl ran with JavaScript switched off, so Ahrefs saw the page shell with no article text and no links. That is why 22 articles look like they have no links pointing at them even though the blog index lists them all.
 
-## 2. `og:url` mismatch (Warning)
+- You switch JavaScript rendering on in the Ahrefs project crawl settings, then re-run the audit. This is a setting on their side, not something I can change in the site.
+- I will also add a short "Related articles" block at the bottom of each article, linking three other articles by shared tag. This gives every article several genuine incoming links and also clears the 4 "only one incoming link" notices.
 
-Static `og:url = https://agntive.ai/` in `index.html` conflicts with the per-route canonical.
+## 2. Titles too long (Warning, 19 articles)
 
-- Removed as part of step 1. Per-route Helmet sets `og:url` to match its canonical (already the case in `StaticPageLayout`, `LandingPage`, `Auth`, `Docs`).
+Every article title currently ends with " | Agntive Blog", which adds 15 characters. Combined with headlines up to 72 characters, 19 titles land between 64 and 87.
 
-## 3. Verify canonical + og:url self-reference on every route
+- Change the suffix to " | Agntive".
+- Trim the longest headlines so each finished title fits inside 60 characters, keeping the same meaning and main search term.
+- Headline changes go to the article records and to the small backup title list used while a page is loading, so both stay in step.
 
-Audit each Helmet consumer to make sure both `<link rel="canonical">` and `<meta property="og:url">` point to the current route (per head-meta guide). Files to re-check:
-- `src/pages/LandingPage.tsx` — should be `/`
-- `src/pages/Auth.tsx` — `/auth`
-- `src/pages/Docs.tsx` — `/docs`
-- `src/components/landing/StaticPageLayout.tsx` — uses `url` prop; spot-check callers (`Security`, `Privacy`, `Contact`, `Cookie-Policy`, `Careers`, `Press`, `GDPR`, `Changelog`, `Terms`, `About`, `Community`, `Status`, `Partners`, `Data-Processing`, `Small-Team-Workspace`, `Blog`) pass the correct URL.
-- `src/main.tsx` — confirm `<HelmetProvider>` wraps the tree exactly once.
+## 3. Low word count (Warning, 25 articles)
 
-## 4. Slow page (Warning) — frontend levers only
+This one is real, not a crawl artefact: the articles run 250 to 500 words each. Only "AI in project management" (1,291 words) is a full piece.
 
-TTFB of 2–16s is largely Lovable hosting cold-start and can't be fixed in code, but a few frontend changes reduce render-blocking:
+- Expand each of the 25 flagged articles to roughly 900 to 1,200 words, keeping the existing angle, headline intent and TL;DR.
+- Added material stays grounded: how Agntive actually works, practical steps, worked examples, trade-offs, and short FAQ sections. No invented statistics, customer names, prices, awards or research claims.
+- Work in batches of about five articles so you can read and approve the tone early rather than after all 25.
 
-- `index.html`: swap the Google Fonts `<link rel="stylesheet">` for a non-blocking pattern (`rel="preload" as="style" onload="this.rel='stylesheet'"` with a `<noscript>` fallback). Removes ~200–400 ms of blocking on every page.
-- Move `<script src="…ahrefs…">` and the gtag `<script>` block to the end of `<body>` (still `async`, but out of the critical `<head>` parse path).
-- Add `<link rel="preload">` for the primary display font weight (Sora 700) so it's ready when the hero renders.
-- Confirm route-level `React.lazy` code-splitting from prior work is still in place (`App.tsx`).
+## 4. Meta description too long (Warning, 1)
 
-## 5. HTTP→HTTPS + 3XX redirect (Notice / Warning)
+"AI in project management" is 174 characters. Trim it to under 155 without dropping its main term.
 
-These describe the `http://agntive.ai/ → https://agntive.ai/` redirect performed by Lovable hosting. Not fixable from application code; will be marked as reviewed/ignored in the SEO tab.
+## 5. Slow pages (Warning, 49) — cannot be fixed from the site code
 
-## 6. Rescan
+Time to first byte is 2.0 to 5.9 seconds, and the pages themselves are only 7 to 17 KB. The delay is entirely the hosting response before any of our files are involved, so nothing in the code changes it. The front-end is already lean: fonts load without blocking, analytics sits at the end of the page, and pages are split so only what is needed downloads.
 
-After deploying, tell the user to rerun the Ahrefs Site Audit; the duplicate-description and og:url errors should clear immediately, and slow-page numbers should improve on warm cache.
+I will report this as an accepted warning. If it matters commercially, the real fix is server-rendered hosting rather than a code tweak — I can explain the options separately.
 
-## Files touched
+## 6. Redirect notices (1 each) — no action
 
-- `index.html` (remove duplicate description/canonical/og:url; non-blocking font load; move analytics scripts to end of body)
-- `src/pages/LandingPage.tsx`, `src/pages/Auth.tsx`, `src/pages/Docs.tsx` (verify canonical+og:url self-reference; no changes expected unless mismatch found)
-- `src/components/landing/StaticPageLayout.tsx` (spot-check `url` prop propagation)
-- `src/main.tsx` (confirm single `<HelmetProvider>`)
+`http://agntive.ai/` correctly sends visitors to `https://agntive.ai/` with a permanent redirect. That is exactly what should happen; Ahrefs lists it for information. Mark as reviewed.
 
-No backend, routing, or business-logic changes.
+## 7. IndexNow notice — optional, your call
+
+IndexNow pings search engines the moment a page changes. It needs an API key file hosted on the domain and a ping whenever content changes. Not in scope unless you want it; say the word and I will plan it.
+
+## Technical notes
+
+- Files: `src/pages/BlogPost.tsx` (title suffix, related-articles block), `src/components/blog/postTitles.ts` and `src/components/blog/postMeta.ts` (fallback title/description sync), a new small related-posts query in `src/hooks/useBlogPosts.ts`.
+- Database: `blog_posts` updates for shortened titles, the trimmed meta description, and expanded `content` per article.
+- `public/sitemap.xml` already lists all 26 posts; `lastmod` values get refreshed for edited posts.
+- No changes to canonicals, H1s, pricing, design or product behaviour.
+
+## After shipping
+
+Publish, then re-run the Ahrefs audit with JavaScript rendering enabled. Expected result: orphan errors and the single-link notices clear, title and description warnings clear, word-count warnings clear as each batch lands, and the speed and redirect items remain as accepted.
