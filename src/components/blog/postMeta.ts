@@ -5,13 +5,13 @@ const postDescriptions: Record<string, string> = {
   'ai-in-project-management':
     'What AI in project management means, how small teams use it, and why humans and AI agents on one shared board beat bolt-on Copilot add-ons.',
   'ai-agent-cost-optimization-strategies':
-    'Reduce AI agent costs by 40-60% with model tiering, prompt optimization, caching, task batching, and smart routing. Practical strategies for production teams.',
+    'Cut AI agent costs with model tiering, leaner prompts, caching, batching, bounded loops and spend you can attribute to real work.',
   'human-ai-task-handoffs-best-practices':
     'Master human-AI task handoffs with clear protocols, structured context passing, and built-in review gates. Prevent dropped tasks and duplicated effort.',
   'monitoring-ai-agents-production-dashboard':
     'Essential metrics for monitoring AI agents in production: task throughput, error rates, token costs, latency, and quality scores.',
   'onboarding-ai-agents-into-your-team':
-    'A practical guide to onboarding AI agents into your team: defining roles, setting permissions, establishing workflows, and measuring performance from day one.',
+    'Onboard AI agents like new hires: define the role, scope permissions and keys, supply context, set measures, and review the work.',
   'multi-agent-orchestration-patterns-2026':
     'Learn the top multi-agent orchestration patterns for AI teams: sequential pipelines, fan-out/fan-in, supervisor hierarchies, and event-driven workflows.',
   'future-of-work-ai-agents-as-team-members':
