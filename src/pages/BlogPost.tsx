@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useBlogPost } from '@/hooks/useBlogPosts';
+import { useBlogPost, useRelatedPosts } from '@/hooks/useBlogPosts';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ const BASE_URL = 'https://agntive.ai';
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
+  const { data: related } = useRelatedPosts(post?.id, post?.tags);
   const coverSrc = slug ? getCoverImage(slug) : undefined;
   const cleanSlug = (slug ?? '').replace(/\/+$/, '');
   const fallbackTitle = getPostTitle(cleanSlug);
@@ -27,7 +28,7 @@ const BlogPost = () => {
   // Canonical and description are emitted from the route immediately, before the post loads.
   const head = (
     <Helmet>
-      <title>{`${post?.title ?? fallbackTitle} | Agntive Blog`}</title>
+      <title>{`${post?.title ?? fallbackTitle} | Agntive`}</title>
       <meta property="og:type" content="article" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta property="og:title" content={post?.title ?? fallbackTitle} />
@@ -154,6 +155,28 @@ const BlogPost = () => {
         ">
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </div>
+
+        {/* Related articles — internal links so every post is reachable from other posts */}
+        {related && related.length > 0 && (
+          <nav aria-label="Related articles" className="mt-14 pt-8 border-t border-border/40">
+            <h2 className="text-xl font-semibold text-[hsl(var(--marketing-text))] mb-4">Related articles</h2>
+            <ul className="space-y-4">
+              {related.map(r => (
+                <li key={r.id}>
+                  <Link
+                    to={`/blog/${r.slug}`}
+                    className="block rounded-xl border border-border/40 p-4 transition-colors hover:border-[hsl(var(--marketing-accent))]"
+                  >
+                    <span className="block font-medium text-[hsl(var(--marketing-text))]">{r.title}</span>
+                    <span className="mt-1 block text-sm text-[hsl(var(--marketing-text-muted))]">
+                      {r.meta_description}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
       </article>
 
       <LandingFooter />

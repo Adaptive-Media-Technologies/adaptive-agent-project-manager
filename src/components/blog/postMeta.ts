@@ -3,7 +3,7 @@
 // resolves). Keep in sync with blog_posts.meta_description.
 const postDescriptions: Record<string, string> = {
   'ai-in-project-management':
-    'A clear definition of AI in project management, how small teams use it, whether it replaces PMP, and why humans and AI agents on the same board beat Copilot bolted onto Jira.',
+    'What AI in project management means, how small teams use it, and why humans and AI agents on one shared board beat bolt-on Copilot add-ons.',
   'ai-agent-cost-optimization-strategies':
     'Reduce AI agent costs by 40-60% with model tiering, prompt optimization, caching, task batching, and smart routing. Practical strategies for production teams.',
   'human-ai-task-handoffs-best-practices':

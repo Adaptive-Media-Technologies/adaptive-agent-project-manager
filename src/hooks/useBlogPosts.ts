@@ -94,6 +94,33 @@ export const useBlogPost = (slug: string) => {
   });
 };
 
+/** Up to `limit` other published posts sharing a tag with the given post. */
+export const useRelatedPosts = (postId?: string, tags?: string[], limit = 3) => {
+  return useQuery({
+    queryKey: ['blog-related', postId, tags?.join(',')],
+    queryFn: async (): Promise<Pick<BlogPost, 'id' | 'slug' | 'title' | 'meta_description'>[]> => {
+      const { data: tagRows } = await supabase
+        .from('blog_tags')
+        .select('post_id')
+        .in('tag', tags ?? []);
+
+      const ids = [...new Set((tagRows ?? []).map(r => r.post_id))].filter(id => id !== postId);
+      if (ids.length === 0) return [];
+
+      const { data } = await supabase
+        .from('blog_posts')
+        .select('id, slug, title, meta_description')
+        .eq('published', true)
+        .in('id', ids)
+        .order('published_at', { ascending: false })
+        .limit(limit);
+
+      return data ?? [];
+    },
+    enabled: !!postId && !!tags?.length,
+  });
+};
+
 export const useBlogTags = () => {
   return useQuery({
     queryKey: ['blog-tags'],
