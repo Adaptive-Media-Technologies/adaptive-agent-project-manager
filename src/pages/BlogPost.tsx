@@ -155,6 +155,28 @@ const BlogPost = () => {
         ">
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </div>
+
+        {/* Related articles — internal links so every post is reachable from other posts */}
+        {related && related.length > 0 && (
+          <nav aria-label="Related articles" className="mt-14 pt-8 border-t border-border/40">
+            <h2 className="text-xl font-semibold text-[hsl(var(--marketing-text))] mb-4">Related articles</h2>
+            <ul className="space-y-4">
+              {related.map(r => (
+                <li key={r.id}>
+                  <Link
+                    to={`/blog/${r.slug}`}
+                    className="block rounded-xl border border-border/40 p-4 transition-colors hover:border-[hsl(var(--marketing-accent))]"
+                  >
+                    <span className="block font-medium text-[hsl(var(--marketing-text))]">{r.title}</span>
+                    <span className="mt-1 block text-sm text-[hsl(var(--marketing-text-muted))]">
+                      {r.meta_description}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
       </article>
 
       <LandingFooter />
