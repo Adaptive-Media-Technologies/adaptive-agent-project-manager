@@ -19,7 +19,7 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-[hsl(var(--marketing-surface))]">
       <Helmet>
-        <title>Blog | Agntive.ai — AI Agents, Project Management &amp; Automation</title>
+        <title>Blog | Agntive — AI Agents &amp; Automation</title>
         <meta name="description" content={BLOG_DESC} />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Agntive Blog — AI Agents, Workspace Tools & Automation" />
