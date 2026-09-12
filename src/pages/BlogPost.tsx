@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useBlogPost } from '@/hooks/useBlogPosts';
+import { useBlogPost, useRelatedPosts } from '@/hooks/useBlogPosts';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ const BlogPost = () => {
   // Canonical and description are emitted from the route immediately, before the post loads.
   const head = (
     <Helmet>
-      <title>{`${post?.title ?? fallbackTitle} | Agntive Blog`}</title>
+      <title>{`${post?.title ?? fallbackTitle} | Agntive`}</title>
       <meta property="og:type" content="article" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta property="og:title" content={post?.title ?? fallbackTitle} />
