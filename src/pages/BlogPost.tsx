@@ -17,6 +17,7 @@ const BASE_URL = 'https://agntive.ai';
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug ?? '');
+  const { data: related } = useRelatedPosts(post?.id, post?.tags);
   const coverSrc = slug ? getCoverImage(slug) : undefined;
   const cleanSlug = (slug ?? '').replace(/\/+$/, '');
   const fallbackTitle = getPostTitle(cleanSlug);
