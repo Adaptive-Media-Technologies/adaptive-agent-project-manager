@@ -40,7 +40,7 @@ export function useAgents() {
 
     // Fetch all project assignments for these agents
     const agentIds = (agentRows as any[]).map((a: any) => a.id);
-    let assignmentMap: Record<string, string[]> = {};
+    const assignmentMap: Record<string, string[]> = {};
 
     if (agentIds.length > 0) {
       const { data: assignments } = await supabase

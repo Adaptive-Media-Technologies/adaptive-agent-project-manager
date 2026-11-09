@@ -109,7 +109,11 @@ const TaskList = ({ tasks, groups, onCreateGroup, onRenameGroup, onUpdateGroupDa
   });
   useEffect(() => {
     if (!collapseStorageKey || typeof window === 'undefined') return;
-    try { window.localStorage.setItem(collapseStorageKey, JSON.stringify(collapsed)); } catch {}
+    try { 
+      window.localStorage.setItem(collapseStorageKey, JSON.stringify(collapsed)); 
+    } catch {
+      // Silently ignore localStorage errors (e.g., quota exceeded, private browsing)
+    }
   }, [collapsed, collapseStorageKey]);
   const toggleCollapsed = (cid: ContainerId) =>
     setCollapsed((prev) => ({ ...prev, [cid]: !prev[cid] }));
